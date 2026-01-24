@@ -110,3 +110,77 @@ Lumen is a simple note-taking web application built with React and TypeScript. I
 - Bundle analysis available via `npm run build` (generates dist/stats.html)
 - PWA configuration for offline functionality
 - Lazy loading and code splitting implemented
+
+---
+
+## Fork Personal - jovotrox
+
+Este es un fork personal con Tauri como wrapper de escritorio para macOS.
+
+### Estructura Adicional
+
+```
+src-tauri/           # Wrapper Tauri (código custom, no del upstream)
+.env.local           # GitHub PAT (no se sube a git)
+```
+
+### Comandos Tauri
+
+```bash
+npm run tauri:dev      # Desarrollo con hot reload (abre ventana nativa)
+npm run tauri:build    # Build producción → Lumen.app
+```
+
+### Remotes
+
+- `origin`: https://github.com/jovotrox/lumen (fork personal)
+- `upstream`: https://github.com/lumen-notes/lumen (proyecto original)
+
+### Flujo de Trabajo para Nuevas Features
+
+**IMPORTANTE: Seguir siempre este flujo**
+
+#### 1. Crear branch
+```bash
+git checkout main
+git pull origin main
+git checkout -b feature/nombre-feature
+```
+
+#### 2. Desarrollar
+- Analizar código existente antes de modificar
+- Proponer approach y validar con el usuario antes de implementar
+- Probar con `npm run tauri:dev`
+
+#### 3. Commit y deploy
+```bash
+git add .
+git commit -m "feat: descripción"
+npm run tauri:build
+cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
+```
+
+#### 4. (Opcional) Contribuir al proyecto original
+```bash
+git push origin feature/nombre-feature
+# Crear PR en GitHub hacia lumen-notes/lumen
+```
+
+### Mantener Actualizado con Upstream
+
+Antes de empezar una feature nueva:
+```bash
+git checkout main
+git fetch upstream
+git merge upstream/main
+git push origin main
+```
+
+### Reglas para Claude
+
+1. **Siempre crear branch** antes de modificar código para features
+2. **Validar approach** con el usuario antes de implementar cambios significativos
+3. **Probar con tauri:dev** antes de hacer build final
+4. **Preferir src-tauri/** para código custom cuando sea posible
+5. **Mantener compatibilidad** con upstream para facilitar merges futuros
+6. **No modificar .env.local** - contiene el GitHub PAT del usuario
