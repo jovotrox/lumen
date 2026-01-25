@@ -8,6 +8,7 @@ import { AppLayout } from "../components/app-layout"
 import { CommandMenu } from "../components/command-menu"
 import { DevBar } from "../components/dev-bar"
 import { ErrorIcon16 } from "../components/icons"
+import { UpdateBanner } from "../components/update-banner"
 import {
   FloatingConversationInput,
   Tool,
@@ -304,6 +305,7 @@ function RouteComponent() {
       <CommandMenu />
       {/* <Toaster toastOptions={{ duration: 2000 }} /> */}
       <DevBar />
+      <UpdateBanner />
     </div>
   )
 }

@@ -11,6 +11,20 @@
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      // GitHub Pages SPA redirect handler
+      (function () {
+        var redirect = sessionStorage.getItem("redirect")
+        if (redirect) {
+          sessionStorage.removeItem("redirect")
+          // Remove /lumen prefix if present (GitHub Pages base path)
+          var path = redirect.replace(/^\/lumen/, "")
+          if (path && path !== "/" && path !== window.location.pathname) {
+            history.replaceState(null, "", path)
+          }
+        }
+      })()
+    </script>
     <script type="module" src="/src/index.tsx"></script>
   </body>
 </html>
