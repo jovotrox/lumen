@@ -121,7 +121,7 @@ Este es un fork personal con Tauri como wrapper de escritorio para macOS.
 
 ```
 src-tauri/           # Wrapper Tauri (código custom, no del upstream)
-.env.local           # GitHub PAT (no se sube a git)
+.env.local           # GitHub OAuth Client ID para Tauri (no se sube a git)
 ```
 
 ### Comandos Tauri
@@ -136,14 +136,37 @@ npm run tauri:build    # Build producción → Lumen.app
 - `origin`: https://github.com/jovotrox/lumen (fork personal)
 - `upstream`: https://github.com/lumen-notes/lumen (proyecto original)
 
+### Estrategia de Branches
+
+```
+main      ← Sincronizado con upstream (proyecto original)
+personal  ← TODAS las features custom + upstream (USAR PARA COMPILAR)
+feature/* ← Branches temporales para desarrollo
+```
+
+**IMPORTANTE:** La rama `personal` es la rama de compilación. Contiene:
+- Todos los cambios del upstream (proyecto original)
+- Todas las features custom (font-style, OAuth Device Flow, links externos, etc.)
+- Código Tauri para desktop
+
+### Features Custom Implementadas
+
+| Feature | Descripción | Archivos Principales |
+|---------|-------------|---------------------|
+| Tauri Desktop | Wrapper nativo macOS | `src-tauri/*` |
+| Font Style | Setting para cambiar tipografía | `src/routes/_appRoot.settings.tsx` |
+| OAuth Device Flow | Login GitHub sin servidor | `src/components/github-auth-tauri.tsx` |
+| Links Externos | Abrir links en navegador sistema | `src/hooks/use-external-links.ts` |
+| HTTP sin CORS | Git operations en Tauri | `src/utils/tauri.ts`, `src/utils/git.ts` |
+
 ### Flujo de Trabajo para Nuevas Features
 
 **IMPORTANTE: Seguir siempre este flujo**
 
-#### 1. Crear branch
+#### 1. Crear branch desde personal
 ```bash
-git checkout main
-git pull origin main
+git checkout personal
+git pull origin personal
 git checkout -b feature/nombre-feature
 ```
 
@@ -152,35 +175,54 @@ git checkout -b feature/nombre-feature
 - Proponer approach y validar con el usuario antes de implementar
 - Probar con `npm run tauri:dev`
 
-#### 3. Commit y deploy
+#### 3. Commit y merge a personal
 ```bash
 git add .
 git commit -m "feat: descripción"
+git checkout personal
+git merge feature/nombre-feature --no-edit
+git push origin personal
+```
+
+#### 4. Compilar e instalar
+```bash
 npm run tauri:build
 cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ```
 
-#### 4. (Opcional) Contribuir al proyecto original
-```bash
-git push origin feature/nombre-feature
-# Crear PR en GitHub hacia lumen-notes/lumen
-```
+### Actualizar con Upstream (Proyecto Original)
 
-### Mantener Actualizado con Upstream
+**Ejecutar periódicamente para traer nuevos cambios:**
 
-Antes de empezar una feature nueva:
 ```bash
+# 1. Actualizar main con upstream
 git checkout main
 git fetch upstream
-git merge upstream/main
+git merge upstream/main --no-edit
 git push origin main
+
+# 2. Traer cambios a personal (preserva features custom)
+git checkout personal
+git merge main --no-edit
+git push origin personal
+
+# 3. Compilar nueva versión con todo
+npm run tauri:build
+cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ```
+
+**Si hay conflictos en el merge:**
+1. Resolver manualmente preservando código custom
+2. `git add .` y `git commit`
+3. Continuar con el flujo
 
 ### Reglas para Claude
 
-1. **Siempre crear branch** antes de modificar código para features
-2. **Validar approach** con el usuario antes de implementar cambios significativos
-3. **Probar con tauri:dev** antes de hacer build final
-4. **Preferir src-tauri/** para código custom cuando sea posible
-5. **Mantener compatibilidad** con upstream para facilitar merges futuros
-6. **No modificar .env.local** - contiene el GitHub PAT del usuario
+1. **Siempre trabajar desde `personal`** - Es la rama con todas las features
+2. **Crear feature branch** antes de modificar código para features nuevas
+3. **Validar approach** con el usuario antes de implementar cambios significativos
+4. **Probar con tauri:dev** antes de hacer build final
+5. **Merge a personal** después de completar cada feature
+6. **Mantener compatibilidad** con upstream para facilitar merges futuros
+7. **No modificar .env.local** - contiene el GitHub OAuth Client ID del usuario
+8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features
