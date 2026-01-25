@@ -461,6 +461,8 @@ function createGlobalStateMachine() {
           githubUser: (_, event) => {
             switch (event.type) {
               case "SIGN_IN":
+                // Save to localStorage for session persistence
+                localStorage.setItem(GITHUB_USER_STORAGE_KEY, JSON.stringify(event.githubUser))
                 return event.githubUser
               case "done.invoke.global.resolvingUser:invocation[0]":
                 return event.data.githubUser
