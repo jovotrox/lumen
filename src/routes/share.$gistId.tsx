@@ -98,6 +98,9 @@ function RouteComponent() {
     return parsedFont || "sans"
   }, [note?.frontmatter?.font])
 
+  // Map "mono" to "monospace" to match CSS variable naming
+  const fontFamily = resolvedFont === "mono" ? "monospace" : resolvedFont
+
   // Resolve width (frontmatter width or default)
   const resolvedWidth = React.useMemo(() => {
     const frontmatterWidth = note?.frontmatter?.width
@@ -198,8 +201,8 @@ function RouteComponent() {
             className="flex flex-col gap-2"
             style={
               {
-                "--font-family-content": `var(--font-family-${resolvedFont})`,
-                "--font-family-mono": `var(--font-family-${resolvedFont}-mono)`,
+                "--font-family-content": `var(--font-family-${fontFamily})`,
+                "--font-family-mono": `var(--font-family-${fontFamily}-mono)`,
               } as React.CSSProperties
             }
           >

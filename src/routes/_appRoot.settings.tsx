@@ -10,8 +10,10 @@ import { OpenAIKeyInput } from "../components/openai-key-input"
 import { PageLayout } from "../components/page-layout"
 import { RepoForm } from "../components/repo-form"
 import { Signature } from "../components/signature"
+import { SegmentedControl } from "../components/segmented-control"
 import { Switch } from "../components/switch"
 import {
+  defaultFontAtom,
   epaperAtom,
   githubRepoAtom,
   githubUserAtom,
@@ -157,6 +159,7 @@ function GitHubSection() {
 
 function AppearanceSection() {
   const [epaper, setEpaper] = useAtom(epaperAtom)
+  const [font, setFont] = useAtom(defaultFontAtom)
 
   return (
     <SettingsSection title="Appearance">
@@ -165,6 +168,40 @@ function AppearanceSection() {
         <label htmlFor="epaper" className="select-none">
           E-paper
         </label>
+      </div>
+      <div role="separator" className="h-px bg-border-secondary mt-4" />
+      <div className="flex items-center justify-between mt-4">
+        <span className="leading-4">Font style</span>
+        <SegmentedControl aria-label="Font style" size="small">
+          <SegmentedControl.Segment
+            selected={font === "sans"}
+            onClick={() => setFont("sans")}
+            className="font-sans"
+          >
+            Sans
+          </SegmentedControl.Segment>
+          <SegmentedControl.Segment
+            selected={font === "serif"}
+            onClick={() => setFont("serif")}
+            className="font-serif"
+          >
+            Serif
+          </SegmentedControl.Segment>
+          <SegmentedControl.Segment
+            selected={font === "handwriting"}
+            onClick={() => setFont("handwriting")}
+            className="font-handwriting"
+          >
+            Hand
+          </SegmentedControl.Segment>
+          <SegmentedControl.Segment
+            selected={font === "mono"}
+            onClick={() => setFont("mono")}
+            style={{ fontFamily: "var(--font-family-monospace)" }}
+          >
+            Mono
+          </SegmentedControl.Segment>
+        </SegmentedControl>
       </div>
     </SettingsSection>
   )

@@ -1,5 +1,5 @@
 .cm-editor {
-  @apply w-full cursor-text font-mono;
+  @apply w-full cursor-text font-content;
 }
 
 .cm-editor.cm-editor.cm-focused {

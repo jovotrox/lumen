@@ -179,13 +179,15 @@ function NotePage() {
 
   // Set the font
   React.useEffect(() => {
+    // Map "mono" to "monospace" to match CSS variable naming
+    const fontFamily = resolvedFont === "mono" ? "monospace" : resolvedFont
     document.documentElement.style.setProperty(
       "--font-family-content",
-      `var(--font-family-${resolvedFont})`,
+      `var(--font-family-${fontFamily})`,
     )
     document.documentElement.style.setProperty(
       "--font-family-mono",
-      `var(--font-family-${resolvedFont}-mono)`,
+      `var(--font-family-${fontFamily}-mono)`,
     )
   }, [resolvedFont])
 

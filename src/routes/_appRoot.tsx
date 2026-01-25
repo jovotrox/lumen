@@ -14,6 +14,7 @@ import {
   voiceConversationMachineAtom,
 } from "../components/voice-conversation"
 import {
+  defaultFontAtom,
   epaperAtom,
   globalStateMachineAtom,
   notesAtom,
@@ -237,6 +238,21 @@ function RouteComponent() {
   React.useEffect(() => {
     document.documentElement.toggleAttribute("data-epaper", epaper)
   }, [epaper])
+
+  // Apply font style
+  const defaultFont = useAtomValue(defaultFontAtom)
+  React.useEffect(() => {
+    // Map "mono" to "monospace" to match CSS variable naming
+    const fontFamily = defaultFont === "mono" ? "monospace" : defaultFont
+    document.documentElement.style.setProperty(
+      "--font-family-content",
+      `var(--font-family-${fontFamily})`,
+    )
+    document.documentElement.style.setProperty(
+      "--font-family-mono",
+      `var(--font-family-${fontFamily}-mono)`,
+    )
+  }, [defaultFont])
 
   // Apply overflow classes to parent elements
   React.useEffect(() => {
