@@ -53,6 +53,9 @@ export function NotePreview({ note, className, hideProperties }: NotePreviewProp
     return parsedFont || defaultFont
   }, [resolvedFrontmatter?.font, defaultFont])
 
+  // Map "mono" to "monospace" to match CSS variable naming
+  const fontFamily = resolvedFont === "mono" ? "monospace" : resolvedFont
+
   const frontmatterTags = useMemo(() => {
     return Array.isArray(resolvedFrontmatter?.tags) &&
       (resolvedFrontmatter.tags as unknown[]).every((tag) => typeof tag === "string")
@@ -131,8 +134,8 @@ export function NotePreview({ note, className, hideProperties }: NotePreviewProp
       )}
       style={
         {
-          "--font-family-content": `var(--font-family-${resolvedFont})`,
-          "--font-family-mono": `var(--font-family-${resolvedFont}-mono)`,
+          "--font-family-content": `var(--font-family-${fontFamily})`,
+          "--font-family-mono": `var(--font-family-${fontFamily}-mono)`,
         } as React.CSSProperties
       }
     >

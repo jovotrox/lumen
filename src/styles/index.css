@@ -10,7 +10,7 @@
 @import "tailwindcss";
 
 body {
-  @apply bg-bg font-sans text-base font-normal text-text print:bg-[white];
+  @apply bg-bg font-content text-base font-normal text-text print:bg-[white];
 }
 
 ::selection {

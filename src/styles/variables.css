@@ -97,13 +97,17 @@
   --color-syntax-purple: var(--purple-11);
   --color-syntax-green: var(--green-11);
 
-  /* Font families */
+  /* Font families - base definitions for each style */
   --font-family-sans: "iA Writer Quattro", system-ui, sans-serif;
   --font-family-sans-mono: "iA Writer Mono", monospace;
   --font-family-serif: "Literata Variable", Georgia, serif;
   --font-family-serif-mono: "Monaspace Xenon", monospace;
   --font-family-handwriting: "Shantell Sans Variable", system-ui, sans-serif;
   --font-family-handwriting-mono: "Monaspace Radon", monospace;
+  --font-family-monospace: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
+  --font-family-monospace-mono: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
+
+  /* Dynamic font variables - set via JS based on user preference */
   --font-family-content: var(--font-family-sans);
   --font-family-mono: var(--font-family-sans-mono);
 
