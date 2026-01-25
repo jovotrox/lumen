@@ -1,11 +1,19 @@
 import { useSetAtom } from "jotai"
 import urlcat from "urlcat"
 import { globalStateMachineAtom } from "../global-state"
+import { isTauri } from "../utils/tauri"
 import { Button, ButtonProps } from "./button"
+import { TauriSignInButton } from "./github-auth-tauri"
 import { GitHubIcon16 } from "./icons"
 
 export function SignInButton(props: ButtonProps) {
   const send = useSetAtom(globalStateMachineAtom)
+
+  // Use Device Flow for Tauri app
+  if (isTauri()) {
+    return <TauriSignInButton {...props} />
+  }
+
   return (
     <Button
       variant="primary"

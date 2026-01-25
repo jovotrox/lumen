@@ -2,18 +2,35 @@ import git from "isomorphic-git"
 import http from "isomorphic-git/http/web"
 import { GitHubRepository, GitHubUser } from "../schema"
 import { fs, fsWipe } from "./fs"
+import { createTauriHttpClient, isTauri } from "./tauri"
 import { startTimer } from "./timer"
 
 export const REPO_DIR = "/repo"
 const DEFAULT_BRANCH = "main"
 
+// Get the appropriate HTTP client and cors proxy based on environment
+function getHttpConfig() {
+  if (isTauri()) {
+    // In Tauri, use direct HTTP without CORS proxy
+    return {
+      http: createTauriHttpClient(),
+      corsProxy: undefined,
+    }
+  }
+  // In browser, use cors proxy
+  return {
+    http,
+    corsProxy: "/cors-proxy",
+  }
+}
+
 export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
+  const httpConfig = getHttpConfig()
   const options: Parameters<typeof git.clone>[0] = {
     fs,
-    http,
+    http: httpConfig.http,
     dir: REPO_DIR,
-    // corsProxy: "https://cors.isomorphic-git.org",
-    corsProxy: "/cors-proxy",
+    corsProxy: httpConfig.corsProxy,
     url: `https://github.com/${repo.owner}/${repo.name}`,
     ref: DEFAULT_BRANCH,
     singleBranch: true,
@@ -45,10 +62,12 @@ export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
 }
 
 export async function gitPull(user: GitHubUser) {
+  const httpConfig = getHttpConfig()
   const options: Parameters<typeof git.pull>[0] = {
     fs,
-    http,
+    http: httpConfig.http,
     dir: REPO_DIR,
+    corsProxy: httpConfig.corsProxy,
     singleBranch: true,
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
@@ -61,10 +80,12 @@ export async function gitPull(user: GitHubUser) {
 }
 
 export async function gitPush(user: GitHubUser) {
+  const httpConfig = getHttpConfig()
   const options: Parameters<typeof git.push>[0] = {
     fs,
-    http,
+    http: httpConfig.http,
     dir: REPO_DIR,
+    corsProxy: httpConfig.corsProxy,
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
     onAuth: () => ({ username: user.login, password: user.token }),

@@ -1,1 +1,1 @@
-{}
+{"default":{"identifier":"default","description":"Default capabilities for Lumen","local":true,"windows":["main"],"permissions":["core:default","shell:allow-open",{"identifier":"http:default","allow":[{"url":"https://github.com/**"},{"url":"https://api.github.com/**"}]}]}}

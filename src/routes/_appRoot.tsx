@@ -20,6 +20,7 @@ import {
   tagsAtom,
   templatesAtom,
 } from "../global-state"
+import { useExternalLinks } from "../hooks/use-external-links"
 import { useSearchNotes } from "../hooks/search-notes"
 import { useValueRef } from "../hooks/value-ref"
 import { generateNoteId } from "../utils/note-id"
@@ -40,6 +41,9 @@ export const Route = createFileRoute("/_appRoot")({
 const errorAtom = selectAtom(globalStateMachineAtom, (state) => state.context.error)
 
 function RouteComponent() {
+  // Open external links in system browser when running in Tauri
+  useExternalLinks()
+
   const error = useAtomValue(errorAtom)
   const send = useSetAtom(globalStateMachineAtom)
   const searchNotes = useSearchNotes()
