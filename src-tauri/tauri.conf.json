@@ -6,8 +6,8 @@
   "build": {
     "beforeDevCommand": "npm run dev -- --port 1420",
     "devUrl": "http://localhost:1420",
-    "beforeBuildCommand": "npm run build",
-    "frontendDist": "../dist"
+    "beforeBuildCommand": "",
+    "frontendDist": "https://jovotrox.github.io/lumen/"
   },
   "app": {
     "windows": [
@@ -18,7 +18,8 @@
         "minWidth": 800,
         "minHeight": 600,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "devtools": true
       }
     ],
     "security": {
