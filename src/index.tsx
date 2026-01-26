@@ -18,8 +18,11 @@ import ReactDOM from "react-dom/client"
 import { routeTree } from "./routeTree.gen"
 import "./styles/index.css"
 
+// Determine base path for GitHub Pages deployment
+const basepath = import.meta.env.BASE_URL === "/" ? undefined : import.meta.env.BASE_URL.replace(/\/$/, "")
+
 // Create a new router instance
-const router = createRouter({ routeTree, scrollRestoration: true })
+const router = createRouter({ routeTree, scrollRestoration: true, basepath })
 
 // Register the router instance for type safety
 declare module "@tanstack/react-router" {
