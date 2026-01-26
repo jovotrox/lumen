@@ -27,6 +27,8 @@ import { useSearchNotes } from "../hooks/search-notes"
 import { useValueRef } from "../hooks/value-ref"
 import { generateNoteId } from "../utils/note-id"
 import { notificationSound, playSound } from "../utils/sounds"
+import { isTauri } from "../utils/tauri"
+import { updateFrontmatterValue } from "../utils/frontmatter"
 
 export const Route = createFileRoute("/_appRoot")({
   component: RouteComponent,
@@ -69,6 +71,39 @@ function RouteComponent() {
   useEvent("online", () => {
     send("SYNC")
   })
+
+  // Listen for quick-note save events from the quick-note window (Tauri only)
+  React.useEffect(() => {
+    if (!isTauri()) return
+
+    let unlisten: (() => void) | undefined
+
+    const setupListener = async () => {
+      const { listen } = await import("@tauri-apps/api/event")
+      unlisten = await listen<{ noteId: string; content: string }>(
+        "quick-note-save",
+        (event) => {
+          const { noteId, content } = event.payload
+          // Add updated_at timestamp to the note
+          const contentWithTimestamp = updateFrontmatterValue({
+            content,
+            properties: { updated_at: new Date() },
+          })
+          // Save the note using the global state machine
+          send({
+            type: "WRITE_FILES",
+            markdownFiles: { [`${noteId}.md`]: contentWithTimestamp },
+          })
+        },
+      )
+    }
+
+    setupListener()
+
+    return () => {
+      unlisten?.()
+    }
+  }, [send])
 
   // Notify voice assistant when the route changes
   React.useEffect(() => {

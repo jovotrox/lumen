@@ -53,6 +53,7 @@
     "@radix-ui/react-tabs": "^1.0.3",
     "@replit/codemirror-vim": "^6.1.0",
     "@supabase/supabase-js": "^2.89.0",
+    "@tauri-apps/api": "^2.5.0",
     "@tauri-apps/plugin-http": "^2.5.6",
     "@tauri-apps/plugin-shell": "^2.3.4",
     "@uiw/codemirror-themes": "^4.22.0",
