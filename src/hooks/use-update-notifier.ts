@@ -48,7 +48,30 @@ export function useUpdateNotifier() {
 
   const dismiss = () => setUpdateAvailable(false)
 
-  const refresh = () => window.location.reload()
+  const refresh = async () => {
+    // Clear caches to ensure fresh assets are loaded
+    if ("caches" in window) {
+      try {
+        const cacheNames = await caches.keys()
+        await Promise.all(cacheNames.map((name) => caches.delete(name)))
+      } catch (error) {
+        console.debug("Could not clear caches:", error)
+      }
+    }
+
+    // Unregister service workers to prevent stale cache
+    if ("serviceWorker" in navigator) {
+      try {
+        const registrations = await navigator.serviceWorker.getRegistrations()
+        await Promise.all(registrations.map((reg) => reg.unregister()))
+      } catch (error) {
+        console.debug("Could not unregister service workers:", error)
+      }
+    }
+
+    // Force hard reload
+    window.location.reload()
+  }
 
   return { updateAvailable, newVersion, dismiss, refresh }
 }
