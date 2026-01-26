@@ -1,0 +1,59 @@
+name: Sync with Upstream
+
+on:
+  schedule:
+    # Run every day at 6:00 UTC
+    - cron: "0 6 * * *"
+  workflow_dispatch: # Allow manual trigger
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout personal branch
+        uses: actions/checkout@v4
+        with:
+          ref: personal
+          fetch-depth: 0
+
+      - name: Configure Git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/lumen-notes/lumen.git
+
+      - name: Fetch upstream
+        run: git fetch upstream main
+
+      - name: Check for upstream changes
+        id: check
+        run: |
+          BEHIND=$(git rev-list --count personal..upstream/main)
+          echo "behind=$BEHIND" >> $GITHUB_OUTPUT
+          if [ "$BEHIND" -gt 0 ]; then
+            echo "Found $BEHIND new commits from upstream"
+          else
+            echo "Already up to date with upstream"
+          fi
+
+      - name: Merge upstream changes
+        if: steps.check.outputs.behind > 0
+        run: |
+          git merge upstream/main --no-edit -m "chore: sync with upstream lumen-notes/lumen"
+
+      - name: Push changes
+        if: steps.check.outputs.behind > 0
+        run: git push origin personal
+
+      - name: Summary
+        run: |
+          if [ "${{ steps.check.outputs.behind }}" -gt 0 ]; then
+            echo "### ✅ Synced ${{ steps.check.outputs.behind }} commits from upstream" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "### ✅ Already up to date with upstream" >> $GITHUB_STEP_SUMMARY
+          fi

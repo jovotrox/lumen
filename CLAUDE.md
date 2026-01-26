@@ -158,6 +158,9 @@ feature/* ← Branches temporales para desarrollo
 | OAuth Device Flow | Login GitHub sin servidor | `src/components/github-auth-tauri.tsx` |
 | Links Externos | Abrir links en navegador sistema | `src/hooks/use-external-links.ts` |
 | HTTP sin CORS | Git operations en Tauri | `src/utils/tauri.ts`, `src/utils/git.ts` |
+| Quick Note | Global hotkey ⌥⇧N para notas rápidas | `src/routes/quick-note.tsx`, `src-tauri/src/lib.rs` |
+| System Tray | App se minimiza a tray en lugar de cerrar | `src-tauri/src/lib.rs` |
+| Auto-sync | GitHub Action sincroniza con upstream diariamente | `.github/workflows/sync-upstream.yml` |
 
 ### Flujo de Trabajo para Nuevas Features
 
@@ -190,31 +193,46 @@ npm run tauri:build
 cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ```
 
-### Actualizar con Upstream (Proyecto Original)
+### Sincronización con Upstream (Automatizada)
 
-**Ejecutar periódicamente para traer nuevos cambios:**
+El fork tiene un **GitHub Action** que sincroniza automáticamente con el proyecto original:
+
+- **Frecuencia:** Diariamente a las 6:00 UTC
+- **Workflow:** `.github/workflows/sync-upstream.yml`
+- **Trigger manual:** Actions → "Sync with Upstream" → Run workflow
+
+**Flujo automático:**
+1. El Action hace fetch de `upstream/main`
+2. Merge automático a `personal` branch
+3. Push a origin
+4. El workflow `deploy-pages.yml` se activa y despliega
+
+**Si el auto-merge falla (conflictos):**
+```bash
+git checkout personal
+git fetch upstream
+git merge upstream/main
+# Resolver conflictos manualmente
+git add .
+git commit -m "chore: resolve merge conflicts with upstream"
+git push origin personal
+```
+
+### Actualización Manual (Opcional)
+
+Si prefieres actualizar manualmente:
 
 ```bash
-# 1. Actualizar main con upstream
-git checkout main
+# 1. Fetch y merge upstream a personal
+git checkout personal
 git fetch upstream
 git merge upstream/main --no-edit
-git push origin main
-
-# 2. Traer cambios a personal (preserva features custom)
-git checkout personal
-git merge main --no-edit
 git push origin personal
 
-# 3. Compilar nueva versión con todo
+# 2. Compilar nueva versión
 npm run tauri:build
 cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ```
-
-**Si hay conflictos en el merge:**
-1. Resolver manualmente preservando código custom
-2. `git add .` y `git commit`
-3. Continuar con el flujo
 
 ### Reglas para Claude
 
