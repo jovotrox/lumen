@@ -97,7 +97,8 @@ fn create_quick_note_window(app: &tauri::AppHandle) {
     }
 
     // Create new quick-note window
-    let _ = WebviewWindowBuilder::new(app, "quick-note", WebviewUrl::App("/quick-note".into()))
+    // Note: path without leading "/" to be relative to frontendDist base path
+    let _ = WebviewWindowBuilder::new(app, "quick-note", WebviewUrl::App("quick-note".into()))
         .title("Quick Note")
         .inner_size(400.0, 300.0)
         .center()

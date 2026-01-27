@@ -98,14 +98,14 @@
   --color-syntax-green: var(--green-11);
 
   /* Font families - base definitions for each style */
-  --font-family-sans: "iA Writer Quattro", system-ui, sans-serif;
-  --font-family-sans-mono: "iA Writer Mono", monospace;
+  --font-family-sans: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --font-family-sans-mono: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
   --font-family-serif: "Literata Variable", Georgia, serif;
   --font-family-serif-mono: "Monaspace Xenon", monospace;
   --font-family-handwriting: "Shantell Sans Variable", system-ui, sans-serif;
   --font-family-handwriting-mono: "Monaspace Radon", monospace;
-  --font-family-monospace: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
-  --font-family-monospace-mono: ui-monospace, "SF Mono", Menlo, Monaco, "Cascadia Mono", monospace;
+  --font-family-monospace: "iA Writer Quattro", system-ui, sans-serif;
+  --font-family-monospace-mono: "iA Writer Mono", monospace;
 
   /* Dynamic font variables - set via JS based on user preference */
   --font-family-content: var(--font-family-sans);
