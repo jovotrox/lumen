@@ -9,6 +9,11 @@ import { isTrackedWithGitLfs, resolveGitLfsPointer } from "./git-lfs"
 import { stripWikilinks } from "./strip-wikilinks"
 import { transformUploadUrls } from "./transform-upload-urls"
 
+// Get the API base URL for web (Vercel deployment)
+function getApiBaseUrl(): string {
+  return import.meta.env.VITE_API_BASE_URL || ""
+}
+
 export async function createGist({ note, githubUser }: { note: Note; githubUser: GitHubUser }) {
   const filename = `${note.id}.md`
 
@@ -62,7 +67,7 @@ export async function updateGist({
       fs: gistFs,
       http,
       dir: gistDir,
-      corsProxy: "/cors-proxy",
+      corsProxy: `${getApiBaseUrl()}/cors-proxy`,
       url: `https://gist.github.com/${gistId}.git`,
       singleBranch: true,
       depth: 1,
@@ -101,7 +106,7 @@ export async function updateGist({
         })
 
         // Fetch the binary file content
-        const response = await fetch(`/file-proxy?url=${encodeURIComponent(fileUrl)}`)
+        const response = await fetch(`${getApiBaseUrl()}/file-proxy?url=${encodeURIComponent(fileUrl)}`)
         if (!response.ok) {
           throw new Error(`Failed to fetch LFS file: ${response.statusText}`)
         }

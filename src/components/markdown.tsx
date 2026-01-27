@@ -60,6 +60,11 @@ import { TagLink } from "./tag-link"
 import { Tooltip } from "./tooltip"
 import { WebsiteFavicon } from "./website-favicon"
 
+// Get the API base URL for web (Vercel deployment)
+function getApiBaseUrl(): string {
+  return import.meta.env.VITE_API_BASE_URL || ""
+}
+
 export type MarkdownProps = {
   children: string
   className?: string
@@ -489,7 +494,7 @@ function Image(props: React.ComponentPropsWithoutRef<"img">) {
 
   // Proxy external images
   if (props.src?.startsWith("http")) {
-    const proxyUrl = `/file-proxy?url=${encodeURIComponent(props.src)}`
+    const proxyUrl = `${getApiBaseUrl()}/file-proxy?url=${encodeURIComponent(props.src)}`
     return (
       <a href={props.src} target="_blank" rel="noopener noreferrer">
         {/* eslint-disable-next-line jsx-a11y/alt-text */}

@@ -8,6 +8,14 @@ import { startTimer } from "./timer"
 export const REPO_DIR = "/repo"
 const DEFAULT_BRANCH = "main"
 
+// Get the API base URL for web (Vercel deployment)
+// In Tauri, we don't need this as we bypass CORS
+// In local dev with Vercel, relative paths work
+// In GitHub Pages, we need the full Vercel URL
+function getApiBaseUrl(): string {
+  return import.meta.env.VITE_API_BASE_URL || ""
+}
+
 // Get the appropriate HTTP client and cors proxy based on environment
 function getHttpConfig() {
   if (isTauri()) {
@@ -20,7 +28,7 @@ function getHttpConfig() {
   // In browser, use cors proxy
   return {
     http,
-    corsProxy: "/cors-proxy",
+    corsProxy: `${getApiBaseUrl()}/cors-proxy`,
   }
 }
 

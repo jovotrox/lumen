@@ -113,8 +113,15 @@ upstream/main ──────┐
 ## Credenciales y Configuración
 
 - **GitHub OAuth App ID:** `Ov23liTryXqk6yLSWeYW`
-- **Callback URL:** `https://jovotrox.github.io/lumen/`
+- **OAuth Callback URL:** `https://lumen-wheat-chi.vercel.app/github-auth`
+- **Vercel API URL:** `https://lumen-wheat-chi.vercel.app`
 - **`.env.local`:** Contiene `VITE_GITHUB_CLIENT_ID` (no modificar)
+
+### GitHub Actions Secrets (repo settings)
+| Secret | Valor |
+|--------|-------|
+| `VITE_GITHUB_CLIENT_ID` | `Ov23liTryXqk6yLSWeYW` |
+| `VITE_API_BASE_URL` | `https://lumen-wheat-chi.vercel.app` |
 
 ---
 
@@ -166,6 +173,7 @@ git push origin personal
 ## Historial de Cambios Importantes
 
 ### 2026-01-26
+- **OAuth para GitHub Pages**: Vercel deployment para OAuth callback y CORS proxy
 - Habilitado DevTools en release builds
 - Implementado frontend remoto desde GitHub Pages
 - Añadido cache clearing en update refresh
