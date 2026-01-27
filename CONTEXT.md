@@ -186,7 +186,10 @@ git push origin personal
 
 ### 2026-01-26
 
-- **OAuth para GitHub Pages**: Vercel deployment para OAuth callback y CORS proxy
+- **Web OAuth completo**: GitHub Pages + Vercel API funcionando
+  - OAuth callback en Vercel (`/github-auth`)
+  - CORS proxy con headers para cross-origin (`/cors-proxy`)
+  - Vercel despliega desde branch `personal`
 - Habilitado DevTools en release builds
 - Implementado frontend remoto desde GitHub Pages
 - Añadido cache clearing en update refresh
