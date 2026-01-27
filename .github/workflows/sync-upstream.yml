@@ -13,10 +13,10 @@ jobs:
       contents: write
 
     steps:
-      - name: Checkout personal branch
+      - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          ref: personal
+          ref: main
           fetch-depth: 0
 
       - name: Configure Git
@@ -27,13 +27,15 @@ jobs:
       - name: Add upstream remote
         run: git remote add upstream https://github.com/lumen-notes/lumen.git
 
-      - name: Fetch upstream
-        run: git fetch upstream main
+      - name: Fetch all
+        run: |
+          git fetch upstream main
+          git fetch origin personal
 
       - name: Check for upstream changes
         id: check
         run: |
-          BEHIND=$(git rev-list --count personal..upstream/main)
+          BEHIND=$(git rev-list --count main..upstream/main)
           echo "behind=$BEHIND" >> $GITHUB_OUTPUT
           if [ "$BEHIND" -gt 0 ]; then
             echo "Found $BEHIND new commits from upstream"
@@ -41,19 +43,25 @@ jobs:
             echo "Already up to date with upstream"
           fi
 
-      - name: Merge upstream changes
+      - name: Sync main branch with upstream
         if: steps.check.outputs.behind > 0
         run: |
-          git merge upstream/main --no-edit -m "chore: sync with upstream lumen-notes/lumen"
+          git merge upstream/main --ff-only
+          git push origin main
 
-      - name: Push changes
+      - name: Merge upstream into personal
         if: steps.check.outputs.behind > 0
-        run: git push origin personal
+        run: |
+          git checkout personal
+          git merge upstream/main --no-edit -m "chore: sync with upstream lumen-notes/lumen"
+          git push origin personal
 
       - name: Summary
         run: |
           if [ "${{ steps.check.outputs.behind }}" -gt 0 ]; then
             echo "### ✅ Synced ${{ steps.check.outputs.behind }} commits from upstream" >> $GITHUB_STEP_SUMMARY
+            echo "- Updated main branch (fast-forward)" >> $GITHUB_STEP_SUMMARY
+            echo "- Merged into personal branch" >> $GITHUB_STEP_SUMMARY
           else
             echo "### ✅ Already up to date with upstream" >> $GITHUB_STEP_SUMMARY
           fi
