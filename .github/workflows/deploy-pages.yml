@@ -5,6 +5,7 @@ on:
     branches: [personal]
     paths-ignore:
       - "src-tauri/**" # No deploy si solo cambia Tauri
+  workflow_dispatch: # Permite trigger manual desde GitHub Actions UI
 
 # Allow only one concurrent deployment
 concurrency:
