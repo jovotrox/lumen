@@ -1,5 +1,16 @@
 // Reference: https://github.com/isomorphic-git/cors-proxy
 
+// CORS headers for cross-origin requests (GitHub Pages → Vercel API)
+function addCorsHeaders(headers: Headers, request: Request): Headers {
+  const origin = request.headers.get("origin") || "*"
+  headers.set("Access-Control-Allow-Origin", origin)
+  headers.set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS, HEAD")
+  headers.set("Access-Control-Allow-Headers", ALLOW_HEADERS.join(", "))
+  headers.set("Access-Control-Expose-Headers", EXPOSE_HEADERS.join(", "))
+  headers.set("Access-Control-Max-Age", "86400")
+  return headers
+}
+
 const ALLOW_HEADERS = [
   "accept-encoding",
   "accept-language",
@@ -42,12 +53,21 @@ const EXPOSE_HEADERS = [
 ]
 
 async function handler(request: Request): Promise<Response> {
+  // Handle CORS preflight requests
+  if (request.method === "OPTIONS") {
+    const headers = new Headers()
+    addCorsHeaders(headers, request)
+    return new Response(null, { status: 204, headers })
+  }
+
   try {
     const url = getRequestUrl(request)
     const path = url.searchParams.get("path")
 
     if (!path) {
-      return new Response("Missing 'path' query parameter", { status: 400 })
+      const headers = new Headers()
+      addCorsHeaders(headers, request)
+      return new Response("Missing 'path' query parameter", { status: 400, headers })
     }
 
     const targetUrl = new URL(`https://${path}`)
@@ -86,6 +106,9 @@ async function handler(request: Request): Promise<Response> {
       }
     }
 
+    // Add CORS headers to the response
+    addCorsHeaders(responseHeaders, request)
+
     return new Response(response.body, {
       status: response.status,
       statusText: response.statusText,
@@ -94,7 +117,9 @@ async function handler(request: Request): Promise<Response> {
   } catch (error) {
     console.error(error)
     const message = error instanceof Error ? error.message : "Unknown error"
-    return new Response(`Error: ${message}`, { status: 500 })
+    const headers = new Headers()
+    addCorsHeaders(headers, request)
+    return new Response(`Error: ${message}`, { status: 500, headers })
   }
 }
 
