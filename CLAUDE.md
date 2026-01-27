@@ -145,28 +145,30 @@ feature/* ← Branches temporales para desarrollo
 ```
 
 **IMPORTANTE:** La rama `personal` es la rama de compilación. Contiene:
+
 - Todos los cambios del upstream (proyecto original)
 - Todas las features custom (font-style, OAuth Device Flow, links externos, etc.)
 - Código Tauri para desktop
 
 ### Features Custom Implementadas
 
-| Feature | Descripción | Archivos Principales |
-|---------|-------------|---------------------|
-| Tauri Desktop | Wrapper nativo macOS | `src-tauri/*` |
-| Font Style | Setting para cambiar tipografía | `src/routes/_appRoot.settings.tsx` |
-| OAuth Device Flow | Login GitHub sin servidor | `src/components/github-auth-tauri.tsx` |
-| Links Externos | Abrir links en navegador sistema | `src/hooks/use-external-links.ts` |
-| HTTP sin CORS | Git operations en Tauri | `src/utils/tauri.ts`, `src/utils/git.ts` |
-| Quick Note | Global hotkey ⌥⇧N para notas rápidas | `src/routes/quick-note.tsx`, `src-tauri/src/lib.rs` |
-| System Tray | App se minimiza a tray en lugar de cerrar | `src-tauri/src/lib.rs` |
-| Auto-sync | GitHub Action sincroniza con upstream diariamente | `.github/workflows/sync-upstream.yml` |
+| Feature           | Descripción                                       | Archivos Principales                                |
+| ----------------- | ------------------------------------------------- | --------------------------------------------------- |
+| Tauri Desktop     | Wrapper nativo macOS                              | `src-tauri/*`                                       |
+| Font Style        | Setting para cambiar tipografía                   | `src/routes/_appRoot.settings.tsx`                  |
+| OAuth Device Flow | Login GitHub sin servidor                         | `src/components/github-auth-tauri.tsx`              |
+| Links Externos    | Abrir links en navegador sistema                  | `src/hooks/use-external-links.ts`                   |
+| HTTP sin CORS     | Git operations en Tauri                           | `src/utils/tauri.ts`, `src/utils/git.ts`            |
+| Quick Note        | Global hotkey ⌥⇧N para notas rápidas              | `src/routes/quick-note.tsx`, `src-tauri/src/lib.rs` |
+| System Tray       | App se minimiza a tray en lugar de cerrar         | `src-tauri/src/lib.rs`                              |
+| Auto-sync         | GitHub Action sincroniza con upstream diariamente | `.github/workflows/sync-upstream.yml`               |
 
 ### Flujo de Trabajo para Nuevas Features
 
 **IMPORTANTE: Seguir siempre este flujo**
 
 #### 1. Crear branch desde personal
+
 ```bash
 git checkout personal
 git pull origin personal
@@ -174,11 +176,13 @@ git checkout -b feature/nombre-feature
 ```
 
 #### 2. Desarrollar
+
 - Analizar código existente antes de modificar
 - Proponer approach y validar con el usuario antes de implementar
 - Probar con `npm run tauri:dev`
 
 #### 3. Commit y merge a personal
+
 ```bash
 git add .
 git commit -m "feat: descripción"
@@ -188,6 +192,7 @@ git push origin personal
 ```
 
 #### 4. Compilar e instalar
+
 ```bash
 npm run tauri:build
 cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
@@ -202,12 +207,14 @@ El fork tiene un **GitHub Action** que sincroniza automáticamente con el proyec
 - **Trigger manual:** Actions → "Sync with Upstream" → Run workflow
 
 **Flujo automático:**
+
 1. El Action hace fetch de `upstream/main`
 2. Merge automático a `personal` branch
 3. Push a origin
 4. El workflow `deploy-pages.yml` se activa y despliega
 
 **Si el auto-merge falla (conflictos):**
+
 ```bash
 git checkout personal
 git fetch upstream
@@ -255,6 +262,7 @@ El archivo `CONTEXT.md` contiene el contexto actual del proyecto para mantener c
 ### Cuándo Actualizar
 
 Actualizar `CONTEXT.md` después de:
+
 - Completar una feature nueva
 - Cambios en la arquitectura o configuración
 - Resolver problemas importantes

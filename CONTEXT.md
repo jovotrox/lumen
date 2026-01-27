@@ -9,6 +9,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ## Estado Actual del Proyecto
 
 ### Branch Activo
+
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
 - **Último commit:** `8e39bbe` - feat: enable devtools in release builds
@@ -35,6 +36,7 @@ La app Tauri carga el frontend desde GitHub Pages en lugar de archivos embebidos
 **Beneficio:** Los cambios en el frontend se aplican automáticamente sin necesidad de rebuild de la app.
 
 **Cuándo SÍ se necesita rebuild:**
+
 - Cambios en código Rust (`src-tauri/`)
 - Cambios en `Cargo.toml` o `tauri.conf.json`
 - Nuevas features nativas (shortcuts, tray, etc.)
@@ -42,29 +44,33 @@ La app Tauri carga el frontend desde GitHub Pages en lugar de archivos embebidos
 ### Configuraciones Clave
 
 #### `src-tauri/tauri.conf.json`
+
 ```json
 {
   "build": {
     "frontendDist": "https://jovotrox.github.io/lumen/"
   },
   "app": {
-    "windows": [{
-      "devtools": true
-    }]
+    "windows": [
+      {
+        "devtools": true
+      }
+    ]
   }
 }
 ```
 
 #### `src-tauri/Cargo.toml`
+
 ```toml
 tauri = { version = "2", features = ["tray-icon", "devtools"] }
 ```
 
 #### `src/index.tsx` - Basepath para GitHub Pages
+
 ```typescript
-const basepath = import.meta.env.BASE_URL === "/"
-  ? undefined
-  : import.meta.env.BASE_URL.replace(/\/$/, "")
+const basepath =
+  import.meta.env.BASE_URL === "/" ? undefined : import.meta.env.BASE_URL.replace(/\/$/, "")
 ```
 
 ---
@@ -94,19 +100,19 @@ upstream/main ──────┐
 
 ## Archivos Modificados (vs upstream)
 
-| Archivo | Tipo de Cambio | Propósito |
-|---------|----------------|-----------|
-| `src-tauri/*` | Nuevo | Wrapper Tauri completo |
-| `src/index.tsx` | Modificado | Basepath para GitHub Pages |
-| `src/hooks/use-update-notifier.ts` | Modificado | Cache clearing en refresh |
-| `src/routes/quick-note.tsx` | Nuevo | Ventana de nota rápida |
-| `src/components/github-auth-tauri.tsx` | Nuevo | OAuth Device Flow |
-| `src/hooks/use-external-links.ts` | Nuevo | Links en navegador sistema |
-| `src/utils/tauri.ts` | Nuevo | Utilidades Tauri |
-| `.github/workflows/sync-upstream.yml` | Nuevo | Auto-sync con upstream |
-| `.github/workflows/deploy-pages.yml` | Nuevo | Deploy a GitHub Pages |
-| `index.html` | Modificado | SPA redirect handler |
-| `404.html` | Nuevo | GitHub Pages SPA fallback |
+| Archivo                                | Tipo de Cambio | Propósito                  |
+| -------------------------------------- | -------------- | -------------------------- |
+| `src-tauri/*`                          | Nuevo          | Wrapper Tauri completo     |
+| `src/index.tsx`                        | Modificado     | Basepath para GitHub Pages |
+| `src/hooks/use-update-notifier.ts`     | Modificado     | Cache clearing en refresh  |
+| `src/routes/quick-note.tsx`            | Nuevo          | Ventana de nota rápida     |
+| `src/components/github-auth-tauri.tsx` | Nuevo          | OAuth Device Flow          |
+| `src/hooks/use-external-links.ts`      | Nuevo          | Links en navegador sistema |
+| `src/utils/tauri.ts`                   | Nuevo          | Utilidades Tauri           |
+| `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream     |
+| `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages      |
+| `index.html`                           | Modificado     | SPA redirect handler       |
+| `404.html`                             | Nuevo          | GitHub Pages SPA fallback  |
 
 ---
 
@@ -118,10 +124,11 @@ upstream/main ──────┐
 - **`.env.local`:** Contiene `VITE_GITHUB_CLIENT_ID` (no modificar)
 
 ### GitHub Actions Secrets (repo settings)
-| Secret | Valor |
-|--------|-------|
-| `VITE_GITHUB_CLIENT_ID` | `Ov23liTryXqk6yLSWeYW` |
-| `VITE_API_BASE_URL` | `https://lumen-wheat-chi.vercel.app` |
+
+| Secret                  | Valor                                |
+| ----------------------- | ------------------------------------ |
+| `VITE_GITHUB_CLIENT_ID` | `Ov23liTryXqk6yLSWeYW`               |
+| `VITE_API_BASE_URL`     | `https://lumen-wheat-chi.vercel.app` |
 
 ---
 
@@ -149,16 +156,21 @@ git push origin personal
 ## Problemas Conocidos y Soluciones
 
 ### Caché de WebKit
+
 Si la app no muestra cambios recientes:
+
 1. Usar el botón "Refresh" cuando aparece notificación de update
 2. O limpiar manualmente: `rm -rf ~/Library/WebKit/com.lumen.notes ~/Library/Caches/com.lumen.notes`
 
 ### DevTools en Release Build
+
 Para abrir DevTools: `Cmd + Option + I` o click derecho → Inspect Element
 (Requiere `devtools` feature en Cargo.toml)
 
 ### Conflictos en Auto-sync
+
 Si el GitHub Action falla por conflictos:
+
 ```bash
 git checkout personal
 git fetch upstream
@@ -173,6 +185,7 @@ git push origin personal
 ## Historial de Cambios Importantes
 
 ### 2026-01-26
+
 - **OAuth para GitHub Pages**: Vercel deployment para OAuth callback y CORS proxy
 - Habilitado DevTools en release builds
 - Implementado frontend remoto desde GitHub Pages
@@ -180,6 +193,7 @@ git push origin personal
 - Configurado basepath para TanStack Router
 
 ### Anteriores
+
 - Quick Note con global hotkey (⌥⇧N)
 - System Tray (app se minimiza en lugar de cerrar)
 - Auto-sync workflow con upstream

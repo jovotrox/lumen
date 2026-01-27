@@ -80,22 +80,19 @@ function RouteComponent() {
 
     const setupListener = async () => {
       const { listen } = await import("@tauri-apps/api/event")
-      unlisten = await listen<{ noteId: string; content: string }>(
-        "quick-note-save",
-        (event) => {
-          const { noteId, content } = event.payload
-          // Add updated_at timestamp to the note
-          const contentWithTimestamp = updateFrontmatterValue({
-            content,
-            properties: { updated_at: new Date() },
-          })
-          // Save the note using the global state machine
-          send({
-            type: "WRITE_FILES",
-            markdownFiles: { [`${noteId}.md`]: contentWithTimestamp },
-          })
-        },
-      )
+      unlisten = await listen<{ noteId: string; content: string }>("quick-note-save", (event) => {
+        const { noteId, content } = event.payload
+        // Add updated_at timestamp to the note
+        const contentWithTimestamp = updateFrontmatterValue({
+          content,
+          properties: { updated_at: new Date() },
+        })
+        // Save the note using the global state machine
+        send({
+          type: "WRITE_FILES",
+          markdownFiles: { [`${noteId}.md`]: contentWithTimestamp },
+        })
+      })
     }
 
     setupListener()

@@ -106,7 +106,9 @@ export async function updateGist({
         })
 
         // Fetch the binary file content
-        const response = await fetch(`${getApiBaseUrl()}/file-proxy?url=${encodeURIComponent(fileUrl)}`)
+        const response = await fetch(
+          `${getApiBaseUrl()}/file-proxy?url=${encodeURIComponent(fileUrl)}`,
+        )
         if (!response.ok) {
           throw new Error(`Failed to fetch LFS file: ${response.statusText}`)
         }

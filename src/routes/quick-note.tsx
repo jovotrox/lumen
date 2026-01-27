@@ -138,12 +138,7 @@ function QuickNoteComponent() {
               Saved
             </span>
           )}
-          <Button
-            variant="primary"
-            size="small"
-            onClick={handleSave}
-            disabled={!content.trim()}
-          >
+          <Button variant="primary" size="small" onClick={handleSave} disabled={!content.trim()}>
             Save
           </Button>
         </div>
@@ -155,6 +150,7 @@ function QuickNoteComponent() {
           ref={editorRef}
           defaultValue={content}
           placeholder="Start typing..."
+          // eslint-disable-next-line jsx-a11y/no-autofocus -- Quick note window should focus immediately
           autoFocus
           onChange={handleChange}
           minHeight={200}
