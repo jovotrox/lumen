@@ -244,3 +244,31 @@ cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 6. **Mantener compatibilidad** con upstream para facilitar merges futuros
 7. **No modificar .env.local** - contiene el GitHub OAuth Client ID del usuario
 8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features
+9. **Actualizar CONTEXT.md** después de cambios importantes (ver sección abajo)
+
+---
+
+## Mantenimiento de CONTEXT.md
+
+El archivo `CONTEXT.md` contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
+
+### Cuándo Actualizar
+
+Actualizar `CONTEXT.md` después de:
+- Completar una feature nueva
+- Cambios en la arquitectura o configuración
+- Resolver problemas importantes
+- Cambios en el flujo de trabajo o sincronización
+- Nuevas credenciales o configuraciones
+
+### Qué Incluir
+
+- Estado actual del branch y último commit relevante
+- Archivos modificados respecto al upstream
+- Configuraciones clave
+- Problemas conocidos y soluciones
+- Historial de cambios importantes con fecha
+
+### Formato
+
+Mantener las secciones existentes y agregar al historial de cambios con la fecha actual.
