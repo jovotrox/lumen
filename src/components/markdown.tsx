@@ -18,7 +18,6 @@ import {
   canMoveListItemDown,
   moveListItemUp,
   moveListItemDown,
-  moveListItemToEnd,
 } from "../utils/reorder-list-item"
 import { remarkEmbed } from "../remark-plugins/embed"
 import { remarkPriority } from "../remark-plugins/priority"
@@ -787,26 +786,10 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
                 if (!node.position) return
 
                 // Update the corresponding checkbox in the markdownBody string
-                let newValue =
+                const newValue =
                   markdownBody.slice(0, node.position.start.offset) +
                   (newChecked ? "- [x]" : "- [ ]") +
                   markdownBody.slice((node.position.start.offset ?? 0) + 5)
-
-                // If completing the task, move it to the end of the list group
-                if (
-                  newChecked &&
-                  node.position.start.offset != null &&
-                  node.position.end.offset != null
-                ) {
-                  const movedValue = moveListItemToEnd(
-                    newValue,
-                    node.position.start.offset,
-                    node.position.end.offset,
-                  )
-                  if (movedValue !== null) {
-                    newValue = movedValue
-                  }
-                }
 
                 onChange?.(newValue)
               }}
