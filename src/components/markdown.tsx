@@ -44,9 +44,11 @@ import {
   ArrowDownIcon16,
   ArrowUpIcon16,
   CalendarDateIcon16,
+  CircleSlashIcon16,
   CopyIcon16,
   CutIcon16,
   ErrorIcon16,
+  FlagFillIcon16,
   MoreIcon16,
   TrashIcon16,
 } from "./icons"
@@ -676,6 +678,53 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
     onChange?.(markdownBody.slice(0, start) + markdownBody.slice(endWithNewline))
   }, [markdownBody, node.position, onChange])
 
+  // Get current priority from the task text
+  const currentPriority = React.useMemo((): 1 | 2 | 3 | null => {
+    const taskLine = getTaskLine()
+    const match = taskLine.match(/!!([123])/)
+    return match ? (parseInt(match[1], 10) as 1 | 2 | 3) : null
+  }, [getTaskLine])
+
+  // Change task priority
+  const setPriority = React.useCallback(
+    (priority: 1 | 2 | 3 | null) => {
+      if (!node.position) return
+      if (priority === currentPriority) return
+
+      const taskStart = node.position.start.offset ?? 0
+      // Find end of current line
+      let lineEnd = taskStart
+      while (lineEnd < markdownBody.length && markdownBody[lineEnd] !== "\n") {
+        lineEnd++
+      }
+      const taskLine = markdownBody.slice(taskStart, lineEnd)
+
+      let newTaskLine: string
+      if (currentPriority) {
+        // Replace or remove existing priority
+        if (priority) {
+          newTaskLine = taskLine.replace(`!!${currentPriority}`, `!!${priority}`)
+        } else {
+          // Remove priority with surrounding whitespace cleanup
+          newTaskLine = taskLine
+            .replace(new RegExp(`(^|\\s)!!${currentPriority}(\\s|$)`), " ")
+            .replace(/\s+/g, " ")
+            .trim()
+          // Re-add the checkbox prefix if it was trimmed
+          if (!newTaskLine.startsWith("- [")) {
+            newTaskLine = taskLine.slice(0, 5) + " " + newTaskLine
+          }
+        }
+      } else {
+        // Add new priority after the checkbox
+        newTaskLine = taskLine.slice(0, 5) + ` !!${priority}` + taskLine.slice(5)
+      }
+
+      onChange?.(markdownBody.slice(0, taskStart) + newTaskLine + markdownBody.slice(lineEnd))
+    },
+    [markdownBody, node.position, onChange, currentPriority],
+  )
+
   const nodeStart = node.position?.start.offset
   const nodeEnd = node.position?.end.offset
   const hasNodePosition = nodeStart != null && nodeEnd != null
@@ -820,6 +869,38 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
                     <DropdownMenu.Separator />
                   </>
                 ) : null}
+                <DropdownMenu.Group>
+                  <DropdownMenu.GroupLabel>Priority</DropdownMenu.GroupLabel>
+                  <DropdownMenu.Item
+                    icon={<FlagFillIcon16 className="text-[var(--red-9)] epaper:text-text" />}
+                    selected={currentPriority === 1}
+                    onClick={() => setPriority(1)}
+                  >
+                    High
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    icon={<FlagFillIcon16 className="text-[var(--orange-9)] epaper:text-text" />}
+                    selected={currentPriority === 2}
+                    onClick={() => setPriority(2)}
+                  >
+                    Medium
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    icon={<FlagFillIcon16 className="text-[var(--blue-9)] epaper:text-text" />}
+                    selected={currentPriority === 3}
+                    onClick={() => setPriority(3)}
+                  >
+                    Low
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Item
+                    icon={<CircleSlashIcon16 />}
+                    selected={currentPriority === null}
+                    onClick={() => setPriority(null)}
+                  >
+                    No priority
+                  </DropdownMenu.Item>
+                </DropdownMenu.Group>
+                <DropdownMenu.Separator />
                 <DropdownMenu.Item
                   icon={<CopyIcon16 />}
                   onClick={() => navigator.clipboard.writeText(getTaskLine())}
