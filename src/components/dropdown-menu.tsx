@@ -25,7 +25,13 @@ function Content({
 }: ContentProps) {
   return (
     <Menu.Portal>
-      <Menu.Positioner side={side} sideOffset={sideOffset} align={align} alignOffset={alignOffset}>
+      <Menu.Positioner
+        side={side}
+        sideOffset={sideOffset}
+        align={align}
+        alignOffset={alignOffset}
+        collisionPadding={8}
+      >
         <Menu.Popup
           className={cx(
             "card-2 z-20 grid place-items-stretch overflow-hidden rounded-lg print:hidden outline-hidden",
@@ -34,7 +40,9 @@ function Content({
           )}
           style={{ width }}
         >
-          <div className="grid max-h-[60svh] scroll-py-1 overflow-auto p-1">{children}</div>
+          <div className="grid max-h-[min(60svh,var(--available-height,60svh))] scroll-py-1 overflow-auto p-1">
+            {children}
+          </div>
         </Menu.Popup>
       </Menu.Positioner>
     </Menu.Portal>
