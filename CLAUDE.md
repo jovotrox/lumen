@@ -179,24 +179,50 @@ git checkout -b feature/nombre-feature
 
 - Analizar código existente antes de modificar
 - Proponer approach y validar con el usuario antes de implementar
-- Probar con `npm run tauri:dev`
 
-#### 3. Commit y merge a personal
+#### 3. Probar antes de commit
 
 ```bash
-git add .
+npm run build          # Verificar que compila sin errores
+npm run format         # Formatear código
+npm run lint           # Verificar linting
+```
+
+- Iniciar dev server para que el usuario pruebe: `npm run dev`
+- Esperar confirmación del usuario de que funciona correctamente
+
+#### 4. Commit y merge a personal
+
+```bash
+git add <archivos-específicos>
 git commit -m "feat: descripción"
 git checkout personal
 git merge feature/nombre-feature --no-edit
+```
+
+#### 5. Confirmar y push
+
+- **SIEMPRE pedir confirmación al usuario antes de push**
+- Mostrar resumen de cambios (archivos modificados, descripción)
+
+```bash
 git push origin personal
 ```
 
-#### 4. Compilar e instalar
+#### 6. Compilar Tauri (si aplica)
+
+Solo si los cambios requieren recompilación de la app nativa (cambios que no llegan via web refresh):
+
+- Cambios en `src-tauri/*`
+- Cambios en configuración de Tauri
+- Nuevas dependencias nativas
 
 ```bash
 npm run tauri:build
 cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ```
+
+**Nota:** Cambios en React/TypeScript/CSS se reciben automáticamente via GitHub Pages (web) o hot reload (dev).
 
 ### Sincronización con Upstream (Automatizada)
 
