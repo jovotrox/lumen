@@ -21,6 +21,7 @@ import {
   SettingsIcon16,
   TagFillIcon16,
   TagIcon16,
+  TaskListIcon16,
 } from "./icons"
 import { NoteFavicon } from "./note-favicon"
 import { SyncStatusIcon, useSyncStatusText } from "./sync-status"
@@ -104,6 +105,16 @@ export function NavItems({
                 onNavigate={onNavigate}
               >
                 Calendar
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/tasks"
+                search={{ query: undefined, view: "grid" }}
+                icon={<TaskListIcon16 />}
+                onNavigate={onNavigate}
+              >
+                Tasks
               </NavLink>
             </li>
             <li>

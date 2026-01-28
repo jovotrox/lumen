@@ -15,6 +15,7 @@ import { Route as QuickNoteImport } from "./routes/quick-note"
 import { Route as AppRootImport } from "./routes/_appRoot"
 import { Route as AppRootIndexImport } from "./routes/_appRoot.index"
 import { Route as ShareGistIdImport } from "./routes/share.$gistId"
+import { Route as AppRootTasksImport } from "./routes/_appRoot.tasks"
 import { Route as AppRootSettingsImport } from "./routes/_appRoot.settings"
 import { Route as AppRootFileImport } from "./routes/_appRoot.file"
 import { Route as AppRootChatImport } from "./routes/_appRoot.chat"
@@ -46,6 +47,12 @@ const ShareGistIdRoute = ShareGistIdImport.update({
   id: "/share/$gistId",
   path: "/share/$gistId",
   getParentRoute: () => rootRoute,
+} as any)
+
+const AppRootTasksRoute = AppRootTasksImport.update({
+  id: "/tasks",
+  path: "/tasks",
+  getParentRoute: () => AppRootRoute,
 } as any)
 
 const AppRootSettingsRoute = AppRootSettingsImport.update({
@@ -129,6 +136,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppRootSettingsImport
       parentRoute: typeof AppRootImport
     }
+    "/_appRoot/tasks": {
+      id: "/_appRoot/tasks"
+      path: "/tasks"
+      fullPath: "/tasks"
+      preLoaderRoute: typeof AppRootTasksImport
+      parentRoute: typeof AppRootImport
+    }
     "/share/$gistId": {
       id: "/share/$gistId"
       path: "/share/$gistId"
@@ -180,6 +194,7 @@ interface AppRootRouteChildren {
   AppRootChatRoute: typeof AppRootChatRoute
   AppRootFileRoute: typeof AppRootFileRoute
   AppRootSettingsRoute: typeof AppRootSettingsRoute
+  AppRootTasksRoute: typeof AppRootTasksRoute
   AppRootIndexRoute: typeof AppRootIndexRoute
   AppRootNotesSplatRoute: typeof AppRootNotesSplatRoute
   AppRootTagsSplatRoute: typeof AppRootTagsSplatRoute
@@ -191,6 +206,7 @@ const AppRootRouteChildren: AppRootRouteChildren = {
   AppRootChatRoute: AppRootChatRoute,
   AppRootFileRoute: AppRootFileRoute,
   AppRootSettingsRoute: AppRootSettingsRoute,
+  AppRootTasksRoute: AppRootTasksRoute,
   AppRootIndexRoute: AppRootIndexRoute,
   AppRootNotesSplatRoute: AppRootNotesSplatRoute,
   AppRootTagsSplatRoute: AppRootTagsSplatRoute,
@@ -206,6 +222,7 @@ export interface FileRoutesByFullPath {
   "/chat": typeof AppRootChatRoute
   "/file": typeof AppRootFileRoute
   "/settings": typeof AppRootSettingsRoute
+  "/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
   "/": typeof AppRootIndexRoute
   "/notes/$": typeof AppRootNotesSplatRoute
@@ -219,6 +236,7 @@ export interface FileRoutesByTo {
   "/chat": typeof AppRootChatRoute
   "/file": typeof AppRootFileRoute
   "/settings": typeof AppRootSettingsRoute
+  "/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
   "/": typeof AppRootIndexRoute
   "/notes/$": typeof AppRootNotesSplatRoute
@@ -234,6 +252,7 @@ export interface FileRoutesById {
   "/_appRoot/chat": typeof AppRootChatRoute
   "/_appRoot/file": typeof AppRootFileRoute
   "/_appRoot/settings": typeof AppRootSettingsRoute
+  "/_appRoot/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
   "/_appRoot/": typeof AppRootIndexRoute
   "/_appRoot/notes_/$": typeof AppRootNotesSplatRoute
@@ -250,6 +269,7 @@ export interface FileRouteTypes {
     | "/chat"
     | "/file"
     | "/settings"
+    | "/tasks"
     | "/share/$gistId"
     | "/"
     | "/notes/$"
@@ -262,6 +282,7 @@ export interface FileRouteTypes {
     | "/chat"
     | "/file"
     | "/settings"
+    | "/tasks"
     | "/share/$gistId"
     | "/"
     | "/notes/$"
@@ -275,6 +296,7 @@ export interface FileRouteTypes {
     | "/_appRoot/chat"
     | "/_appRoot/file"
     | "/_appRoot/settings"
+    | "/_appRoot/tasks"
     | "/share/$gistId"
     | "/_appRoot/"
     | "/_appRoot/notes_/$"
@@ -317,6 +339,7 @@ export const routeTree = rootRoute
         "/_appRoot/chat",
         "/_appRoot/file",
         "/_appRoot/settings",
+        "/_appRoot/tasks",
         "/_appRoot/",
         "/_appRoot/notes_/$",
         "/_appRoot/tags_/$",
@@ -337,6 +360,10 @@ export const routeTree = rootRoute
     },
     "/_appRoot/settings": {
       "filePath": "_appRoot.settings.tsx",
+      "parent": "/_appRoot"
+    },
+    "/_appRoot/tasks": {
+      "filePath": "_appRoot.tasks.tsx",
       "parent": "/_appRoot"
     },
     "/share/$gistId": {
