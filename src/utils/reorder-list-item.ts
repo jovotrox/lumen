@@ -374,3 +374,60 @@ export function moveListItemDown(
     content.slice(nextItem.end)
   )
 }
+
+/**
+ * Finds the last list item at the same indentation level in the current list group
+ */
+export function findLastListItem(content: string, block: ListItemBlock): ListItemBlock {
+  let lastItem = block
+  let nextItem = findNextListItem(content, lastItem)
+
+  while (nextItem !== null) {
+    lastItem = nextItem
+    nextItem = findNextListItem(content, lastItem)
+  }
+
+  return lastItem
+}
+
+/**
+ * Moves a list item to the end of its list group (same indentation level)
+ * Returns the new content, or null if the item is already at the end or can't be moved
+ */
+export function moveListItemToEnd(
+  content: string,
+  nodeStartOffset: number,
+  nodeEndOffset: number,
+): string | null {
+  const block = getListItemBlock(content, nodeStartOffset, nodeEndOffset)
+  if (!block) return null
+
+  const lastItem = findLastListItem(content, block)
+
+  // Already at the end
+  if (lastItem.start === block.start) return null
+
+  const currentContent = content.slice(block.start, block.end)
+  const betweenContent = content.slice(block.end, lastItem.start)
+  const lastContent = content.slice(lastItem.start, lastItem.end)
+
+  // Handle trailing newlines properly
+  let adjustedCurrentContent = currentContent
+  let adjustedLastContent = lastContent
+
+  if (!lastContent.endsWith("\n")) {
+    // Last item doesn't have trailing newline - current item (becoming last) shouldn't either
+    adjustedLastContent = lastContent + "\n"
+    if (currentContent.endsWith("\n")) {
+      adjustedCurrentContent = currentContent.slice(0, -1)
+    }
+  }
+
+  return (
+    content.slice(0, block.start) +
+    betweenContent +
+    adjustedLastContent +
+    adjustedCurrentContent +
+    content.slice(lastItem.end)
+  )
+}
