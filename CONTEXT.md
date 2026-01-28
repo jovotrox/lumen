@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Última actualización:** 2026-01-26
+**Última actualización:** 2026-01-27
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `8e39bbe` - feat: enable devtools in release builds
+- **Último commit:** `b193e61` - fix: remove move-to-end on task completion
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -100,19 +100,24 @@ upstream/main ──────┐
 
 ## Archivos Modificados (vs upstream)
 
-| Archivo                                | Tipo de Cambio | Propósito                  |
-| -------------------------------------- | -------------- | -------------------------- |
-| `src-tauri/*`                          | Nuevo          | Wrapper Tauri completo     |
-| `src/index.tsx`                        | Modificado     | Basepath para GitHub Pages |
-| `src/hooks/use-update-notifier.ts`     | Modificado     | Cache clearing en refresh  |
-| `src/routes/quick-note.tsx`            | Nuevo          | Ventana de nota rápida     |
-| `src/components/github-auth-tauri.tsx` | Nuevo          | OAuth Device Flow          |
-| `src/hooks/use-external-links.ts`      | Nuevo          | Links en navegador sistema |
-| `src/utils/tauri.ts`                   | Nuevo          | Utilidades Tauri           |
-| `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream     |
-| `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages      |
-| `index.html`                           | Modificado     | SPA redirect handler       |
-| `404.html`                             | Nuevo          | GitHub Pages SPA fallback  |
+| Archivo                                | Tipo de Cambio | Propósito                       |
+| -------------------------------------- | -------------- | ------------------------------- |
+| `src-tauri/*`                          | Nuevo          | Wrapper Tauri completo          |
+| `src/index.tsx`                        | Modificado     | Basepath para GitHub Pages      |
+| `src/hooks/use-update-notifier.ts`     | Modificado     | Cache clearing en refresh       |
+| `src/routes/quick-note.tsx`            | Nuevo          | Ventana de nota rápida          |
+| `src/routes/_appRoot.tasks.tsx`        | Nuevo          | Vista Tasks con tareas y notas  |
+| `src/components/tasks-view.tsx`        | Nuevo          | Componente principal de Tasks   |
+| `src/components/nav-items.tsx`         | Modificado     | Añadido link a Tasks en sidebar |
+| `src/components/markdown.tsx`          | Modificado     | Priority menu + strikethrough   |
+| `src/components/github-auth-tauri.tsx` | Nuevo          | OAuth Device Flow               |
+| `src/hooks/use-external-links.ts`      | Nuevo          | Links en navegador sistema      |
+| `src/utils/tauri.ts`                   | Nuevo          | Utilidades Tauri                |
+| `src/utils/reorder-list-item.ts`       | Modificado     | Función moveListItemToEnd       |
+| `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream          |
+| `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages           |
+| `index.html`                           | Modificado     | SPA redirect handler            |
+| `404.html`                             | Nuevo          | GitHub Pages SPA fallback       |
 
 ---
 
@@ -183,6 +188,15 @@ git push origin personal
 ---
 
 ## Historial de Cambios Importantes
+
+### 2026-01-27
+
+- **Tasks View**: Nueva vista `/tasks` en sidebar entre Calendar y Tags
+  - Muestra tareas incompletas con búsqueda y filtros por tags
+  - Sección de notas que contienen tareas incompletas (grid/list)
+- **Priority menu en notas**: Añadido menú de prioridad (High/Medium/Low/None) al dropdown de tareas dentro de las notas
+- **Strikethrough para tareas completadas**: Tareas completadas muestran texto tachado y color atenuado
+- **Flujo de trabajo actualizado**: CLAUDE.md ahora incluye paso de prueba en dev antes de commit y confirmación antes de push
 
 ### 2026-01-26
 
