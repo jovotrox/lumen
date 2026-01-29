@@ -15,12 +15,14 @@ import {
   voiceConversationMachineAtom,
 } from "../components/voice-conversation"
 import {
+  customThemesAtom,
   defaultFontAtom,
   epaperAtom,
   globalStateMachineAtom,
   notesAtom,
   tagsAtom,
   templatesAtom,
+  themeAtom,
 } from "../global-state"
 import { useExternalLinks } from "../hooks/use-external-links"
 import { useSearchNotes } from "../hooks/search-notes"
@@ -269,6 +271,24 @@ function RouteComponent() {
       sendVoiceConversation({ type: "REMOVE_TOOLS", toolNames: tools.map((tool) => tool.name) })
     }
   }, [navigate, searchNotesRef, getNotes, getTemplates, getTags, sendVoiceConversation])
+
+  // Set titlebar height for Tauri overlay titlebar
+  React.useEffect(() => {
+    if (isTauri()) {
+      document.documentElement.style.setProperty("--titlebar-height", "28px")
+    }
+  }, [])
+
+  // Apply theme
+  const themeId = useAtomValue(themeAtom)
+  const customThemes = useAtomValue(customThemesAtom)
+  React.useEffect(() => {
+    import("../utils/themes").then(({ builtInThemes, applyTheme, getAllThemes }) => {
+      const allThemes = getAllThemes(customThemes)
+      const theme = allThemes.find((t) => t.id === themeId) ?? null
+      applyTheme(theme)
+    })
+  }, [themeId, customThemes])
 
   // Set the e-paper mode
   const epaper = useAtomValue(epaperAtom)

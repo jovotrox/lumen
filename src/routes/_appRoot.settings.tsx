@@ -1,8 +1,9 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router"
 import { useAtom, useAtomValue } from "jotai"
-import { useState } from "react"
+import React, { useState } from "react"
 import { useNetworkState } from "react-use"
 import { Button } from "../components/button"
+import { Dialog } from "../components/dialog"
 import { useSignOut } from "../components/github-auth"
 import { GitHubAvatar } from "../components/github-avatar"
 import { LoadingIcon16, SettingsIcon16 } from "../components/icons"
@@ -13,6 +14,7 @@ import { Signature } from "../components/signature"
 import { SegmentedControl } from "../components/segmented-control"
 import { Switch } from "../components/switch"
 import {
+  customThemesAtom,
   defaultFontAtom,
   epaperAtom,
   githubRepoAtom,
@@ -21,10 +23,12 @@ import {
   isCloningRepoAtom,
   isRepoClonedAtom,
   isRepoNotClonedAtom,
+  themeAtom,
   vimModeAtom,
   voiceAssistantEnabledAtom,
 } from "../global-state"
 import { cx } from "../utils/cx"
+import { builtInThemes, getAllThemes, type Theme, type ThemeColors } from "../utils/themes"
 
 export const Route = createFileRoute("/_appRoot/settings")({
   component: RouteComponent,
@@ -160,6 +164,42 @@ function GitHubSection() {
 function AppearanceSection() {
   const [epaper, setEpaper] = useAtom(epaperAtom)
   const [font, setFont] = useAtom(defaultFontAtom)
+  const [themeId, setThemeId] = useAtom(themeAtom)
+  const [customThemes, setCustomThemes] = useAtom(customThemesAtom)
+  const [themeDialogOpen, setThemeDialogOpen] = useState(false)
+  const [editingTheme, setEditingTheme] = useState<Theme | undefined>(undefined)
+
+  const allThemes = getAllThemes(customThemes)
+
+  const handleDeleteTheme = (id: string) => {
+    setCustomThemes((prev) => prev.filter((t) => t.id !== id))
+    if (themeId === id) setThemeId("default")
+  }
+
+  const handleSaveCustomTheme = (theme: Theme) => {
+    setCustomThemes((prev) => {
+      const existing = prev.findIndex((t) => t.id === theme.id)
+      if (existing >= 0) {
+        const updated = [...prev]
+        updated[existing] = theme
+        return updated
+      }
+      return [...prev, theme]
+    })
+    setThemeId(theme.id)
+    setThemeDialogOpen(false)
+    setEditingTheme(undefined)
+  }
+
+  const openCreateDialog = () => {
+    setEditingTheme(undefined)
+    setThemeDialogOpen(true)
+  }
+
+  const openEditDialog = (id: string) => {
+    setEditingTheme(customThemes.find((t) => t.id === id))
+    setThemeDialogOpen(true)
+  }
 
   return (
     <SettingsSection title="Appearance">
@@ -203,7 +243,180 @@ function AppearanceSection() {
           </SegmentedControl.Segment>
         </SegmentedControl>
       </div>
+      <div role="separator" className="h-px bg-border-secondary mt-4" />
+      <div className="flex items-center justify-between mt-4">
+        <span className="leading-4">Theme</span>
+        <div className="flex items-center gap-2">
+          <select
+            value={themeId}
+            onChange={(e) => setThemeId(e.target.value)}
+            className="rounded-md border border-border bg-bg px-2 py-1 text-sm leading-5"
+          >
+            {allThemes.map((theme) => (
+              <option key={theme.id} value={theme.id}>
+                {theme.name}
+              </option>
+            ))}
+          </select>
+          {!builtInThemes.find((t) => t.id === themeId) && themeId !== "default" ? (
+            <div className="flex gap-1">
+              <button
+                onClick={() => openEditDialog(themeId)}
+                className="text-xs text-text-secondary hover:text-text"
+              >
+                Edit
+              </button>
+              <button
+                onClick={() => handleDeleteTheme(themeId)}
+                className="text-xs text-text-danger hover:text-text-danger"
+              >
+                Delete
+              </button>
+            </div>
+          ) : null}
+        </div>
+      </div>
+      <button
+        onClick={openCreateDialog}
+        className="mt-2 text-sm text-text-secondary hover:text-text"
+      >
+        + Create custom theme
+      </button>
+      <Dialog
+        open={themeDialogOpen}
+        onOpenChange={(open) => {
+          setThemeDialogOpen(open)
+          if (!open) setEditingTheme(undefined)
+        }}
+      >
+        <Dialog.Content title={editingTheme ? "Edit theme" : "Create custom theme"}>
+          <CustomThemeForm
+            theme={editingTheme}
+            onSave={handleSaveCustomTheme}
+            onCancel={() => {
+              setThemeDialogOpen(false)
+              setEditingTheme(undefined)
+            }}
+          />
+        </Dialog.Content>
+      </Dialog>
     </SettingsSection>
+  )
+}
+
+const defaultCustomColors: ThemeColors = {
+  bg: "#1e1e1e",
+  bgSecondary: "#252526",
+  text: "#d4d4d4",
+  textSecondary: "#858585",
+  border: "#3c3c3c",
+  accent: "#007acc",
+  accentText: "#3794ff",
+  syntaxHighlight: "#3794ff",
+}
+
+const colorLabels: Record<keyof ThemeColors, string> = {
+  bg: "Background",
+  bgSecondary: "Background secondary",
+  text: "Text",
+  textSecondary: "Text secondary",
+  border: "Border",
+  accent: "Accent",
+  accentText: "Accent text",
+  syntaxHighlight: "Syntax highlight",
+}
+
+function CustomThemeForm({
+  theme,
+  onSave,
+  onCancel,
+}: {
+  theme?: Theme
+  onSave: (theme: Theme) => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState(theme?.name ?? "")
+  const [colors, setColors] = useState<ThemeColors>(theme?.colors ?? defaultCustomColors)
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) return
+
+    const id = theme?.id ?? `custom-${Date.now()}`
+    onSave({
+      id,
+      name: name.trim(),
+      colors,
+      builtIn: false,
+    })
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      <div className="flex flex-col gap-1">
+        <label htmlFor="theme-name" className="text-sm text-text-secondary">
+          Theme name
+        </label>
+        <input
+          id="theme-name"
+          type="text"
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="My custom theme"
+          className="rounded-md border border-border bg-bg px-2 py-1 text-sm"
+          required
+        />
+      </div>
+      <ColorInputGrid colors={colors} onChange={setColors} />
+      <div className="flex gap-2">
+        <Button type="submit" variant="primary" size="small">
+          Save
+        </Button>
+        <Button type="button" size="small" onClick={onCancel}>
+          Cancel
+        </Button>
+      </div>
+    </form>
+  )
+}
+
+function ColorInputGrid({
+  colors,
+  onChange,
+}: {
+  colors: ThemeColors
+  onChange: (colors: ThemeColors) => void
+}) {
+  const keys = Object.keys(colorLabels) as (keyof ThemeColors)[]
+
+  return (
+    <div className="grid grid-cols-2 gap-2">
+      {keys.map((key) => (
+        <div key={key} className="flex items-center gap-2">
+          <input
+            type="color"
+            value={colors[key]}
+            onChange={(e) => onChange({ ...colors, [key]: e.target.value })}
+            className="h-6 w-6 shrink-0 cursor-pointer rounded border border-border"
+          />
+          <div className="flex flex-col">
+            <span className="text-xs text-text-secondary">{colorLabels[key]}</span>
+            <input
+              type="text"
+              value={colors[key]}
+              onChange={(e) => {
+                const val = e.target.value
+                if (/^#[0-9a-fA-F]{0,6}$/.test(val)) {
+                  onChange({ ...colors, [key]: val })
+                }
+              }}
+              className="w-20 bg-transparent text-xs"
+              pattern="^#[0-9a-fA-F]{6}$"
+            />
+          </div>
+        </div>
+      ))}
+    </div>
   )
 }
 

@@ -16,21 +16,29 @@ export function Sidebar() {
   return (
     <div className="grid w-56 shrink-0 grid-rows-[auto_1fr] overflow-hidden border-r border-border-secondary">
       <div
+        // @ts-expect-error WebkitAppRegion is a non-standard CSS property for Tauri window dragging
+        style={{ WebkitAppRegion: "drag" }}
         className={cx(
           "flex w-full justify-between border-b p-2",
           isScrolled ? "border-border-secondary" : "border-transparent",
         )}
       >
-        <IconButton
-          aria-label="Hide sidebar"
-          shortcut={["⌘", "B"]}
-          tooltipAlign="start"
-          size="small"
-          onClick={() => setSidebar("collapsed")}
-        >
-          <SidebarIcon16 />
-        </IconButton>
-        <div className="flex items-center">
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+        {/* @ts-expect-error WebkitAppRegion is a non-standard CSS property */}
+        <div style={{ WebkitAppRegion: "no-drag" }}>
+          <IconButton
+            aria-label="Hide sidebar"
+            shortcut={["⌘", "B"]}
+            tooltipAlign="start"
+            size="small"
+            onClick={() => setSidebar("collapsed")}
+          >
+            <SidebarIcon16 />
+          </IconButton>
+        </div>
+        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
+        {/* @ts-expect-error WebkitAppRegion is a non-standard CSS property */}
+        <div className="flex items-center" style={{ WebkitAppRegion: "no-drag" }}>
           <IconButton
             aria-label="Go back"
             size="small"

@@ -865,6 +865,13 @@ export const vimModeAtom = atomWithStorage<boolean>("vim-mode", false)
 
 export const defaultFontAtom = atomWithStorage<Font>("font", "sans")
 
+export const themeAtom = atomWithStorage<string>("theme", "default")
+
+export const customThemesAtom = atomWithStorage<import("./utils/themes").Theme[]>(
+  "custom-themes",
+  [],
+)
+
 export const sidebarAtom = atomWithStorage<"expanded" | "collapsed">("sidebar", "expanded")
 
 export const calendarLayoutAtom = atomWithStorage<"week" | "month">("calendar-layout", "week")

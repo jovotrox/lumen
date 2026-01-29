@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Última actualización:** 2026-01-27
+**Última actualización:** 2026-01-28
 
 ---
 
@@ -100,24 +100,31 @@ upstream/main ──────┐
 
 ## Archivos Modificados (vs upstream)
 
-| Archivo                                | Tipo de Cambio | Propósito                       |
-| -------------------------------------- | -------------- | ------------------------------- |
-| `src-tauri/*`                          | Nuevo          | Wrapper Tauri completo          |
-| `src/index.tsx`                        | Modificado     | Basepath para GitHub Pages      |
-| `src/hooks/use-update-notifier.ts`     | Modificado     | Cache clearing en refresh       |
-| `src/routes/quick-note.tsx`            | Nuevo          | Ventana de nota rápida          |
-| `src/routes/_appRoot.tasks.tsx`        | Nuevo          | Vista Tasks con tareas y notas  |
-| `src/components/tasks-view.tsx`        | Nuevo          | Componente principal de Tasks   |
-| `src/components/nav-items.tsx`         | Modificado     | Añadido link a Tasks en sidebar |
-| `src/components/markdown.tsx`          | Modificado     | Priority menu + strikethrough   |
-| `src/components/github-auth-tauri.tsx` | Nuevo          | OAuth Device Flow               |
-| `src/hooks/use-external-links.ts`      | Nuevo          | Links en navegador sistema      |
-| `src/utils/tauri.ts`                   | Nuevo          | Utilidades Tauri                |
-| `src/utils/reorder-list-item.ts`       | Modificado     | Función moveListItemToEnd       |
-| `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream          |
-| `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages           |
-| `index.html`                           | Modificado     | SPA redirect handler            |
-| `404.html`                             | Nuevo          | GitHub Pages SPA fallback       |
+| Archivo                                | Tipo de Cambio | Propósito                                |
+| -------------------------------------- | -------------- | ---------------------------------------- |
+| `src-tauri/*`                          | Nuevo          | Wrapper Tauri completo                   |
+| `src/index.tsx`                        | Modificado     | Basepath para GitHub Pages               |
+| `src/hooks/use-update-notifier.ts`     | Modificado     | Cache clearing en refresh                |
+| `src/routes/quick-note.tsx`            | Nuevo          | Ventana de nota rápida                   |
+| `src/routes/_appRoot.tasks.tsx`        | Nuevo          | Vista Tasks con tareas y notas           |
+| `src/components/tasks-view.tsx`        | Nuevo          | Componente principal de Tasks            |
+| `src/components/nav-items.tsx`         | Modificado     | Añadido link a Tasks en sidebar          |
+| `src/components/markdown.tsx`          | Modificado     | Priority menu + strikethrough            |
+| `src/components/github-auth-tauri.tsx` | Nuevo          | OAuth Device Flow                        |
+| `src/hooks/use-external-links.ts`      | Nuevo          | Links en navegador sistema               |
+| `src/utils/tauri.ts`                   | Nuevo          | Utilidades Tauri                         |
+| `src/utils/reorder-list-item.ts`       | Modificado     | Función moveListItemToEnd                |
+| `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream                   |
+| `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages                    |
+| `index.html`                           | Modificado     | SPA redirect handler                     |
+| `404.html`                             | Nuevo          | GitHub Pages SPA fallback                |
+| `src/utils/themes.ts`                  | Nuevo          | Sistema de temas (definiciones + lógica) |
+| `src/routes/_appRoot.settings.tsx`     | Modificado     | Theme selector + custom themes UI        |
+| `src/global-state.ts`                  | Modificado     | Atoms para theme + custom themes         |
+| `src/routes/_appRoot.tsx`              | Modificado     | Apply theme + titlebar height            |
+| `src/components/app-layout.tsx`        | Modificado     | Titlebar padding (collapsed sidebar)     |
+| `src/components/sidebar.tsx`           | Modificado     | Titlebar padding + drag region           |
+| `src/styles/variables.css`             | Modificado     | --titlebar-height variable               |
 
 ---
 
@@ -188,6 +195,23 @@ git push origin personal
 ---
 
 ## Historial de Cambios Importantes
+
+### 2026-01-28
+
+- **Overlay Titlebar**: Eliminado título "Lumen Notes" de la barra, titlebar transparente con semáforo macOS visible
+  - `titleBarStyle: "Overlay"` + `hiddenTitle: true` en tauri.conf.json
+  - Padding dinámico (`--titlebar-height: 28px`) para sidebar y contenido principal
+  - Drag region en sidebar header para que la ventana sea arrastrable
+  - Requiere rebuild de Tauri
+- **Theme System**: Sistema completo de temas con 3 built-in (Default, Notion, VS Code) + custom themes
+  - Sobreescribe ~40 CSS variables semánticas para light y dark mode
+  - UI en Settings > Appearance con dropdown selector
+  - Creador de custom themes con 8 color inputs (bg, text, border, accent, etc.) estilo Slack
+  - Themes custom se persisten en localStorage
+  - Arquitectura: 8 colores core → derivación automática de todas las variantes
+- **Version Polling**: Check de versión cada 12h + al recibir foco, auto-refresh si no hay drafts
+- **Double Escape**: En modo write, doble Esc guarda y cambia a Read mode
+- **Auto-save**: Guardado automático a Git cada 2 minutos en modo write
 
 ### 2026-01-27
 

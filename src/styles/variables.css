@@ -1,7 +1,7 @@
 @import "./radix-colors.css";
 
 :root {
-  color-scheme: light dark;
+  color-scheme: dark;
 
   /* Neutral color scale */
   --neutral-1: var(--sand-1);
@@ -137,6 +137,7 @@
   /* Heights */
   --height-app-header: 40px;
   --height-nav-bar: 40px;
+  --titlebar-height: 0px;
 }
 
 @media (prefers-color-scheme: dark) {
