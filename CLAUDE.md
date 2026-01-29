@@ -165,9 +165,11 @@ feature/* ← Branches temporales para desarrollo
 
 ### Flujo de Trabajo para Nuevas Features
 
-**IMPORTANTE: Seguir siempre este flujo**
+**OBLIGATORIO: Seguir siempre este flujo. No se puede saltar ningún paso.**
 
-#### 1. Crear branch desde personal
+#### 1. Crear branch desde personal (ANTES de cualquier edición)
+
+**Este paso es BLOQUEANTE. No se puede editar ningún archivo sin haber creado el branch primero.**
 
 ```bash
 git checkout personal
@@ -270,7 +272,7 @@ cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ### Reglas para Claude
 
 1. **Siempre trabajar desde `personal`** - Es la rama con todas las features
-2. **Crear feature branch** antes de modificar código para features nuevas
+2. **OBLIGATORIO: Crear feature branch ANTES de cualquier edición de código** - NUNCA editar archivos directamente en `personal`. El primer paso antes de escribir cualquier línea de código es `git checkout -b feature/nombre`. Si se aprueba un plan, lo primero es crear el branch. Sin excepciones.
 3. **Validar approach** con el usuario antes de implementar cambios significativos
 4. **Probar con tauri:dev** antes de hacer build final
 5. **Merge a personal** después de completar cada feature

@@ -430,6 +430,60 @@ function NotePage() {
     sendVoiceConversation,
   ])
 
+  // Double-escape to save and switch to read mode
+  const [escPressedOnce, setEscPressedOnce] = React.useState(false)
+  const escTimeoutRef = React.useRef<number | undefined>(undefined)
+
+  useHotkeys(
+    "escape",
+    () => {
+      if (escPressedOnce) {
+        // Second ESC - save if there are changes, then switch to read mode
+        if (isDraft) {
+          handleSave(editorValue)
+        }
+        switchToReading()
+        setEscPressedOnce(false)
+        if (escTimeoutRef.current) {
+          clearTimeout(escTimeoutRef.current)
+          escTimeoutRef.current = undefined
+        }
+      } else {
+        // First ESC - start waiting for second press
+        setEscPressedOnce(true)
+        escTimeoutRef.current = window.setTimeout(() => {
+          setEscPressedOnce(false)
+        }, 2000)
+      }
+    },
+    {
+      enabled: mode === "write",
+      enableOnFormTags: true,
+      enableOnContentEditable: true,
+    },
+  )
+
+  React.useEffect(() => {
+    return () => {
+      if (escTimeoutRef.current) {
+        clearTimeout(escTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Auto-save every 2 minutes when in write mode with unsaved changes
+  React.useEffect(() => {
+    if (mode !== "write") return
+
+    const intervalId = setInterval(() => {
+      if (isDraftRef.current) {
+        handleSaveRef.current(editorValueRef.current)
+      }
+    }, 120_000)
+
+    return () => clearInterval(intervalId)
+  }, [mode, isDraftRef, handleSaveRef, editorValueRef])
+
   // Keyboard shortcuts
   useHotkeys(
     "mod+e",
