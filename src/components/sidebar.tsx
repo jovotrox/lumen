@@ -14,18 +14,14 @@ export function Sidebar() {
   const { isScrolled, topSentinelProps } = useIsScrolled()
 
   return (
-    <div className="relative grid w-56 shrink-0 grid-rows-[auto_1fr] overflow-hidden border-r border-border-secondary before:absolute before:right-[-1px] before:top-0 before:h-[var(--titlebar-height)] before:w-px before:bg-border-secondary before:content-[''] before:z-50">
+    <div className="relative grid w-56 shrink-0 grid-rows-[auto_1fr] overflow-hidden border-r border-border-secondary">
       <div
-        // @ts-expect-error WebkitAppRegion is a non-standard CSS property for Tauri window dragging
-        style={{ WebkitAppRegion: "drag" }}
         className={cx(
           "flex w-full justify-between border-b p-2",
           isScrolled ? "border-border-secondary" : "border-transparent",
         )}
       >
-        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-        {/* @ts-expect-error WebkitAppRegion is a non-standard CSS property */}
-        <div style={{ WebkitAppRegion: "no-drag" }}>
+        <div>
           <IconButton
             aria-label="Hide sidebar"
             shortcut={["⌘", "B"]}
@@ -36,9 +32,7 @@ export function Sidebar() {
             <SidebarIcon16 />
           </IconButton>
         </div>
-        {/* eslint-disable-next-line @typescript-eslint/ban-ts-comment */}
-        {/* @ts-expect-error WebkitAppRegion is a non-standard CSS property */}
-        <div className="flex items-center" style={{ WebkitAppRegion: "no-drag" }}>
+        <div className="flex items-center">
           <IconButton
             aria-label="Go back"
             size="small"

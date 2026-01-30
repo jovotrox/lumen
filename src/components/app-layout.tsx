@@ -14,15 +14,8 @@ export function AppLayout({ className, children }: AppLayoutProps) {
   const sidebar = useAtomValue(sidebarAtom)
 
   return (
-    <div className={cx("flex grow flex-col overflow-hidden print:overflow-visible relative", className)}>
-      {/* Titlebar drag region - only visible in Tauri */}
-      <div
-        // @ts-expect-error WebkitAppRegion is a non-standard CSS property for Tauri window dragging
-        style={{ WebkitAppRegion: "drag", height: "var(--titlebar-height)" }}
-        className="absolute top-0 left-0 right-0 z-50 pointer-events-auto"
-      />
-
-      <div style={{ paddingTop: "var(--titlebar-height)" }} className="flex grow flex-col overflow-hidden">
+    <div className={cx("flex grow flex-col overflow-hidden print:overflow-visible", className)}>
+      <div className="flex grow flex-col overflow-hidden">
         <SignInBanner />
         <div className="flex overflow-hidden grow">
           {sidebar === "expanded" ? (

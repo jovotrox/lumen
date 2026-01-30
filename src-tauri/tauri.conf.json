@@ -13,7 +13,7 @@
     "windows": [
       {
         "title": "Lumen Notes",
-        "titleBarStyle": "Overlay",
+        "titleBarStyle": "Transparent",
         "hiddenTitle": true,
         "width": 1200,
         "height": 800,
