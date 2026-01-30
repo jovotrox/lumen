@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `40c3936` - fix: iOS home screen start_url for GitHub Pages deployment
+- **Último commit:** `5a1143c` - fix: add favicon link to index.html
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -119,7 +119,7 @@ upstream/main ──────┐
 | `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream                  |
 | `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages                   |
 | `.prettierignore`                      | Modificado     | Ignore .claude/settings.local.json      |
-| `index.html`                           | Modificado     | SPA redirect handler                    |
+| `index.html`                           | Modificado     | SPA redirect handler + favicon link     |
 | `404.html`                             | Nuevo          | GitHub Pages SPA fallback               |
 | `src/utils/themes.ts`                  | Nuevo          | Sistema de temas (6 built-in + custom)  |
 | `src/utils/theme-sync.ts`              | Nuevo          | Sync themes a `.lumen/themes.json`      |
@@ -233,6 +233,11 @@ git push origin personal
   - Al agregar a home screen, iOS ahora abre la URL correcta sin 404
   - Funciona en modo standalone (sin UI de Safari)
   - No requiere rebuild (cambio solo en configuración de Vite)
+- **Favicon Fix**: Agregado favicon link al HTML
+  - Añadido `<link rel="icon" type="image/svg+xml" href="/favicon-production.svg" />`
+  - El archivo favicon-production.svg ya existía en `/public` pero no estaba referenciado
+  - Favicon visible en pestaña del navegador después del deployment
+  - No requiere rebuild (cambio solo en HTML estático)
 
 ### 2026-01-29
 
