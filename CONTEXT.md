@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `1179861` - chore: merge upstream/main - inline note embeds feature
+- **Último commit:** `350bc62` - docs: update CONTEXT.md with upstream merge and CI fix
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -113,9 +113,12 @@ upstream/main ──────┐
 | `src/components/github-auth-tauri.tsx` | Nuevo          | OAuth Device Flow                       |
 | `src/hooks/use-external-links.ts`      | Nuevo          | Links en navegador sistema              |
 | `src/utils/tauri.ts`                   | Nuevo          | Utilidades Tauri                        |
+| `src/utils/gist.ts`                    | Modificado     | getApiBaseUrl (Vercel) + inline embeds  |
+| `src/utils/inline-note-embeds.ts`      | Upstream       | Inline embeds al publicar gists         |
 | `src/utils/reorder-list-item.ts`       | Modificado     | Función moveListItemToEnd               |
 | `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream                  |
 | `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages                   |
+| `.prettierignore`                      | Modificado     | Ignore .claude/settings.local.json      |
 | `index.html`                           | Modificado     | SPA redirect handler                    |
 | `404.html`                             | Nuevo          | GitHub Pages SPA fallback               |
 | `src/utils/themes.ts`                  | Nuevo          | Sistema de temas (6 built-in + custom)  |
