@@ -276,13 +276,6 @@ function RouteComponent() {
     }
   }, [navigate, searchNotesRef, getNotes, getTemplates, getTags, sendVoiceConversation])
 
-  // Set titlebar height for Tauri overlay titlebar
-  React.useEffect(() => {
-    if (isTauri()) {
-      document.documentElement.style.setProperty("--titlebar-height", "28px")
-    }
-  }, [])
-
   // Apply theme
   const themeId = useAtomValue(themeAtom)
   const customThemes = useAtomValue(customThemesAtom)
