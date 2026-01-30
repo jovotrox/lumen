@@ -4,15 +4,18 @@ import React, { useState } from "react"
 import { useNetworkState } from "react-use"
 import { Button } from "../components/button"
 import { Dialog } from "../components/dialog"
+import { DropdownMenu } from "../components/dropdown-menu"
+import { FormControl } from "../components/form-control"
 import { useSignOut } from "../components/github-auth"
 import { GitHubAvatar } from "../components/github-avatar"
-import { LoadingIcon16, SettingsIcon16 } from "../components/icons"
+import { ChevronDownIcon16, LoadingIcon16, SettingsIcon16 } from "../components/icons"
 import { OpenAIKeyInput } from "../components/openai-key-input"
 import { PageLayout } from "../components/page-layout"
 import { RepoForm } from "../components/repo-form"
 import { Signature } from "../components/signature"
 import { SegmentedControl } from "../components/segmented-control"
 import { Switch } from "../components/switch"
+import { TextInput } from "../components/text-input"
 import {
   customThemesAtom,
   defaultFontAtom,
@@ -255,17 +258,32 @@ function AppearanceSection() {
       <div className="flex items-center justify-between mt-4">
         <span className="leading-4">Theme</span>
         <div className="flex items-center gap-2">
-          <select
-            value={themeId}
-            onChange={(e) => setThemeId(e.target.value)}
-            className="rounded-md border border-border bg-bg px-2 py-1 text-sm leading-5"
-          >
-            {allThemes.map((theme) => (
-              <option key={theme.id} value={theme.id}>
-                {theme.name}
-              </option>
-            ))}
-          </select>
+          <DropdownMenu>
+            <DropdownMenu.Trigger
+              render={
+                <button
+                  type="button"
+                  className="h-8 rounded border border-border bg-transparent px-2.5 text-sm flex items-center justify-between gap-2 min-w-[140px] hover:border-border-focus focus:outline focus:outline-2 focus:-outline-offset-2 focus:outline-border-focus coarse:h-10 coarse:px-3"
+                >
+                  <span className="truncate">
+                    {allThemes.find((t) => t.id === themeId)?.name ?? "Default"}
+                  </span>
+                  <ChevronDownIcon16 className="shrink-0" />
+                </button>
+              }
+            />
+            <DropdownMenu.Content align="end" width={200}>
+              {allThemes.map((theme) => (
+                <DropdownMenu.Item
+                  key={theme.id}
+                  onClick={() => setThemeId(theme.id)}
+                  selected={themeId === theme.id}
+                >
+                  {theme.name}
+                </DropdownMenu.Item>
+              ))}
+            </DropdownMenu.Content>
+          </DropdownMenu>
           {!builtInThemes.find((t) => t.id === themeId) && themeId !== "default" ? (
             <div className="flex gap-1">
               <button
@@ -361,20 +379,16 @@ function CustomThemeForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-      <div className="flex flex-col gap-1">
-        <label htmlFor="theme-name" className="text-sm text-text-secondary">
-          Theme name
-        </label>
-        <input
+      <FormControl htmlFor="theme-name" label="Theme name" required>
+        <TextInput
           id="theme-name"
           type="text"
           value={name}
           onChange={(e) => setName(e.target.value)}
           placeholder="My custom theme"
-          className="rounded-md border border-border bg-bg px-2 py-1 text-sm"
           required
         />
-      </div>
+      </FormControl>
       <ColorInputGrid colors={colors} onChange={setColors} />
       <div className="flex gap-2">
         <Button type="submit" variant="primary" size="small">
