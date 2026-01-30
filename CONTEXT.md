@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Última actualización:** 2026-01-28
+**Última actualización:** 2026-01-29
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `b193e61` - fix: remove move-to-end on task completion
+- **Último commit:** `45bcd6f` - fix: extend sidebar separator to cover titlebar area
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -118,13 +118,15 @@ upstream/main ──────┐
 | `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages                    |
 | `index.html`                           | Modificado     | SPA redirect handler                     |
 | `404.html`                             | Nuevo          | GitHub Pages SPA fallback                |
-| `src/utils/themes.ts`                  | Nuevo          | Sistema de temas (definiciones + lógica) |
-| `src/routes/_appRoot.settings.tsx`     | Modificado     | Theme selector + custom themes UI        |
+| `src/utils/themes.ts`                  | Nuevo          | Sistema de temas (6 built-in + custom)   |
+| `src/utils/theme-sync.ts`              | Nuevo          | Sync themes a `.lumen/themes.json`       |
+| `src/hooks/use-theme-sync.ts`          | Nuevo          | Hook para sincronizar themes en repo     |
+| `src/routes/_appRoot.settings.tsx`     | Modificado     | Theme selector + modal custom themes     |
 | `src/global-state.ts`                  | Modificado     | Atoms para theme + custom themes         |
-| `src/routes/_appRoot.tsx`              | Modificado     | Apply theme + titlebar height            |
+| `src/routes/_appRoot.tsx`              | Modificado     | Apply theme + titlebar + theme sync      |
 | `src/components/app-layout.tsx`        | Modificado     | Titlebar padding (collapsed sidebar)     |
-| `src/components/sidebar.tsx`           | Modificado     | Titlebar padding + drag region           |
-| `src/styles/variables.css`             | Modificado     | --titlebar-height variable               |
+| `src/components/sidebar.tsx`           | Modificado     | Titlebar padding + drag + border extend  |
+| `src/styles/variables.css`             | Modificado     | color-scheme: dark + titlebar height     |
 
 ---
 
@@ -196,22 +198,33 @@ git push origin personal
 
 ## Historial de Cambios Importantes
 
-### 2026-01-28
+### 2026-01-29
 
 - **Overlay Titlebar**: Eliminado título "Lumen Notes" de la barra, titlebar transparente con semáforo macOS visible
   - `titleBarStyle: "Overlay"` + `hiddenTitle: true` en tauri.conf.json
   - Padding dinámico (`--titlebar-height: 28px`) para sidebar y contenido principal
   - Drag region en sidebar header para que la ventana sea arrastrable
+  - Separador del sidebar extendido hasta el borde superior con pseudo-elemento `::after`
   - Requiere rebuild de Tauri
-- **Theme System**: Sistema completo de temas con 3 built-in (Default, Notion, VS Code) + custom themes
-  - Sobreescribe ~40 CSS variables semánticas para light y dark mode
-  - UI en Settings > Appearance con dropdown selector
-  - Creador de custom themes con 8 color inputs (bg, text, border, accent, etc.) estilo Slack
-  - Themes custom se persisten en localStorage
-  - Arquitectura: 8 colores core → derivación automática de todas las variantes
+- **Theme System (Dark Mode Only)**: Sistema completo de temas con 6 built-in + custom themes
+  - **Built-in themes**: Default (Radix), GitHub (Primer), Notion, VS Code, Obsidian, Craft
+  - Colores investigados desde fuentes oficiales (Primer, Obsidian docs, Craft brand colors)
+  - Sobreescribe ~40 CSS variables derivadas de 8 colores core
+  - `color-scheme: dark` forzado (sin light mode)
+  - UI en Settings > Appearance (Theme debajo de Font style)
+  - **Custom themes en modal**: Diálogo Radix con 8 color inputs + preview
+  - **Sync a GitHub repo**: Custom themes se guardan en `.lumen/themes.json` del repo del usuario
+    - Al cargar app: Lee desde repo (si existe) o crea archivo desde localStorage
+    - Al crear/editar/eliminar theme: Guarda automáticamente a repo
+    - Persistencia multi-dispositivo cuando se conecta al mismo repo
+  - Arquitectura: 8 colores core → derivación automática de ~40 variantes CSS
 - **Version Polling**: Check de versión cada 12h + al recibir foco, auto-refresh si no hay drafts
 - **Double Escape**: En modo write, doble Esc guarda y cambia a Read mode
 - **Auto-save**: Guardado automático a Git cada 2 minutos en modo write
+
+### 2026-01-28
+
+- Commits iniciales de version polling, double escape y auto-save
 
 ### 2026-01-27
 
