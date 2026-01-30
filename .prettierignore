@@ -1,3 +1,4 @@
 dist
 node_modules
 *.typegen.ts
+.claude/settings.local.json
