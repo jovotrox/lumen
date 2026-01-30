@@ -14,7 +14,7 @@ export function Sidebar() {
   const { isScrolled, topSentinelProps } = useIsScrolled()
 
   return (
-    <div className="grid w-56 shrink-0 grid-rows-[auto_1fr] overflow-hidden border-r border-border-secondary">
+    <div className="relative grid w-56 shrink-0 grid-rows-[auto_1fr] overflow-hidden border-r border-border-secondary after:absolute after:right-0 after:top-0 after:h-[var(--titlebar-height)] after:w-px after:bg-border-secondary after:content-['']">
       <div
         // @ts-expect-error WebkitAppRegion is a non-standard CSS property for Tauri window dragging
         style={{ WebkitAppRegion: "drag" }}
