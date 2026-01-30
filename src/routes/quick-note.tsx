@@ -7,7 +7,7 @@ import { isTauri } from "../utils/tauri"
 import { Button } from "../components/button"
 import { CheckIcon16 } from "../components/icons"
 import { useAtomValue } from "jotai"
-import { defaultFontAtom } from "../global-state"
+import { customThemesAtom, defaultFontAtom, themeAtom } from "../global-state"
 
 export const Route = createFileRoute("/quick-note")({
   component: QuickNoteComponent,
@@ -22,6 +22,8 @@ function QuickNoteComponent() {
   const editorRef = React.useRef<ReactCodeMirrorRef>(null)
   const escTimeoutRef = React.useRef<number | null>(null)
   const defaultFont = useAtomValue(defaultFontAtom)
+  const themeId = useAtomValue(themeAtom)
+  const customThemes = useAtomValue(customThemesAtom)
 
   // Apply font style
   React.useEffect(() => {
@@ -35,6 +37,15 @@ function QuickNoteComponent() {
       `var(--font-family-${fontFamily}-mono)`,
     )
   }, [defaultFont])
+
+  // Apply theme
+  React.useEffect(() => {
+    import("../utils/themes").then(({ applyTheme, getAllThemes }) => {
+      const allThemes = getAllThemes(customThemes)
+      const theme = allThemes.find((t) => t.id === themeId) ?? null
+      applyTheme(theme)
+    })
+  }, [themeId, customThemes])
 
   // Close window
   const closeWindow = React.useCallback(async () => {
