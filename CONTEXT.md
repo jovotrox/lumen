@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `350bc62` - docs: update CONTEXT.md with upstream merge and CI fix
+- **Último commit:** `40c3936` - fix: iOS home screen start_url for GitHub Pages deployment
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -130,6 +130,7 @@ upstream/main ──────┐
 | `src/components/app-layout.tsx`        | Modificado     | Titlebar padding (collapsed sidebar)    |
 | `src/components/sidebar.tsx`           | Modificado     | Titlebar padding + drag + border extend |
 | `src/styles/variables.css`             | Modificado     | color-scheme: dark + titlebar height    |
+| `vite.config.ts`                       | Modificado     | PWA manifest start_url y scope          |
 
 ---
 
@@ -226,6 +227,12 @@ git push origin personal
   - Muestra checkmark en tema seleccionado
   - Incluye icono ChevronDown para indicar interactividad
   - No requiere rebuild (cambio solo en React)
+- **iOS Home Screen Fix**: Arreglado 404 al abrir web app desde home screen de iOS
+  - PWA manifest ahora usa `start_url: "/lumen/"` y `scope: "/lumen/"` para GitHub Pages
+  - Condicional basado en env var `GITHUB_PAGES` (consistente con `base` config)
+  - Al agregar a home screen, iOS ahora abre la URL correcta sin 404
+  - Funciona en modo standalone (sin UI de Safari)
+  - No requiere rebuild (cambio solo en configuración de Vite)
 
 ### 2026-01-29
 
