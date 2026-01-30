@@ -26,6 +26,7 @@ import {
 } from "../global-state"
 import { useExternalLinks } from "../hooks/use-external-links"
 import { useSearchNotes } from "../hooks/search-notes"
+import { useThemeSync } from "../hooks/use-theme-sync"
 import { useValueRef } from "../hooks/value-ref"
 import { generateNoteId } from "../utils/note-id"
 import { notificationSound, playSound } from "../utils/sounds"
@@ -49,6 +50,9 @@ const errorAtom = selectAtom(globalStateMachineAtom, (state) => state.context.er
 function RouteComponent() {
   // Open external links in system browser when running in Tauri
   useExternalLinks()
+
+  // Sync custom themes between localStorage and GitHub repo
+  useThemeSync()
 
   const error = useAtomValue(errorAtom)
   const send = useSetAtom(globalStateMachineAtom)

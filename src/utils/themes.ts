@@ -34,6 +34,23 @@ export const builtInThemes: Theme[] = [
     },
   },
   {
+    id: "github",
+    name: "GitHub",
+    builtIn: true,
+    // GitHub dark mode (Primer design system)
+    // Sources: github.com/primer/primitives, primer.style/design/foundations/color
+    colors: {
+      bg: "#0d1117",
+      bgSecondary: "#161b22",
+      text: "#c9d1d9",
+      textSecondary: "#8b949e",
+      border: "#30363d",
+      accent: "#58a6ff",
+      accentText: "#58a6ff",
+      syntaxHighlight: "#79c0ff",
+    },
+  },
+  {
     id: "notion",
     name: "Notion",
     builtIn: true,
@@ -65,6 +82,40 @@ export const builtInThemes: Theme[] = [
       accent: "#007acc",
       accentText: "#3794ff",
       syntaxHighlight: "#3794ff",
+    },
+  },
+  {
+    id: "obsidian",
+    name: "Obsidian",
+    builtIn: true,
+    // Obsidian default dark theme
+    // Sources: docs.obsidian.md/Reference/CSS+variables, publish.obsidian.md/hub
+    colors: {
+      bg: "#202020",
+      bgSecondary: "#161616",
+      text: "#dcddde",
+      textSecondary: "#999999",
+      border: "#2f3136",
+      accent: "#7f6df2",
+      accentText: "#a68df4",
+      syntaxHighlight: "#7f6df2",
+    },
+  },
+  {
+    id: "craft",
+    name: "Craft",
+    builtIn: true,
+    // Craft macOS app dark mode
+    // Sources: mobbin.com/colors/brand/craft-docs, support.craft.do
+    colors: {
+      bg: "#111827",
+      bgSecondary: "#1f2937",
+      text: "#f9fafb",
+      textSecondary: "#9ca3af",
+      border: "#374151",
+      accent: "#3555ff",
+      accentText: "#5b7aff",
+      syntaxHighlight: "#3555ff",
     },
   },
 ]

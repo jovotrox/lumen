@@ -28,6 +28,7 @@ import {
   voiceAssistantEnabledAtom,
 } from "../global-state"
 import { cx } from "../utils/cx"
+import { saveCustomThemes } from "../hooks/use-theme-sync"
 import { builtInThemes, getAllThemes, type Theme, type ThemeColors } from "../utils/themes"
 
 export const Route = createFileRoute("/_appRoot/settings")({
@@ -172,19 +173,26 @@ function AppearanceSection() {
   const allThemes = getAllThemes(customThemes)
 
   const handleDeleteTheme = (id: string) => {
-    setCustomThemes((prev) => prev.filter((t) => t.id !== id))
+    setCustomThemes((prev) => {
+      const updated = prev.filter((t) => t.id !== id)
+      saveCustomThemes(updated)
+      return updated
+    })
     if (themeId === id) setThemeId("default")
   }
 
   const handleSaveCustomTheme = (theme: Theme) => {
     setCustomThemes((prev) => {
       const existing = prev.findIndex((t) => t.id === theme.id)
+      let updated: Theme[]
       if (existing >= 0) {
-        const updated = [...prev]
+        updated = [...prev]
         updated[existing] = theme
-        return updated
+      } else {
+        updated = [...prev, theme]
       }
-      return [...prev, theme]
+      saveCustomThemes(updated)
+      return updated
     })
     setThemeId(theme.id)
     setThemeDialogOpen(false)
