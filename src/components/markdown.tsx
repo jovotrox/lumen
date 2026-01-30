@@ -1,5 +1,5 @@
 import { Link } from "@tanstack/react-router"
-import { addDays, nextMonday } from "date-fns"
+import { addDays, isWeekend, nextMonday, nextSaturday } from "date-fns"
 import React from "react"
 import ReactMarkdown from "react-markdown"
 import { CodeProps, LiProps } from "react-markdown/lib/ast-to-react"
@@ -16,8 +16,12 @@ import { formatDate, toDateString } from "../utils/date"
 import {
   canMoveListItemUp,
   canMoveListItemDown,
+  canMoveListItemToTop,
+  canMoveListItemToBottom,
   moveListItemUp,
   moveListItemDown,
+  moveListItemToTop,
+  moveListItemToBottom,
 } from "../utils/reorder-list-item"
 import { remarkEmbed } from "../remark-plugins/embed"
 import { remarkPriority } from "../remark-plugins/priority"
@@ -25,6 +29,7 @@ import { remarkTag } from "../remark-plugins/tag"
 import { remarkWikilink } from "../remark-plugins/wikilink"
 import { templateSchema } from "../schema"
 import { cx } from "../utils/cx"
+import { getLeadingEmoji } from "../utils/emoji"
 import {
   getVisibleFrontmatter,
   parseFrontmatter,
@@ -42,7 +47,9 @@ import { GitHubAvatar } from "./github-avatar"
 import { IconButton } from "./icon-button"
 import {
   ArrowDownIcon16,
+  ArrowDownToLineIcon16,
   ArrowUpIcon16,
+  ArrowUpToLineIcon16,
   CalendarDateIcon16,
   CircleSlashIcon16,
   CopyIcon16,
@@ -142,6 +149,25 @@ export const Markdown = React.memo(
 
     const parsedTemplate = templateSchema.omit({ body: true }).safeParse(frontmatter?.template)
 
+    // Extract URL from title if the entire title is a single link (e.g. "# [Google](https://google.com)")
+    // This matches the logic in parse-note.ts
+    const titleUrl = React.useMemo(() => {
+      if (!title) return null
+      // Match: # [text](url) where the entire title content is a single link
+      const match = title.match(/^#\s*\[.*?\]\((https?:\/\/[^)]+)\)$/)
+      return match ? match[1] : null
+    }, [title])
+
+    // Determine the URL to use for favicon: frontmatter.url takes priority, then title link
+    const url = typeof frontmatter?.url === "string" ? frontmatter.url : titleUrl
+
+    // Show favicon when we have a URL,
+    // but not when we're already showing a book cover, avatar, or leading emoji
+    const hasBookCover = frontmatter?.isbn && online
+    const hasAvatar = typeof frontmatter?.github === "string" && online
+    const hasLeadingEmoji = title ? getLeadingEmoji(title.replace(/^#\s*/, "")) !== null : false
+    const showFavicon = online && url && !hasBookCover && !hasAvatar && !hasLeadingEmoji
+
     const contextValue = React.useMemo(
       () => ({
         markdown: children,
@@ -210,6 +236,9 @@ export const Markdown = React.memo(
               ) : null}
               <div className="flex flex-col gap-5">
                 <div className="flex flex-col gap-5 empty:hidden">
+                  {showFavicon && url ? (
+                    <WebsiteFavicon url={url} size={32} className="align-baseline" />
+                  ) : null}
                   {title ? (
                     <MarkdownContent className="[&_h1]:[text-box-trim:trim-start]">
                       {title}
@@ -385,14 +414,6 @@ const anchorUrlSchema = z.union([z.string().url(), z.tuple([z.string().url()])])
 
 function Anchor(props: React.ComponentPropsWithoutRef<"a">) {
   const ref = React.useRef<HTMLAnchorElement>(null)
-  const [isFirst, setIsFirst] = React.useState(false)
-  const { online } = useNetworkState()
-
-  React.useLayoutEffect(() => {
-    if (ref.current) {
-      setIsFirst(checkIsFirst(ref.current))
-    }
-  }, [])
 
   // Transform upload link
   if (props.href?.startsWith(UPLOADS_DIR)) {
@@ -446,12 +467,6 @@ function Anchor(props: React.ComponentPropsWithoutRef<"a">) {
         props.className,
       )}
     >
-      {isFirst && online ? (
-        <WebsiteFavicon
-          url={props.href ?? ""}
-          className="mr-2 [h1>a>&]:inline-block hidden align-baseline"
-        />
-      ) : null}
       {children}
     </a>
   )
@@ -612,8 +627,8 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
     const now = new Date()
     const today = now
     const tomorrow = addDays(now, 1)
-    const todayId = toDateString(today)
-    const tomorrowId = toDateString(tomorrow)
+    const saturday = nextSaturday(now)
+    const monday = nextMonday(now)
 
     type DateOption = {
       label: string
@@ -622,38 +637,44 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
       trailingText: string
     }
 
-    const options: DateOption[] = []
-
-    // Today/Tomorrow: only show if not already on that note
-    if (noteId !== todayId) {
-      options.push({
+    const options: DateOption[] = [
+      {
         label: "Today",
         icon: <CalendarDateIcon16 date={today.getDate()} />,
-        targetId: todayId,
-        trailingText: formatDate(todayId),
-      })
-    }
-    if (noteId !== tomorrowId) {
-      options.push({
+        targetId: toDateString(today),
+        trailingText: formatDate(toDateString(today)),
+      },
+      {
         label: "Tomorrow",
         icon: <CalendarDateIcon16 date={tomorrow.getDate()} />,
-        targetId: tomorrowId,
-        trailingText: formatDate(tomorrowId),
-      })
-    }
-
-    const monday = nextMonday(now)
-    const mondayId = toDateString(monday)
-    if (noteId !== mondayId) {
-      options.push({
+        targetId: toDateString(tomorrow),
+        trailingText: formatDate(toDateString(tomorrow)),
+      },
+      {
+        label: isWeekend(now) ? "Next weekend" : "This weekend",
+        icon: <CalendarDateIcon16 date={saturday.getDate()} />,
+        targetId: toDateString(saturday),
+        trailingText: formatDate(toDateString(saturday)),
+      },
+      {
         label: "Next week",
         icon: <CalendarDateIcon16 date={monday.getDate()} />,
-        targetId: mondayId,
-        trailingText: formatDate(mondayId),
-      })
-    }
+        targetId: toDateString(monday),
+        trailingText: formatDate(toDateString(monday)),
+      },
+    ]
 
-    return options
+    // Filter out current note and duplicates, then sort by date
+    const seen = new Set<string>()
+    const sortedOptions = options
+      .filter((option) => {
+        if (option.targetId === noteId || seen.has(option.targetId)) return false
+        seen.add(option.targetId)
+        return true
+      })
+      .sort((a, b) => a.targetId.localeCompare(b.targetId))
+
+    return sortedOptions
   }, [noteId])
 
   // Get the task line text for copy/cut operations
@@ -739,6 +760,16 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
     [hasNodePosition, markdownBody, nodeStart, nodeEnd],
   )
 
+  const canMoveToTop = React.useMemo(
+    () => (hasNodePosition ? canMoveListItemToTop(markdownBody, nodeStart!, nodeEnd!) : false),
+    [hasNodePosition, markdownBody, nodeStart, nodeEnd],
+  )
+
+  const canMoveToBottom = React.useMemo(
+    () => (hasNodePosition ? canMoveListItemToBottom(markdownBody, nodeStart!, nodeEnd!) : false),
+    [hasNodePosition, markdownBody, nodeStart, nodeEnd],
+  )
+
   const handleMoveUp = React.useCallback(() => {
     if (!hasNodePosition) return
     const result = moveListItemUp(markdownBody, nodeStart!, nodeEnd!)
@@ -750,6 +781,22 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
   const handleMoveDown = React.useCallback(() => {
     if (!hasNodePosition) return
     const result = moveListItemDown(markdownBody, nodeStart!, nodeEnd!)
+    if (result !== null) {
+      onChange?.(result)
+    }
+  }, [hasNodePosition, markdownBody, nodeStart, nodeEnd, onChange])
+
+  const handleMoveToTop = React.useCallback(() => {
+    if (!hasNodePosition) return
+    const result = moveListItemToTop(markdownBody, nodeStart!, nodeEnd!)
+    if (result !== null) {
+      onChange?.(result)
+    }
+  }, [hasNodePosition, markdownBody, nodeStart, nodeEnd, onChange])
+
+  const handleMoveToBottom = React.useCallback(() => {
+    if (!hasNodePosition) return
+    const result = moveListItemToBottom(markdownBody, nodeStart!, nodeEnd!)
     if (result !== null) {
       onChange?.(result)
     }
@@ -854,10 +901,17 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
                     <DropdownMenu.Separator />
                   </>
                 ) : null}
-                {canMoveUp || canMoveDown ? (
+                {canMoveUp || canMoveDown || canMoveToTop || canMoveToBottom ? (
                   <>
                     <DropdownMenu.Group>
                       <DropdownMenu.GroupLabel>Reorder</DropdownMenu.GroupLabel>
+                      <DropdownMenu.Item
+                        icon={<ArrowUpToLineIcon16 />}
+                        onClick={handleMoveToTop}
+                        disabled={!canMoveToTop}
+                      >
+                        Move to top
+                      </DropdownMenu.Item>
                       <DropdownMenu.Item
                         icon={<ArrowUpIcon16 />}
                         onClick={handleMoveUp}
@@ -871,6 +925,13 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
                         disabled={!canMoveDown}
                       >
                         Move down
+                      </DropdownMenu.Item>
+                      <DropdownMenu.Item
+                        icon={<ArrowDownToLineIcon16 />}
+                        onClick={handleMoveToBottom}
+                        disabled={!canMoveToBottom}
+                      >
+                        Move to bottom
                       </DropdownMenu.Item>
                     </DropdownMenu.Group>
                     <DropdownMenu.Separator />
@@ -977,12 +1038,4 @@ function NoteEmbed({ id }: NoteEmbedProps) {
       </div>
     </div>
   )
-}
-
-/**
- * Checks if the given element is the first child of its parent.
- * If there is a text node before the element, it is NOT considered the first child.
- */
-function checkIsFirst(element: HTMLElement) {
-  return element.previousSibling === null
 }
