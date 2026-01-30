@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `42c47a1` - feat: improve theme creation UI with design system components
+- **Último commit:** `1179861` - chore: merge upstream/main - inline note embeds feature
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -200,6 +200,17 @@ git push origin personal
 
 ### 2026-01-30
 
+- **Merge upstream/main**: Sincronizado con proyecto original (commit fb0546d)
+  - Nueva feature: Inline Note Embeds al publicar gists
+  - `![[note-id]]` embeds se convierten en blockquotes al publicar
+  - Conflict resuelto en `src/utils/gist.ts`: Mantenidas ambas funciones (getApiBaseUrl + prepareNoteForGist)
+  - Nuevos archivos: `src/utils/inline-note-embeds.ts` + tests (16 tests)
+  - Actualizado `createGist` y `updateGist` para recibir parámetro `notes`
+  - No requiere rebuild (cambio solo en React)
+- **CI Fix**: Arreglado check de Prettier en GitHub Actions
+  - Formateado CONTEXT.md correctamente
+  - Agregado `.claude/settings.local.json` a `.prettierignore`
+  - Todos los checks del CI ahora pasan (format, lint, test, build)
 - **Quick Note Theme Inheritance**: La ventana de nota rápida (⌥⇧N) ahora hereda el tema seleccionado en Settings
   - Imports `themeAtom` y `customThemesAtom` en quick-note.tsx
   - Aplica tema usando misma lógica que app principal (\_appRoot.tsx)
