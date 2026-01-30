@@ -35,7 +35,8 @@ export default defineConfig({
             type: "image/png",
           },
         ],
-        start_url: "/",
+        start_url: process.env.GITHUB_PAGES ? "/lumen/" : "/",
+        scope: process.env.GITHUB_PAGES ? "/lumen/" : "/",
         display: "standalone",
       },
       workbox: {
