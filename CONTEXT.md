@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Última actualización:** 2026-01-29
+**Última actualización:** 2026-01-30
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `a1cea8a` - chore: remove titlebar height CSS variable setting
+- **Último commit:** `42c47a1` - feat: improve theme creation UI with design system components
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -197,6 +197,21 @@ git push origin personal
 ---
 
 ## Historial de Cambios Importantes
+
+### 2026-01-30
+
+- **Quick Note Theme Inheritance**: La ventana de nota rápida (⌥⇧N) ahora hereda el tema seleccionado en Settings
+  - Imports `themeAtom` y `customThemesAtom` en quick-note.tsx
+  - Aplica tema usando misma lógica que app principal (_appRoot.tsx)
+  - Ambas ventanas (main + quick note) mantienen consistencia visual
+  - No requiere rebuild (cambio solo en React)
+- **Theme Creation UI con Design System**: Mejorada UI de creación de temas personalizados
+  - Input de nombre del tema usa `FormControl` + `TextInput` del design system
+  - Dropdown de selección de tema reemplazado: `<select>` → `DropdownMenu` component
+  - Dropdown tiene mismo estilo que TextInput (border, padding, focus states)
+  - Muestra checkmark en tema seleccionado
+  - Incluye icono ChevronDown para indicar interactividad
+  - No requiere rebuild (cambio solo en React)
 
 ### 2026-01-29
 
