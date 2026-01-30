@@ -202,7 +202,7 @@ git push origin personal
 
 - **Quick Note Theme Inheritance**: La ventana de nota rápida (⌥⇧N) ahora hereda el tema seleccionado en Settings
   - Imports `themeAtom` y `customThemesAtom` en quick-note.tsx
-  - Aplica tema usando misma lógica que app principal (_appRoot.tsx)
+  - Aplica tema usando misma lógica que app principal (\_appRoot.tsx)
   - Ambas ventanas (main + quick note) mantienen consistencia visual
   - No requiere rebuild (cambio solo en React)
 - **Theme Creation UI con Design System**: Mejorada UI de creación de temas personalizados
