@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `fad20d2` - feat: enable update notifier for PWA on iOS
+- **Último commit:** `cd5304f` - docs: update CONTEXT.md with PWA update notifier feature
 
 ### Arquitectura de Actualizaciones Automáticas
 
