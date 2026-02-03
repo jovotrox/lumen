@@ -27,6 +27,7 @@ import { indentedLineWrapExtension } from "../codemirror-extensions/indented-lin
 import { pasteExtension } from "../codemirror-extensions/paste"
 import { spellcheckExtension } from "../codemirror-extensions/spellcheck"
 import { wikilinkExtension } from "../codemirror-extensions/wikilink"
+import { livePreviewExtension } from "../codemirror-extensions/live-preview"
 import { isSignedOutAtom, tagsAtom, templatesAtom, vimModeAtom } from "../global-state"
 import { useAttachFile } from "../hooks/attach-file"
 import { useSaveNote } from "../hooks/note"
@@ -49,6 +50,8 @@ type NoteEditorProps = {
   onEnter?: () => boolean
   disabled?: boolean
   indentWithTab?: boolean
+  /** Enable Obsidian-style live preview (hides syntax on inactive lines) */
+  livePreview?: boolean
 }
 
 const theme = createTheme({
@@ -100,6 +103,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
       onEnter,
       disabled = false,
       indentWithTab = true,
+      livePreview = false,
     },
     ref,
   ) => {
@@ -188,12 +192,17 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
         baseExtensions.push(vim())
       }
 
+      if (livePreview) {
+        baseExtensions.push(livePreviewExtension())
+      }
+
       return baseExtensions
     }, [
       attachFile,
       onPaste, // TODO
       onEnter,
       vimMode,
+      livePreview,
       noteCompletion,
       tagPropertyCompletion,
       tagSyntaxCompletion,

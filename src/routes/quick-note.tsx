@@ -165,6 +165,7 @@ function QuickNoteComponent() {
           autoFocus
           onChange={handleChange}
           minHeight={200}
+          livePreview
         />
       </div>
 
