@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react"
-import { isTauri } from "../utils/tauri"
 
 const VERSION_URL = "https://jovotrox.github.io/lumen/version.json"
 const LOCAL_VERSION_KEY = "lumen-frontend-version"
@@ -53,9 +52,6 @@ export function useUpdateNotifier() {
   const [newVersion, setNewVersion] = useState<string | null>(null)
 
   useEffect(() => {
-    // Only check for updates in Tauri app
-    if (!isTauri()) return
-
     async function checkVersion() {
       try {
         const response = await fetch(VERSION_URL, {
