@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Última actualización:** 2026-02-02
+**Última actualización:** 2026-02-03
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `40e58d9` - feat: add live preview mode to Quick Note
+- **Último commit:** `ffd2ba1` - docs: update CONTEXT.md with quick note live preview feature
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -205,7 +205,7 @@ git push origin personal
 
 ## Historial de Cambios Importantes
 
-### 2026-02-02
+### 2026-02-03
 
 - **Quick Note Live Preview**: Live preview estilo Obsidian para la ventana Quick Note
   - Headers (`#`) ocultan sintaxis y muestran texto estilizado
@@ -215,6 +215,8 @@ git push origin personal
   - Auto-continuación de tareas al presionar Enter
   - Archivos: `live-preview.ts`, `note-editor.tsx`, `quick-note.tsx`
   - No requiere rebuild (cambio solo en React)
+
+### 2026-02-02
 
 - **Hide Completed Tasks Setting**: Nueva preferencia para ocultar tareas completadas en modo lectura
   - Nueva sección "Notes" en Settings con toggle "Hide completed tasks in read mode"
