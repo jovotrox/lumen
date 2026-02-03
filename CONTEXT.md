@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `ffd2ba1` - docs: update CONTEXT.md with quick note live preview feature
+- **Último commit:** `fad20d2` - feat: enable update notifier for PWA on iOS
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -100,40 +100,40 @@ upstream/main ──────┐
 
 ## Archivos Modificados (vs upstream)
 
-| Archivo                                | Tipo de Cambio | Propósito                                             |
-| -------------------------------------- | -------------- | ----------------------------------------------------- |
-| `src-tauri/*`                          | Nuevo          | Wrapper Tauri completo                                |
-| `src/index.tsx`                        | Modificado     | Basepath para GitHub Pages                            |
-| `src/hooks/use-update-notifier.ts`     | Modificado     | Cache clearing en refresh                             |
-| `src/routes/quick-note.tsx`            | Nuevo          | Ventana de nota rápida con live preview               |
-| `src/codemirror-extensions/live-preview.ts` | Nuevo     | Live preview estilo Obsidian para Quick Note          |
-| `src/components/note-editor.tsx`       | Modificado     | Añadido prop livePreview                              |
-| `src/routes/_appRoot.tasks.tsx`        | Nuevo          | Vista Tasks con tareas y notas                        |
-| `src/components/tasks-view.tsx`        | Nuevo          | Componente principal de Tasks                         |
-| `src/components/nav-items.tsx`         | Modificado     | Añadido link a Tasks en sidebar                       |
-| `src/components/markdown.tsx`          | Modificado     | Priority menu + strikethrough + hide completed tasks  |
-| `src/components/github-auth-tauri.tsx` | Nuevo          | OAuth Device Flow                                     |
-| `src/hooks/use-external-links.ts`      | Nuevo          | Links en navegador sistema                            |
-| `src/utils/tauri.ts`                   | Nuevo          | Utilidades Tauri                                      |
-| `src/utils/gist.ts`                    | Modificado     | getApiBaseUrl (Vercel) + inline embeds                |
-| `src/utils/inline-note-embeds.ts`      | Upstream       | Inline embeds al publicar gists                       |
-| `src/utils/reorder-list-item.ts`       | Modificado     | Función moveListItemToEnd                             |
-| `.github/workflows/sync-upstream.yml`  | Nuevo          | Auto-sync con upstream                                |
-| `.github/workflows/deploy-pages.yml`   | Nuevo          | Deploy a GitHub Pages                                 |
-| `.prettierignore`                      | Modificado     | Ignore .claude/settings.local.json                    |
-| `index.html`                           | Modificado     | SPA redirect handler + favicon link                   |
-| `404.html`                             | Nuevo          | GitHub Pages SPA fallback                             |
-| `src/utils/themes.ts`                  | Nuevo          | Sistema de temas (6 built-in + custom)                |
-| `src/utils/theme-sync.ts`              | Nuevo          | Sync themes a `.lumen/themes.json`                    |
-| `src/hooks/use-theme-sync.ts`          | Nuevo          | Hook para sincronizar themes en repo                  |
-| `src/routes/_appRoot.settings.tsx`     | Modificado     | Theme selector + modal + Notes section                |
-| `src/global-state.ts`                  | Modificado     | Atoms para theme + custom themes + hideCompletedTasks |
-| `src/routes/_appRoot.tsx`              | Modificado     | Apply theme + titlebar + theme sync                   |
-| `src/routes/_appRoot.notes_.$.tsx`     | Modificado     | isReadMode prop for hide completed tasks              |
-| `src/components/app-layout.tsx`        | Modificado     | Titlebar padding (collapsed sidebar)                  |
-| `src/components/sidebar.tsx`           | Modificado     | Titlebar padding + drag + border extend               |
-| `src/styles/variables.css`             | Modificado     | color-scheme: dark + titlebar height                  |
-| `vite.config.ts`                       | Modificado     | PWA manifest start_url y scope                        |
+| Archivo                                     | Tipo de Cambio | Propósito                                             |
+| ------------------------------------------- | -------------- | ----------------------------------------------------- |
+| `src-tauri/*`                               | Nuevo          | Wrapper Tauri completo                                |
+| `src/index.tsx`                             | Modificado     | Basepath para GitHub Pages                            |
+| `src/hooks/use-update-notifier.ts`          | Modificado     | Cache clearing + PWA update support                   |
+| `src/routes/quick-note.tsx`                 | Nuevo          | Ventana de nota rápida con live preview               |
+| `src/codemirror-extensions/live-preview.ts` | Nuevo          | Live preview estilo Obsidian para Quick Note          |
+| `src/components/note-editor.tsx`            | Modificado     | Añadido prop livePreview                              |
+| `src/routes/_appRoot.tasks.tsx`             | Nuevo          | Vista Tasks con tareas y notas                        |
+| `src/components/tasks-view.tsx`             | Nuevo          | Componente principal de Tasks                         |
+| `src/components/nav-items.tsx`              | Modificado     | Añadido link a Tasks en sidebar                       |
+| `src/components/markdown.tsx`               | Modificado     | Priority menu + strikethrough + hide completed tasks  |
+| `src/components/github-auth-tauri.tsx`      | Nuevo          | OAuth Device Flow                                     |
+| `src/hooks/use-external-links.ts`           | Nuevo          | Links en navegador sistema                            |
+| `src/utils/tauri.ts`                        | Nuevo          | Utilidades Tauri                                      |
+| `src/utils/gist.ts`                         | Modificado     | getApiBaseUrl (Vercel) + inline embeds                |
+| `src/utils/inline-note-embeds.ts`           | Upstream       | Inline embeds al publicar gists                       |
+| `src/utils/reorder-list-item.ts`            | Modificado     | Función moveListItemToEnd                             |
+| `.github/workflows/sync-upstream.yml`       | Nuevo          | Auto-sync con upstream                                |
+| `.github/workflows/deploy-pages.yml`        | Nuevo          | Deploy a GitHub Pages                                 |
+| `.prettierignore`                           | Modificado     | Ignore .claude/settings.local.json                    |
+| `index.html`                                | Modificado     | SPA redirect handler + favicon link                   |
+| `404.html`                                  | Nuevo          | GitHub Pages SPA fallback                             |
+| `src/utils/themes.ts`                       | Nuevo          | Sistema de temas (6 built-in + custom)                |
+| `src/utils/theme-sync.ts`                   | Nuevo          | Sync themes a `.lumen/themes.json`                    |
+| `src/hooks/use-theme-sync.ts`               | Nuevo          | Hook para sincronizar themes en repo                  |
+| `src/routes/_appRoot.settings.tsx`          | Modificado     | Theme selector + modal + Notes section                |
+| `src/global-state.ts`                       | Modificado     | Atoms para theme + custom themes + hideCompletedTasks |
+| `src/routes/_appRoot.tsx`                   | Modificado     | Apply theme + titlebar + theme sync                   |
+| `src/routes/_appRoot.notes_.$.tsx`          | Modificado     | isReadMode prop for hide completed tasks              |
+| `src/components/app-layout.tsx`             | Modificado     | Titlebar padding (collapsed sidebar)                  |
+| `src/components/sidebar.tsx`                | Modificado     | Titlebar padding + drag + border extend               |
+| `src/styles/variables.css`                  | Modificado     | color-scheme: dark + titlebar height                  |
+| `vite.config.ts`                            | Modificado     | PWA manifest start_url y scope                        |
 
 ---
 
@@ -207,6 +207,13 @@ git push origin personal
 
 ### 2026-02-03
 
+- **PWA Update Notifier for iOS**: El verificador de actualizaciones ahora funciona en PWA (no solo Tauri)
+  - Eliminada restricción `if (!isTauri())` del hook
+  - PWA en iOS home screen ahora verifica `version.json` al abrir
+  - Si hay nueva versión y no hay borradores: auto-refresh
+  - Si hay borradores: muestra banner para refrescar manualmente
+  - Archivo modificado: `use-update-notifier.ts`
+  - No requiere rebuild (cambio solo en React)
 - **Quick Note Live Preview**: Live preview estilo Obsidian para la ventana Quick Note
   - Headers (`#`) ocultan sintaxis y muestran texto estilizado
   - Bold (`**`) e Italic (`*`, `_`) ocultan marcadores y aplican formato
