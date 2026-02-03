@@ -886,6 +886,7 @@ function NotePage() {
                 <Markdown
                   noteId={noteId}
                   onChange={setEditorValue}
+                  isReadMode
                   emptyText={
                     <>
                       Empty note (double <span className="coarse:hidden">click</span>

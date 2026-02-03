@@ -23,6 +23,7 @@ import {
   githubRepoAtom,
   githubUserAtom,
   hasOpenAIKeyAtom,
+  hideCompletedTasksAtom,
   isCloningRepoAtom,
   isRepoClonedAtom,
   isRepoNotClonedAtom,
@@ -49,6 +50,7 @@ function RouteComponent() {
           <GitHubSection />
           <AppearanceSection />
           <EditorSection />
+          <NotesSection />
           <AISection />
           <div className="p-5 text-text-tertiary self-center flex flex-col gap-3 items-center">
             <span className="text-sm">
@@ -451,6 +453,25 @@ function EditorSection() {
         <Switch id="vim-mode" checked={vimMode} onCheckedChange={setVimMode} />
         <label htmlFor="vim-mode" className="select-none">
           Vim mode
+        </label>
+      </div>
+    </SettingsSection>
+  )
+}
+
+function NotesSection() {
+  const [hideCompletedTasks, setHideCompletedTasks] = useAtom(hideCompletedTasksAtom)
+
+  return (
+    <SettingsSection title="Notes">
+      <div className="flex items-center gap-2.5 leading-4">
+        <Switch
+          id="hide-completed-tasks"
+          checked={hideCompletedTasks}
+          onCheckedChange={setHideCompletedTasks}
+        />
+        <label htmlFor="hide-completed-tasks" className="select-none">
+          Hide completed tasks in read mode
         </label>
       </div>
     </SettingsSection>

@@ -1,5 +1,6 @@
 import { Link } from "@tanstack/react-router"
 import { addDays, isWeekend, nextMonday, nextSaturday } from "date-fns"
+import { useAtomValue } from "jotai"
 import React from "react"
 import ReactMarkdown from "react-markdown"
 import { CodeProps, LiProps } from "react-markdown/lib/ast-to-react"
@@ -9,6 +10,7 @@ import rehypeRaw from "rehype-raw"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import { z } from "zod"
+import { hideCompletedTasksAtom } from "../global-state"
 import { UPLOADS_DIR } from "../hooks/attach-file"
 import { useNoteById } from "../hooks/note"
 import { useMoveTask } from "../hooks/task"
@@ -82,6 +84,7 @@ export type MarkdownProps = {
   onChange?: (value: string) => void
   emptyText?: React.ReactNode
   noteId?: string
+  isReadMode?: boolean
 }
 
 const MarkdownContext = React.createContext<{
@@ -90,6 +93,7 @@ const MarkdownContext = React.createContext<{
   markdownBodyStartOffset: number
   onChange?: (value: string) => void
   noteId?: string
+  isReadMode?: boolean
 }>({
   markdown: "",
   markdownBody: "",
@@ -105,6 +109,7 @@ export const Markdown = React.memo(
     onChange,
     emptyText = "Empty",
     noteId,
+    isReadMode = false,
   }: MarkdownProps) => {
     const { online } = useNetworkState()
     const { frontmatter, content } = React.useMemo(() => parseFrontmatter(children), [children])
@@ -181,8 +186,9 @@ export const Markdown = React.memo(
             }
           : undefined,
         noteId,
+        isReadMode,
       }),
-      [body, children, markdownBodyStartOffset, onChange, noteId],
+      [body, children, markdownBodyStartOffset, onChange, noteId, isReadMode],
     )
 
     return (
@@ -596,11 +602,12 @@ function extractListItemElements(children: React.ReactNode): {
 }
 
 function ListItem({ node, children, ordered, className, ...props }: LiProps) {
-  const { markdownBody, markdown, markdownBodyStartOffset, onChange, noteId } =
+  const { markdownBody, markdown, markdownBodyStartOffset, onChange, noteId, isReadMode } =
     React.useContext(MarkdownContext)
   const isTask = className?.includes("task-list-item")
   const [isMenuOpen, setIsMenuOpen] = React.useState(false)
   const moveTask = useMoveTask()
+  const hideCompletedTasks = useAtomValue(hideCompletedTasksAtom)
 
   const { checkbox, content, nestedLists } = React.useMemo(
     () => extractListItemElements(children),
@@ -801,6 +808,11 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
       onChange?.(result)
     }
   }, [hasNodePosition, markdownBody, nodeStart, nodeEnd, onChange])
+
+  // Hide completed tasks in read mode if setting is enabled
+  if (isTask && hideCompletedTasks && isReadMode && checkbox?.checked) {
+    return null
+  }
 
   return (
     <li

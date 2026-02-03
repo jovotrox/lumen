@@ -876,6 +876,8 @@ export const sidebarAtom = atomWithStorage<"expanded" | "collapsed">("sidebar", 
 
 export const calendarLayoutAtom = atomWithStorage<"week" | "month">("calendar-layout", "week")
 
+export const hideCompletedTasksAtom = atomWithStorage<boolean>("hide-completed-tasks", false)
+
 // -----------------------------------------------------------------------------
 // AI
 // -----------------------------------------------------------------------------
