@@ -1,5 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "installCommand": "npm install --include=dev",
   "devCommand": "vite dev --host --port $PORT",
   "rewrites": [
     { "source": "/cors-proxy/:path*", "destination": "/api/cors-proxy?path=:path" },

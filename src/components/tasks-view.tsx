@@ -5,18 +5,10 @@ import { useInView } from "react-intersection-observer"
 import { useDebounce } from "use-debounce"
 import { useSearchTasks } from "../hooks/search-tasks"
 import { useSaveNote } from "../hooks/note"
-import { useMoveTask } from "../hooks/task"
 import { Note } from "../schema"
-import { generateNoteId } from "../utils/note-id"
 import { parseQuery } from "../utils/search"
 import { formatNumber, pluralize } from "../utils/pluralize"
-import {
-  deleteTask,
-  prioritizeTask,
-  scheduleTask,
-  updateTaskCompletion,
-  updateTaskText,
-} from "../utils/task"
+import { scheduleTask } from "../utils/task"
 import { Button } from "./button"
 import { DropdownMenu } from "./dropdown-menu"
 import { IconButton } from "./icon-button"
@@ -35,7 +27,7 @@ import { NoteFavicon } from "./note-favicon"
 import { NotePreviewCard } from "./note-preview-card"
 import { PillButton } from "./pill-button"
 import { SearchInput } from "./search-input"
-import { TaskItem } from "./task-item"
+import { TaskListItemWrapper } from "./task-list-item-wrapper"
 
 type View = "grid" | "list"
 
@@ -57,7 +49,6 @@ const initialVisibleNotes = 6
 export function TasksView({ query, view, onQueryChange, onViewChange }: TasksViewProps) {
   const searchTasks = useSearchTasks()
   const saveNote = useSaveNote()
-  const moveTask = useMoveTask()
 
   // Task item animation
   const [shouldAnimateTasks, setShouldAnimateTasks] = useState(false)
@@ -347,116 +338,14 @@ export function TasksView({ query, view, onQueryChange, onViewChange }: TasksVie
                 }}
                 className="list-none"
               >
-                <TaskItem
+                <TaskListItemWrapper
                   task={task}
-                  noteId={task.note.id}
-                  onCompletedChange={(completed) => {
-                    enableTaskAnimation()
-
-                    const updatedContent = updateTaskCompletion({
-                      content: task.note.content,
-                      task,
-                      completed,
-                    })
-
-                    if (updatedContent !== task.note.content) {
-                      saveNote({ id: task.note.id, content: updatedContent })
-                    }
-                  }}
-                  onTextChange={(newText) => {
-                    enableTaskAnimation()
-
-                    const updatedContent = updateTaskText({
-                      content: task.note.content,
-                      task,
-                      text: newText,
-                    })
-
-                    if (updatedContent !== task.note.content) {
-                      saveNote({ id: task.note.id, content: updatedContent })
-                    }
-                  }}
+                  onMutate={enableTaskAnimation}
                   onSchedule={(date) => {
-                    enableTaskAnimation()
-
                     const updatedContent = scheduleTask({
                       content: task.note.content,
                       task,
                       date,
-                    })
-
-                    if (updatedContent !== task.note.content) {
-                      saveNote({ id: task.note.id, content: updatedContent })
-                    }
-                  }}
-                  onPriorityChange={(priority) => {
-                    enableTaskAnimation()
-
-                    const updatedContent = prioritizeTask({
-                      content: task.note.content,
-                      task,
-                      priority,
-                    })
-
-                    if (updatedContent !== task.note.content) {
-                      saveNote({ id: task.note.id, content: updatedContent })
-                    }
-                  }}
-                  onDelete={() => {
-                    enableTaskAnimation()
-
-                    const updatedContent = deleteTask({
-                      content: task.note.content,
-                      task,
-                    })
-
-                    if (updatedContent !== task.note.content) {
-                      saveNote({ id: task.note.id, content: updatedContent })
-                    }
-                  }}
-                  onMoveTo={(targetNoteId) => {
-                    enableTaskAnimation()
-
-                    // Compute nodeEnd by finding end of task line from startOffset
-                    let nodeEnd = task.startOffset
-                    while (
-                      nodeEnd < task.note.content.length &&
-                      task.note.content[nodeEnd] !== "\n"
-                    ) {
-                      nodeEnd++
-                    }
-
-                    moveTask({
-                      sourceNoteId: task.note.id,
-                      targetNoteId,
-                      sourceMarkdown: task.note.content,
-                      nodeStart: task.startOffset,
-                      nodeEnd,
-                    })
-                  }}
-                  onCreateNote={async (title) => {
-                    enableTaskAnimation()
-
-                    // Get task line text
-                    const lineStart = task.startOffset
-                    let lineEnd = task.startOffset
-                    while (
-                      lineEnd < task.note.content.length &&
-                      task.note.content[lineEnd] !== "\n"
-                    ) {
-                      lineEnd++
-                    }
-                    const taskLine = task.note.content.slice(lineStart, lineEnd).trim()
-
-                    // Create new note with task content
-                    const id = generateNoteId()
-                    const content = `# ${title}\n\n${taskLine}`
-                    await saveNote({ id, content })
-
-                    // Delete task from source note
-                    const updatedContent = deleteTask({
-                      content: task.note.content,
-                      task,
                     })
 
                     if (updatedContent !== task.note.content) {

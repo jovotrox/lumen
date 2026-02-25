@@ -102,6 +102,13 @@ export const MarkdownContext = React.createContext<{
   markdownBodyStartOffset: 0,
 })
 
+export type ListItemExtensions = {
+  /** Extra menu items rendered inside the More actions dropdown */
+  extraMenuItems?: React.ReactNode
+}
+
+export const ListItemExtensionsContext = React.createContext<ListItemExtensions>({})
+
 export const Markdown = React.memo(
   ({
     children,
@@ -646,6 +653,7 @@ function extractListItemElements(children: React.ReactNode): {
 function ListItem({ node, children, ordered, className, ...props }: LiProps) {
   const { markdownBody, markdown, markdownBodyStartOffset, onChange, noteId, isReadMode } =
     React.useContext(MarkdownContext)
+  const extensions = React.useContext(ListItemExtensionsContext)
   const isTask = className?.includes("task-list-item")
   const [isMoveMenuOpen, setIsMoveMenuOpen] = React.useState(false)
   const [isMoreMenuOpen, setIsMoreMenuOpen] = React.useState(false)
@@ -935,6 +943,7 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
                   </DropdownMenu.Item>
                   <DropdownMenu.Separator />
                 </div>
+                {extensions.extraMenuItems}
                 {canMoveUp || canMoveDown || canMoveToTop || canMoveToBottom ? (
                   <>
                     <DropdownMenu.Group>
