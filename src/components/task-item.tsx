@@ -9,6 +9,7 @@ import { Checkbox } from "./checkbox"
 import { DropdownMenu } from "./dropdown-menu"
 import { IconButton } from "./icon-button"
 import {
+  ArrowDownRightIcon16,
   CalendarDateIcon16,
   CircleSlashIcon16,
   FlagFillIcon16,
@@ -18,6 +19,7 @@ import {
 import { Markdown } from "./markdown"
 import { NoteEditor } from "./note-editor"
 import { NoteLink } from "./note-link"
+import { NotePickerPopover, NotePickerDialog } from "./note-picker"
 
 type TaskItemProps = {
   task: Task
@@ -29,6 +31,8 @@ type TaskItemProps = {
   onSchedule?: (date: string | null) => void
   onPriorityChange?: (priority: 1 | 2 | 3 | null) => void
   onDelete?: () => void
+  onMoveTo?: (targetNoteId: string) => void
+  onCreateNote?: (title: string) => void
 }
 
 export function TaskItem({
@@ -41,6 +45,8 @@ export function TaskItem({
   onSchedule,
   onPriorityChange,
   onDelete,
+  onMoveTo,
+  onCreateNote,
 }: TaskItemProps) {
   const note = useNoteById(noteId)
   const noteLabel = note?.displayName ?? noteId
@@ -52,6 +58,9 @@ export function TaskItem({
   const [mode, setMode] = useState<"read" | "write">("read")
   const [pendingText, setPendingText] = useState(task.text)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const [isMoveMenuOpen, setIsMoveMenuOpen] = useState(false)
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = useState(false)
+  const isAnyMenuOpen = isMenuOpen || isMoveMenuOpen || isMoveDialogOpen
   const buttonRef = useRef<HTMLDivElement>(null)
 
   const commitChange = useCallback(() => {
@@ -138,7 +147,7 @@ export function TaskItem({
         "flex rounded-lg gap-1 p-1 cursor-text focus-ring @container",
         mode === "read" && "hover:bg-bg-hover",
         mode === "write" && "ring-2 ring-inset ring-border-focus",
-        isMenuOpen && "bg-bg-hover",
+        isAnyMenuOpen && "bg-bg-hover",
         className,
       )}
       tabIndex={0}
@@ -184,121 +193,188 @@ export function TaskItem({
         ) : null}
       </div>
       {mode === "read" ? (
-        <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen} modal={false}>
-          <DropdownMenu.Trigger
-            render={
-              <IconButton aria-label="More actions" disableTooltip className="ml-1">
-                <MoreIcon16 />
-              </IconButton>
-            }
-          />
-          <DropdownMenu.Content align="end" width={280}>
-            <DropdownMenu.Group>
-              <DropdownMenu.GroupLabel>Schedule</DropdownMenu.GroupLabel>
-              {(() => {
-                const today = new Date()
-                return task.date !== toDateString(today) ? (
-                  <DropdownMenu.Item
-                    icon={<CalendarDateIcon16 date={today.getDate()} />}
-                    onClick={() => onSchedule?.(toDateString(today))}
-                    trailingVisual={
-                      <span className="text-text-secondary">{format(today, "EEE")}</span>
+        <div className="flex gap-0.5 ml-1">
+          {onMoveTo ? (
+            <NotePickerPopover
+              open={isMoveMenuOpen}
+              onOpenChange={setIsMoveMenuOpen}
+              placeholder="Move to…"
+              exclude={[noteId]}
+              onSelect={(targetNoteId) => {
+                onMoveTo(targetNoteId)
+                setIsMoveMenuOpen(false)
+              }}
+              onCreateNote={
+                onCreateNote
+                  ? (title) => {
+                      onCreateNote(title)
+                      setIsMoveMenuOpen(false)
                     }
-                  >
-                    Today
-                  </DropdownMenu.Item>
-                ) : null
-              })()}
-              {(() => {
-                const tomorrow = addDays(new Date(), 1)
-                return task.date !== toDateString(tomorrow) ? (
+                  : undefined
+              }
+              trigger={
+                <IconButton
+                  aria-label="Move to…"
+                  tooltipSide="top"
+                  className="hidden sm:fine:inline-flex coarse:hidden!"
+                >
+                  <ArrowDownRightIcon16 />
+                </IconButton>
+              }
+            />
+          ) : null}
+          <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen} modal={false}>
+            <DropdownMenu.Trigger
+              render={
+                <IconButton aria-label="More actions" disableTooltip>
+                  <MoreIcon16 />
+                </IconButton>
+              }
+            />
+            <DropdownMenu.Content align="end" width={280}>
+              {onMoveTo ? (
+                <div className="sm:fine:hidden">
                   <DropdownMenu.Item
-                    icon={<CalendarDateIcon16 date={tomorrow.getDate()} />}
-                    onClick={() => onSchedule?.(toDateString(tomorrow))}
-                    trailingVisual={
-                      <span className="text-text-secondary">{format(tomorrow, "EEE")}</span>
-                    }
+                    icon={<ArrowDownRightIcon16 />}
+                    onClick={() => setIsMoveDialogOpen(true)}
                   >
-                    Tomorrow
+                    Move to…
                   </DropdownMenu.Item>
-                ) : null
-              })()}
-              {(() => {
-                const now = new Date()
-                const weekendDate = nextSaturday(now)
-                const label = isWeekend(now) ? "Next weekend" : "This weekend"
-                return task.date !== toDateString(weekendDate) ? (
-                  <DropdownMenu.Item
-                    icon={<CalendarDateIcon16 date={weekendDate.getDate()} />}
-                    onClick={() => onSchedule?.(toDateString(weekendDate))}
-                    trailingVisual={
-                      <span className="text-text-secondary">
-                        {format(weekendDate, "EEE MMM d")}
-                      </span>
-                    }
-                  >
-                    {label}
-                  </DropdownMenu.Item>
-                ) : null
-              })()}
-              {(() => {
-                const mondayDate = nextMonday(new Date())
-                return task.date !== toDateString(mondayDate) ? (
-                  <DropdownMenu.Item
-                    icon={<CalendarDateIcon16 date={mondayDate.getDate()} />}
-                    onClick={() => onSchedule?.(toDateString(mondayDate))}
-                    trailingVisual={
-                      <span className="text-text-secondary">{format(mondayDate, "EEE MMM d")}</span>
-                    }
-                  >
-                    Next week
-                  </DropdownMenu.Item>
-                ) : null
-              })()}
-              {task.date !== null ? (
-                <DropdownMenu.Item icon={<CircleSlashIcon16 />} onClick={() => onSchedule?.(null)}>
-                  No date
-                </DropdownMenu.Item>
+                  <DropdownMenu.Separator />
+                </div>
               ) : null}
-            </DropdownMenu.Group>
-            <DropdownMenu.Separator />
-            <DropdownMenu.Group>
-              <DropdownMenu.GroupLabel>Priority</DropdownMenu.GroupLabel>
-              <DropdownMenu.Item
-                icon={<FlagFillIcon16 className="text-[var(--red-9)] epaper:text-text" />}
-                selected={task.priority === 1}
-                onClick={() => onPriorityChange?.(1)}
-              >
-                High
+              <DropdownMenu.Group>
+                <DropdownMenu.GroupLabel>Schedule</DropdownMenu.GroupLabel>
+                {(() => {
+                  const today = new Date()
+                  return task.date !== toDateString(today) ? (
+                    <DropdownMenu.Item
+                      icon={<CalendarDateIcon16 date={today.getDate()} />}
+                      onClick={() => onSchedule?.(toDateString(today))}
+                      trailingVisual={
+                        <span className="text-text-secondary">{format(today, "EEE")}</span>
+                      }
+                    >
+                      Today
+                    </DropdownMenu.Item>
+                  ) : null
+                })()}
+                {(() => {
+                  const tomorrow = addDays(new Date(), 1)
+                  return task.date !== toDateString(tomorrow) ? (
+                    <DropdownMenu.Item
+                      icon={<CalendarDateIcon16 date={tomorrow.getDate()} />}
+                      onClick={() => onSchedule?.(toDateString(tomorrow))}
+                      trailingVisual={
+                        <span className="text-text-secondary">{format(tomorrow, "EEE")}</span>
+                      }
+                    >
+                      Tomorrow
+                    </DropdownMenu.Item>
+                  ) : null
+                })()}
+                {(() => {
+                  const now = new Date()
+                  const weekendDate = nextSaturday(now)
+                  const label = isWeekend(now) ? "Next weekend" : "This weekend"
+                  return task.date !== toDateString(weekendDate) ? (
+                    <DropdownMenu.Item
+                      icon={<CalendarDateIcon16 date={weekendDate.getDate()} />}
+                      onClick={() => onSchedule?.(toDateString(weekendDate))}
+                      trailingVisual={
+                        <span className="text-text-secondary">
+                          {format(weekendDate, "EEE MMM d")}
+                        </span>
+                      }
+                    >
+                      {label}
+                    </DropdownMenu.Item>
+                  ) : null
+                })()}
+                {(() => {
+                  const mondayDate = nextMonday(new Date())
+                  return task.date !== toDateString(mondayDate) ? (
+                    <DropdownMenu.Item
+                      icon={<CalendarDateIcon16 date={mondayDate.getDate()} />}
+                      onClick={() => onSchedule?.(toDateString(mondayDate))}
+                      trailingVisual={
+                        <span className="text-text-secondary">
+                          {format(mondayDate, "EEE MMM d")}
+                        </span>
+                      }
+                    >
+                      Next week
+                    </DropdownMenu.Item>
+                  ) : null
+                })()}
+                {task.date !== null ? (
+                  <DropdownMenu.Item
+                    icon={<CircleSlashIcon16 />}
+                    onClick={() => onSchedule?.(null)}
+                  >
+                    No date
+                  </DropdownMenu.Item>
+                ) : null}
+              </DropdownMenu.Group>
+              <DropdownMenu.Separator />
+              <DropdownMenu.Group>
+                <DropdownMenu.GroupLabel>Priority</DropdownMenu.GroupLabel>
+                <DropdownMenu.Item
+                  icon={<FlagFillIcon16 className="text-[var(--red-9)] epaper:text-text" />}
+                  selected={task.priority === 1}
+                  onClick={() => onPriorityChange?.(1)}
+                >
+                  High
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  icon={<FlagFillIcon16 className="text-[var(--orange-9)] epaper:text-text" />}
+                  selected={task.priority === 2}
+                  onClick={() => onPriorityChange?.(2)}
+                >
+                  Medium
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  icon={<FlagFillIcon16 className="text-[var(--blue-9)] epaper:text-text" />}
+                  selected={task.priority === 3}
+                  onClick={() => onPriorityChange?.(3)}
+                >
+                  Low
+                </DropdownMenu.Item>
+                <DropdownMenu.Item
+                  icon={<CircleSlashIcon16 />}
+                  selected={task.priority === null}
+                  onClick={() => onPriorityChange?.(null)}
+                >
+                  No priority
+                </DropdownMenu.Item>
+              </DropdownMenu.Group>
+              <DropdownMenu.Separator />
+              <DropdownMenu.Item variant="danger" icon={<TrashIcon16 />} onClick={onDelete}>
+                Delete task
               </DropdownMenu.Item>
-              <DropdownMenu.Item
-                icon={<FlagFillIcon16 className="text-[var(--orange-9)] epaper:text-text" />}
-                selected={task.priority === 2}
-                onClick={() => onPriorityChange?.(2)}
-              >
-                Medium
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                icon={<FlagFillIcon16 className="text-[var(--blue-9)] epaper:text-text" />}
-                selected={task.priority === 3}
-                onClick={() => onPriorityChange?.(3)}
-              >
-                Low
-              </DropdownMenu.Item>
-              <DropdownMenu.Item
-                icon={<CircleSlashIcon16 />}
-                selected={task.priority === null}
-                onClick={() => onPriorityChange?.(null)}
-              >
-                No priority
-              </DropdownMenu.Item>
-            </DropdownMenu.Group>
-            <DropdownMenu.Separator />
-            <DropdownMenu.Item variant="danger" icon={<TrashIcon16 />} onClick={onDelete}>
-              Delete task
-            </DropdownMenu.Item>
-          </DropdownMenu.Content>
-        </DropdownMenu>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+          {onMoveTo ? (
+            <NotePickerDialog
+              open={isMoveDialogOpen}
+              onOpenChange={setIsMoveDialogOpen}
+              placeholder="Move to…"
+              exclude={[noteId]}
+              onSelect={(targetNoteId) => {
+                onMoveTo(targetNoteId)
+                setIsMoveDialogOpen(false)
+              }}
+              onCreateNote={
+                onCreateNote
+                  ? (title) => {
+                      onCreateNote(title)
+                      setIsMoveDialogOpen(false)
+                    }
+                  : undefined
+              }
+            />
+          ) : null}
+        </div>
       ) : null}
     </div>
   )
