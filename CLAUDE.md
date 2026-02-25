@@ -284,7 +284,7 @@ cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 6. **Mantener compatibilidad** con upstream para facilitar merges futuros
 7. **No modificar .env.local** - contiene el GitHub OAuth Client ID del usuario
 8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features
-9. **Actualizar CONTEXT.md** después de cambios importantes (ver sección abajo)
+9. **OBLIGATORIO: Actualizar CONTEXT.md** después de cada feature nueva o fix de errores importantes - SIEMPRE actualizar antes de terminar la sesión. Sin excepciones.
 10. **Confirmar antes de hacer push** - SIEMPRE pedir confirmación al usuario antes de ejecutar `git push`
 
 ---
