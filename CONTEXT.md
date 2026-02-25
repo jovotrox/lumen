@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal`
 - **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `92bd9ba` - fix: resolve Git LFS pointers in GitHub Pages and Tauri
+- **Último commit:** `caaa11f` - feat: unify task rendering using ListItem from upstream + fix Vercel build
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -100,41 +100,43 @@ upstream/main ──────┐
 
 ## Archivos Modificados (vs upstream)
 
-| Archivo                                     | Tipo de Cambio | Propósito                                                 |
-| ------------------------------------------- | -------------- | --------------------------------------------------------- |
-| `src-tauri/*`                               | Nuevo          | Wrapper Tauri completo                                    |
-| `src/index.tsx`                             | Modificado     | Basepath para GitHub Pages                                |
-| `src/hooks/use-update-notifier.ts`          | Modificado     | Cache clearing + PWA update support                       |
-| `src/routes/quick-note.tsx`                 | Nuevo          | Ventana de nota rápida con live preview                   |
-| `src/codemirror-extensions/live-preview.ts` | Nuevo          | Live preview estilo Obsidian para Quick Note              |
-| `src/components/note-editor.tsx`            | Modificado     | Añadido prop livePreview                                  |
-| `src/routes/_appRoot.tasks.tsx`             | Nuevo          | Vista Tasks con tareas y notas                            |
-| `src/components/tasks-view.tsx`             | Nuevo          | Componente principal de Tasks                             |
-| `src/components/nav-items.tsx`              | Modificado     | Añadido link a Tasks en sidebar                           |
-| `src/components/markdown.tsx`               | Modificado     | Priority menu + strikethrough + hide completed tasks      |
-| `src/components/github-auth-tauri.tsx`      | Nuevo          | OAuth Device Flow                                         |
-| `src/hooks/use-external-links.ts`           | Nuevo          | Links en navegador sistema                                |
-| `src/utils/tauri.ts`                        | Nuevo          | Utilidades Tauri                                          |
-| `src/utils/git-lfs.ts`                      | Modificado     | LFS resolution con API base URL + llamadas directas Tauri |
-| `src/utils/gist.ts`                         | Modificado     | getApiBaseUrl (Vercel) + inline embeds                    |
-| `src/utils/inline-note-embeds.ts`           | Upstream       | Inline embeds al publicar gists                           |
-| `src/utils/reorder-list-item.ts`            | Modificado     | Función moveListItemToEnd                                 |
-| `.github/workflows/sync-upstream.yml`       | Nuevo          | Auto-sync con upstream                                    |
-| `.github/workflows/deploy-pages.yml`        | Nuevo          | Deploy a GitHub Pages                                     |
-| `.prettierignore`                           | Modificado     | Ignore .claude/settings.local.json                        |
-| `index.html`                                | Modificado     | SPA redirect handler + favicon link                       |
-| `404.html`                                  | Nuevo          | GitHub Pages SPA fallback                                 |
-| `src/utils/themes.ts`                       | Nuevo          | Sistema de temas (6 built-in + custom)                    |
-| `src/utils/theme-sync.ts`                   | Nuevo          | Sync themes a `.lumen/themes.json`                        |
-| `src/hooks/use-theme-sync.ts`               | Nuevo          | Hook para sincronizar themes en repo                      |
-| `src/routes/_appRoot.settings.tsx`          | Modificado     | Theme selector + modal + Notes section                    |
-| `src/global-state.ts`                       | Modificado     | Atoms para theme + custom themes + hideCompletedTasks     |
-| `src/routes/_appRoot.tsx`                   | Modificado     | Apply theme + titlebar + theme sync                       |
-| `src/routes/_appRoot.notes_.$.tsx`          | Modificado     | isReadMode prop for hide completed tasks                  |
-| `src/components/app-layout.tsx`             | Modificado     | Titlebar padding (collapsed sidebar)                      |
-| `src/components/sidebar.tsx`                | Modificado     | Titlebar padding + drag + border extend                   |
-| `src/styles/variables.css`                  | Modificado     | color-scheme: dark + titlebar height                      |
-| `vite.config.ts`                            | Modificado     | PWA manifest start_url y scope                            |
+| Archivo                                     | Tipo de Cambio | Propósito                                                                  |
+| ------------------------------------------- | -------------- | -------------------------------------------------------------------------- |
+| `src-tauri/*`                               | Nuevo          | Wrapper Tauri completo                                                     |
+| `src/index.tsx`                             | Modificado     | Basepath para GitHub Pages                                                 |
+| `src/hooks/use-update-notifier.ts`          | Modificado     | Cache clearing + PWA update support                                        |
+| `src/routes/quick-note.tsx`                 | Nuevo          | Ventana de nota rápida con live preview                                    |
+| `src/codemirror-extensions/live-preview.ts` | Nuevo          | Live preview estilo Obsidian para Quick Note                               |
+| `src/components/note-editor.tsx`            | Modificado     | Añadido prop livePreview                                                   |
+| `src/routes/_appRoot.tasks.tsx`             | Nuevo          | Vista Tasks con tareas y notas                                             |
+| `src/components/tasks-view.tsx`             | Modificado     | Tasks page (usa TaskListItemWrapper)                                       |
+| `src/components/nav-items.tsx`              | Modificado     | Añadido link a Tasks en sidebar                                            |
+| `src/components/markdown.tsx`               | Modificado     | Priority menu + strikethrough + hide completed + ListItemExtensionsContext |
+| `src/components/task-list-item-wrapper.tsx` | Nuevo          | Wrapper que renderiza tasks via MarkdownContent/ListItem                   |
+| `src/components/github-auth-tauri.tsx`      | Nuevo          | OAuth Device Flow                                                          |
+| `src/hooks/use-external-links.ts`           | Nuevo          | Links en navegador sistema                                                 |
+| `src/utils/tauri.ts`                        | Nuevo          | Utilidades Tauri                                                           |
+| `src/utils/git-lfs.ts`                      | Modificado     | LFS resolution con API base URL + llamadas directas Tauri                  |
+| `src/utils/gist.ts`                         | Modificado     | getApiBaseUrl (Vercel) + inline embeds                                     |
+| `src/utils/inline-note-embeds.ts`           | Upstream       | Inline embeds al publicar gists                                            |
+| `src/utils/reorder-list-item.ts`            | Modificado     | Función moveListItemToEnd                                                  |
+| `.github/workflows/sync-upstream.yml`       | Nuevo          | Auto-sync con upstream                                                     |
+| `.github/workflows/deploy-pages.yml`        | Nuevo          | Deploy a GitHub Pages                                                      |
+| `.prettierignore`                           | Modificado     | Ignore .claude/settings.local.json                                         |
+| `index.html`                                | Modificado     | SPA redirect handler + favicon link                                        |
+| `404.html`                                  | Nuevo          | GitHub Pages SPA fallback                                                  |
+| `src/utils/themes.ts`                       | Nuevo          | Sistema de temas (6 built-in + custom)                                     |
+| `src/utils/theme-sync.ts`                   | Nuevo          | Sync themes a `.lumen/themes.json`                                         |
+| `src/hooks/use-theme-sync.ts`               | Nuevo          | Hook para sincronizar themes en repo                                       |
+| `src/routes/_appRoot.settings.tsx`          | Modificado     | Theme selector + modal + Notes section                                     |
+| `src/global-state.ts`                       | Modificado     | Atoms para theme + custom themes + hideCompletedTasks                      |
+| `src/routes/_appRoot.tsx`                   | Modificado     | Apply theme + titlebar + theme sync                                        |
+| `src/routes/_appRoot.notes_.$.tsx`          | Modificado     | isReadMode prop for hide completed tasks                                   |
+| `src/components/app-layout.tsx`             | Modificado     | Titlebar padding (collapsed sidebar)                                       |
+| `src/components/sidebar.tsx`                | Modificado     | Titlebar padding + drag + border extend                                    |
+| `src/styles/variables.css`                  | Modificado     | color-scheme: dark + titlebar height                                       |
+| `vite.config.ts`                            | Modificado     | PWA manifest start_url y scope                                             |
+| `vercel.json`                               | Modificado     | installCommand para devDependencies                                        |
 
 ---
 
@@ -208,6 +210,14 @@ git push origin personal
 
 ### 2026-02-25
 
+- **Unificar rendering de tasks (Tasks page usa ListItem de upstream)**: La página Tasks ahora renderiza tasks a través de `MarkdownContent`/`ListItem` en vez de un componente separado `TaskItem`
+  - Cualquier cambio futuro de upstream a `ListItem` (nuevas acciones, mejoras UI) aparece automáticamente en la Tasks page
+  - `ListItemExtensionsContext`: Context para inyectar menu items extra al dropdown de `ListItem` (~3 líneas de cambio en `ListItem`)
+  - `TaskListItemWrapper`: Wrapper que renderiza tasks via `MarkdownContent`, con inline editing y schedule via context injection
+  - `tasks-view.tsx` simplificado: usa `TaskListItemWrapper` en vez de `TaskItem` con muchos callbacks
+  - Archivos: `markdown.tsx` (+9 líneas), `task-list-item-wrapper.tsx` (nuevo), `tasks-view.tsx` (simplificado)
+  - No requiere rebuild (cambio solo en React)
+- **Fix Vercel build**: Añadido `installCommand: "npm install --include=dev"` en `vercel.json` para que Vercel instale devDependencies (vite)
 - **Fix Git LFS en GitHub Pages y Tauri**: Los archivos adjuntos (imágenes, etc.) trackeados con Git LFS no se mostraban ("File not found")
   - Causa: `resolveGitLfsPointer` y `uploadToGitLfsServer` usaban URLs relativas (`/git-lfs-file`) que solo funcionan en Vercel (app oficial)
   - Fix web: Prepend `VITE_API_BASE_URL` para usar el proxy de Vercel
