@@ -56,7 +56,6 @@
 
 .markdown h1 {
   font-size: var(--font-size-xl);
-  letter-spacing: -0.01em;
 }
 
 .markdown h2 {
@@ -151,4 +150,8 @@
 
 .markdown .katex-html {
   display: none;
+}
+
+.markdown [id^="user-content-fn-"] {
+  color: var(--color-text-secondary);
 }

@@ -39,7 +39,7 @@ export const Route = createFileRoute("/_appRoot")({
     links: [
       {
         rel: "icon",
-        href: `/favicon-${import.meta.env.MODE}.svg`,
+        href: import.meta.env.DEV ? "/favicon-dev.svg" : "/favicon.svg",
       },
     ],
   }),

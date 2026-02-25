@@ -1,5 +1,4 @@
 import { Link } from "@tanstack/react-router"
-import { addDays, isWeekend, nextMonday, nextSaturday } from "date-fns"
 import { useAtomValue } from "jotai"
 import React from "react"
 import ReactMarkdown from "react-markdown"
@@ -12,9 +11,9 @@ import remarkMath from "remark-math"
 import { z } from "zod"
 import { hideCompletedTasksAtom } from "../global-state"
 import { UPLOADS_DIR } from "../hooks/attach-file"
-import { useNoteById } from "../hooks/note"
+import { useNoteById, useSaveNote } from "../hooks/note"
 import { useMoveTask } from "../hooks/task"
-import { formatDate, toDateString } from "../utils/date"
+import { generateNoteId } from "../utils/note-id"
 import {
   canMoveListItemUp,
   canMoveListItemDown,
@@ -49,10 +48,10 @@ import { GitHubAvatar } from "./github-avatar"
 import { IconButton } from "./icon-button"
 import {
   ArrowDownIcon16,
+  ArrowDownRightIcon16,
   ArrowDownToLineIcon16,
   ArrowUpIcon16,
   ArrowUpToLineIcon16,
-  CalendarDateIcon16,
   CircleSlashIcon16,
   CopyIcon16,
   CutIcon16,
@@ -61,7 +60,9 @@ import {
   MoreIcon16,
   TrashIcon16,
 } from "./icons"
+import { FootnoteRefLink } from "./footnote-ref-link"
 import { NoteLink } from "./note-link"
+import { NotePickerPopover, NotePickerDialog } from "./note-picker"
 import { PillButton } from "./pill-button"
 import { PriorityIndicator } from "./priority-indicator"
 import { PropertyKeyEditor } from "./property-key"
@@ -70,6 +71,7 @@ import { SyntaxHighlighter, TemplateSyntaxHighlighter } from "./syntax-highlight
 import { TagLink } from "./tag-link"
 import { Tooltip } from "./tooltip"
 import { WebsiteFavicon } from "./website-favicon"
+import { getImdbId } from "../utils/imdb"
 
 // Get the API base URL for web (Vercel deployment)
 function getApiBaseUrl(): string {
@@ -87,7 +89,7 @@ export type MarkdownProps = {
   isReadMode?: boolean
 }
 
-const MarkdownContext = React.createContext<{
+export const MarkdownContext = React.createContext<{
   markdown: string
   markdownBody: string
   markdownBodyStartOffset: number
@@ -168,10 +170,13 @@ export const Markdown = React.memo(
 
     // Show favicon when we have a URL,
     // but not when we're already showing a book cover, avatar, or leading emoji
+    const imdbId = getImdbId(url ?? null)
     const hasBookCover = frontmatter?.isbn && online
+    const hasImdbPoster = imdbId && online
     const hasAvatar = typeof frontmatter?.github === "string" && online
     const hasLeadingEmoji = title ? getLeadingEmoji(title.replace(/^#\s*/, "")) !== null : false
-    const showFavicon = online && url && !hasBookCover && !hasAvatar && !hasLeadingEmoji
+    const showFavicon =
+      online && url && !hasBookCover && !hasImdbPoster && !hasAvatar && !hasLeadingEmoji
 
     const contextValue = React.useMemo(
       () => ({
@@ -230,13 +235,18 @@ export const Markdown = React.memo(
             <>
               {frontmatter?.isbn && online ? (
                 // If the note has an ISBN, show the book cover
-                <div className="mb-4 inline-flex">
+                <div className="mb-5 inline-flex">
                   <BookCover isbn={`${frontmatter.isbn}`} />
+                </div>
+              ) : null}
+              {hasImdbPoster && url ? (
+                <div className="mb-5 inline-flex">
+                  <ImdbPoster imdbId={imdbId} url={url} />
                 </div>
               ) : null}
               {typeof frontmatter?.github === "string" && online ? (
                 // If the note has a GitHub username, show the GitHub avatar
-                <div className="mb-4 inline-flex">
+                <div className="mb-5 inline-flex">
                   <GitHubAvatar login={frontmatter.github} size={64} />
                 </div>
               ) : null}
@@ -301,7 +311,7 @@ function isObjectEmpty(obj: Record<string, unknown>) {
   return Object.keys(obj).length === 0
 }
 
-function MarkdownContent({ children, className }: { children: string; className?: string }) {
+export function MarkdownContent({ children, className }: { children: string; className?: string }) {
   return (
     <ReactMarkdown
       className={cx("markdown", className)}
@@ -369,6 +379,23 @@ function MarkdownContent({ children, className }: { children: string; className?
   )
 }
 
+function ImdbPoster({ imdbId, url }: { imdbId: string; url: string }) {
+  return (
+    <a
+      className="inline-block rounded-sm shadow-md transition-all duration-100 ease-out hover:shadow-lg hover:-translate-y-1 hover:scale-[1.03] hover:-rotate-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-border-focus"
+      href={url}
+      target="_blank"
+      rel="noopener noreferrer"
+    >
+      <img
+        src={`/api/tmdb-poster?imdbId=${imdbId}&size=w185`}
+        alt="IMDb poster"
+        className="aspect-[2/3] h-[120px] rounded-sm object-cover bg-bg-tertiary"
+      />
+    </a>
+  )
+}
+
 function BookCover({ isbn }: { isbn: string }) {
   return (
     <a
@@ -420,6 +447,21 @@ const anchorUrlSchema = z.union([z.string().url(), z.tuple([z.string().url()])])
 
 function Anchor(props: React.ComponentPropsWithoutRef<"a">) {
   const ref = React.useRef<HTMLAnchorElement>(null)
+
+  // Render footnote references with a preview hover card
+  if (props.href?.startsWith("#user-content-fn-")) {
+    return (
+      <FootnoteRefLink href={props.href} className={props.className}>
+        {props.children}
+      </FootnoteRefLink>
+    )
+  }
+
+  // Render other anchor links (e.g. footnote back-refs) as plain links
+  if (props.href?.startsWith("#")) {
+    // eslint-disable-next-line jsx-a11y/anchor-has-content
+    return <a {...props} />
+  }
 
   // Transform upload link
   if (props.href?.startsWith(UPLOADS_DIR)) {
@@ -605,9 +647,13 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
   const { markdownBody, markdown, markdownBodyStartOffset, onChange, noteId, isReadMode } =
     React.useContext(MarkdownContext)
   const isTask = className?.includes("task-list-item")
-  const [isMenuOpen, setIsMenuOpen] = React.useState(false)
+  const [isMoveMenuOpen, setIsMoveMenuOpen] = React.useState(false)
+  const [isMoreMenuOpen, setIsMoreMenuOpen] = React.useState(false)
+  const [isMoveDialogOpen, setIsMoveDialogOpen] = React.useState(false)
+  const isMenuOpen = isMoveMenuOpen || isMoreMenuOpen || isMoveDialogOpen
   const moveTask = useMoveTask()
   const hideCompletedTasks = useAtomValue(hideCompletedTasksAtom)
+  const saveNote = useSaveNote()
 
   const { checkbox, content, nestedLists } = React.useMemo(
     () => extractListItemElements(children),
@@ -628,61 +674,6 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
     },
     [markdownBodyStartOffset, markdown, moveTask, node.position, noteId],
   )
-
-  // Memoize date options to avoid recalculating on every render
-  const dateOptions = React.useMemo(() => {
-    const now = new Date()
-    const today = now
-    const tomorrow = addDays(now, 1)
-    const saturday = nextSaturday(now)
-    const monday = nextMonday(now)
-
-    type DateOption = {
-      label: string
-      icon: React.ReactNode
-      targetId: string
-      trailingText: string
-    }
-
-    const options: DateOption[] = [
-      {
-        label: "Today",
-        icon: <CalendarDateIcon16 date={today.getDate()} />,
-        targetId: toDateString(today),
-        trailingText: formatDate(toDateString(today)),
-      },
-      {
-        label: "Tomorrow",
-        icon: <CalendarDateIcon16 date={tomorrow.getDate()} />,
-        targetId: toDateString(tomorrow),
-        trailingText: formatDate(toDateString(tomorrow)),
-      },
-      {
-        label: isWeekend(now) ? "Next weekend" : "This weekend",
-        icon: <CalendarDateIcon16 date={saturday.getDate()} />,
-        targetId: toDateString(saturday),
-        trailingText: formatDate(toDateString(saturday)),
-      },
-      {
-        label: "Next week",
-        icon: <CalendarDateIcon16 date={monday.getDate()} />,
-        targetId: toDateString(monday),
-        trailingText: formatDate(toDateString(monday)),
-      },
-    ]
-
-    // Filter out current note and duplicates, then sort by date
-    const seen = new Set<string>()
-    const sortedOptions = options
-      .filter((option) => {
-        if (option.targetId === noteId || seen.has(option.targetId)) return false
-        seen.add(option.targetId)
-        return true
-      })
-      .sort((a, b) => a.targetId.localeCompare(b.targetId))
-
-    return sortedOptions
-  }, [noteId])
 
   // Get the task line text for copy/cut operations
   const getTaskLine = React.useCallback(() => {
@@ -753,6 +744,20 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
     [markdownBody, node.position, onChange, currentPriority],
   )
 
+  const handleCreateNote = React.useCallback(
+    async (title: string) => {
+      const id = generateNoteId()
+      const content = `# ${title}\n\n${getTaskLine()}`
+
+      // Create new note with task content
+      await saveNote({ id, content })
+
+      // Delete task from this note
+      deleteTask()
+    },
+    [getTaskLine, saveNote, deleteTask],
+  )
+
   const nodeStart = node.position?.start.offset
   const nodeEnd = node.position?.end.offset
   const hasNodePosition = nodeStart != null && nodeEnd != null
@@ -818,15 +823,16 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
     <li
       {...props}
       className={cx(
-        "transition-[background-color] rounded-lg",
+        "rounded-lg",
         isMenuOpen &&
           "bg-bg-selection epaper:bg-transparent epaper:ring-1 epaper:ring-border epaper:ring-inset",
         className,
       )}
     >
       <div
-        className={cx("flex p-1.5 gap-1.5", {
-          "relative pr-10 coarse:pr-12 group/task": isTask && onChange,
+        className={cx("flex p-1.5 gap-1.5 rounded-lg", {
+          "relative pr-10 sm:fine:pr-[74px] coarse:pr-12 group/task": isTask && onChange,
+          "hover:bg-bg-hover": isTask && !isMenuOpen,
         })}
       >
         <div className="size-7 coarse:size-9 shrink-0 grid place-items-center">
@@ -876,12 +882,39 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
           {content}
         </div>
         {isTask && onChange ? (
-          <div className="absolute top-1 right-1">
-            <DropdownMenu open={isMenuOpen} onOpenChange={setIsMenuOpen} modal={false}>
+          <div className="absolute top-1 right-1 flex gap-0.5">
+            <NotePickerPopover
+              open={isMoveMenuOpen}
+              onOpenChange={setIsMoveMenuOpen}
+              placeholder="Move to…"
+              exclude={noteId ? [noteId] : []}
+              onSelect={(targetNoteId) => {
+                handleMoveTo(targetNoteId)
+                setIsMoveMenuOpen(false)
+              }}
+              onCreateNote={(title) => {
+                handleCreateNote(title)
+                setIsMoveMenuOpen(false)
+              }}
+              trigger={
+                <IconButton
+                  aria-label="Move to…"
+                  tooltipSide="top"
+                  className={cx(
+                    "opacity-0 group-hover/task:opacity-100 focus-visible:opacity-100",
+                    isMenuOpen && "opacity-100",
+                    "hidden sm:fine:inline-flex coarse:hidden!",
+                  )}
+                >
+                  <ArrowDownRightIcon16 />
+                </IconButton>
+              }
+            />
+            <DropdownMenu open={isMoreMenuOpen} onOpenChange={setIsMoreMenuOpen} modal={false}>
               <DropdownMenu.Trigger
                 render={
                   <IconButton
-                    aria-label="Task actions"
+                    aria-label="More actions"
                     tooltipSide="top"
                     className={cx(
                       "opacity-0 group-hover/task:opacity-100 focus-visible:opacity-100 coarse:opacity-100",
@@ -892,27 +925,16 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
                   </IconButton>
                 }
               />
-              <DropdownMenu.Content align="end" width={280} sideOffset={8} alignOffset={-4}>
-                {noteId && dateOptions.length > 0 ? (
-                  <>
-                    <DropdownMenu.Group>
-                      <DropdownMenu.GroupLabel>Move to</DropdownMenu.GroupLabel>
-                      {dateOptions.map((option) => (
-                        <DropdownMenu.Item
-                          key={option.targetId}
-                          icon={option.icon}
-                          onClick={() => handleMoveTo(option.targetId)}
-                          trailingVisual={
-                            <span className="text-text-secondary">{option.trailingText}</span>
-                          }
-                        >
-                          {option.label}
-                        </DropdownMenu.Item>
-                      ))}
-                    </DropdownMenu.Group>
-                    <DropdownMenu.Separator />
-                  </>
-                ) : null}
+              <DropdownMenu.Content align="end" width={280} sideOffset={8}>
+                <div className="sm:fine:hidden">
+                  <DropdownMenu.Item
+                    icon={<ArrowDownRightIcon16 />}
+                    onClick={() => setIsMoveDialogOpen(true)}
+                  >
+                    Move to…
+                  </DropdownMenu.Item>
+                  <DropdownMenu.Separator />
+                </div>
                 {canMoveUp || canMoveDown || canMoveToTop || canMoveToBottom ? (
                   <>
                     <DropdownMenu.Group>
@@ -1002,6 +1024,20 @@ function ListItem({ node, children, ordered, className, ...props }: LiProps) {
                 </DropdownMenu.Item>
               </DropdownMenu.Content>
             </DropdownMenu>
+            <NotePickerDialog
+              open={isMoveDialogOpen}
+              onOpenChange={setIsMoveDialogOpen}
+              placeholder="Move to…"
+              exclude={noteId ? [noteId] : []}
+              onSelect={(targetNoteId) => {
+                handleMoveTo(targetNoteId)
+                setIsMoveDialogOpen(false)
+              }}
+              onCreateNote={(title) => {
+                handleCreateNote(title)
+                setIsMoveDialogOpen(false)
+              }}
+            />
           </div>
         ) : null}
       </div>

@@ -564,31 +564,9 @@ function NotePage() {
   return (
     <PageLayout
       title={
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-2">
           <span className="truncate">{noteId}.md</span>
-          {isDraft ? (
-            <DropdownMenu modal={false}>
-              <DropdownMenu.Trigger
-                render={
-                  <IconButton aria-label="Unsaved changes" size="small" className="px-1">
-                    <DraftIndicator />
-                  </IconButton>
-                }
-              />
-              <DropdownMenu.Content>
-                <DropdownMenu.Item
-                  icon={<UndoIcon16 />}
-                  variant="danger"
-                  onClick={() => {
-                    discardChanges()
-                    editorRef.current?.view?.focus()
-                  }}
-                >
-                  Discard changes
-                </DropdownMenu.Item>
-              </DropdownMenu.Content>
-            </DropdownMenu>
-          ) : null}
+          {isDraft ? <DraftIndicator /> : null}
         </div>
       }
       icon={<NoteFavicon note={parsedNote} />}
@@ -608,30 +586,42 @@ function NotePage() {
           ) : null}
 
           <SegmentedControl aria-label="Mode" size="small" className="hidden sm:flex">
-            <Tooltip open={mode === "read" ? false : undefined}>
-              <Tooltip.Trigger
-                render={
-                  <SegmentedControl.Segment selected={mode === "read"} onClick={switchToReading}>
-                    Read
-                  </SegmentedControl.Segment>
-                }
-              />
-              <Tooltip.Content side="bottom" className="text-text-secondary">
-                {toggleModeShortcut}
-              </Tooltip.Content>
-            </Tooltip>
-            <Tooltip open={mode === "write" ? false : undefined}>
-              <Tooltip.Trigger
-                render={
-                  <SegmentedControl.Segment selected={mode === "write"} onClick={switchToWriting}>
-                    Write
-                  </SegmentedControl.Segment>
-                }
-              />
-              <Tooltip.Content side="bottom" className="text-text-secondary">
-                {toggleModeShortcut}
-              </Tooltip.Content>
-            </Tooltip>
+            {mode === "read" ? (
+              <SegmentedControl.Segment selected onClick={switchToReading}>
+                View
+              </SegmentedControl.Segment>
+            ) : (
+              <Tooltip>
+                <Tooltip.Trigger
+                  render={
+                    <SegmentedControl.Segment onClick={switchToReading}>
+                      View
+                    </SegmentedControl.Segment>
+                  }
+                />
+                <Tooltip.Content side="bottom" className="text-text-secondary">
+                  {toggleModeShortcut}
+                </Tooltip.Content>
+              </Tooltip>
+            )}
+            {mode === "write" ? (
+              <SegmentedControl.Segment selected onClick={switchToWriting}>
+                Edit
+              </SegmentedControl.Segment>
+            ) : (
+              <Tooltip>
+                <Tooltip.Trigger
+                  render={
+                    <SegmentedControl.Segment onClick={switchToWriting}>
+                      Edit
+                    </SegmentedControl.Segment>
+                  }
+                />
+                <Tooltip.Content side="bottom" className="text-text-secondary">
+                  {toggleModeShortcut}
+                </Tooltip.Content>
+              </Tooltip>
+            )}
           </SegmentedControl>
           <div className="flex items-center">
             <IconButton
@@ -674,6 +664,20 @@ function NotePage() {
                 }
               />
               <DropdownMenu.Content align="end">
+                {isDraft ? (
+                  <>
+                    <DropdownMenu.Item
+                      icon={<UndoIcon16 />}
+                      onClick={() => {
+                        discardChanges()
+                        editorRef.current?.view?.focus()
+                      }}
+                    >
+                      Discard changes
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator />
+                  </>
+                ) : null}
                 {containerWidth > 800 && (
                   <>
                     <DropdownMenu.Group>
@@ -837,6 +841,7 @@ function NotePage() {
       {/* eslint-disable-next-line jsx-a11y/no-static-element-interactions */}
       <div
         ref={containerRef}
+        className="@container"
         onMouseDown={(event) => {
           // Double click to edit
           if (mode === "read" && event.detail > 1) {
@@ -845,7 +850,7 @@ function NotePage() {
           }
         }}
       >
-        <div className="p-5 lg:p-10">
+        <div className="p-5 @[640px]:p-10">
           <div
             className={cx(
               "flex flex-col gap-8 pb-[50vh]",

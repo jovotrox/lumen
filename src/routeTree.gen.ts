@@ -12,13 +12,13 @@
 
 import { Route as rootRoute } from "./routes/__root"
 import { Route as QuickNoteImport } from "./routes/quick-note"
+import { Route as AiImport } from "./routes/ai"
 import { Route as AppRootImport } from "./routes/_appRoot"
 import { Route as AppRootIndexImport } from "./routes/_appRoot.index"
 import { Route as ShareGistIdImport } from "./routes/share.$gistId"
 import { Route as AppRootTasksImport } from "./routes/_appRoot.tasks"
 import { Route as AppRootSettingsImport } from "./routes/_appRoot.settings"
 import { Route as AppRootFileImport } from "./routes/_appRoot.file"
-import { Route as AppRootChatImport } from "./routes/_appRoot.chat"
 import { Route as AppRootTagsIndexImport } from "./routes/_appRoot.tags.index"
 import { Route as AppRootNotesIndexImport } from "./routes/_appRoot.notes.index"
 import { Route as AppRootTagsSplatImport } from "./routes/_appRoot.tags_.$"
@@ -29,6 +29,12 @@ import { Route as AppRootNotesSplatImport } from "./routes/_appRoot.notes_.$"
 const QuickNoteRoute = QuickNoteImport.update({
   id: "/quick-note",
   path: "/quick-note",
+  getParentRoute: () => rootRoute,
+} as any)
+
+const AiRoute = AiImport.update({
+  id: "/ai",
+  path: "/ai",
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -67,12 +73,6 @@ const AppRootFileRoute = AppRootFileImport.update({
   getParentRoute: () => AppRootRoute,
 } as any)
 
-const AppRootChatRoute = AppRootChatImport.update({
-  id: "/chat",
-  path: "/chat",
-  getParentRoute: () => AppRootRoute,
-} as any)
-
 const AppRootTagsIndexRoute = AppRootTagsIndexImport.update({
   id: "/tags/",
   path: "/tags/",
@@ -108,19 +108,19 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppRootImport
       parentRoute: typeof rootRoute
     }
+    "/ai": {
+      id: "/ai"
+      path: "/ai"
+      fullPath: "/ai"
+      preLoaderRoute: typeof AiImport
+      parentRoute: typeof rootRoute
+    }
     "/quick-note": {
       id: "/quick-note"
       path: "/quick-note"
       fullPath: "/quick-note"
       preLoaderRoute: typeof QuickNoteImport
       parentRoute: typeof rootRoute
-    }
-    "/_appRoot/chat": {
-      id: "/_appRoot/chat"
-      path: "/chat"
-      fullPath: "/chat"
-      preLoaderRoute: typeof AppRootChatImport
-      parentRoute: typeof AppRootImport
     }
     "/_appRoot/file": {
       id: "/_appRoot/file"
@@ -191,7 +191,6 @@ declare module "@tanstack/react-router" {
 // Create and export the route tree
 
 interface AppRootRouteChildren {
-  AppRootChatRoute: typeof AppRootChatRoute
   AppRootFileRoute: typeof AppRootFileRoute
   AppRootSettingsRoute: typeof AppRootSettingsRoute
   AppRootTasksRoute: typeof AppRootTasksRoute
@@ -203,7 +202,6 @@ interface AppRootRouteChildren {
 }
 
 const AppRootRouteChildren: AppRootRouteChildren = {
-  AppRootChatRoute: AppRootChatRoute,
   AppRootFileRoute: AppRootFileRoute,
   AppRootSettingsRoute: AppRootSettingsRoute,
   AppRootTasksRoute: AppRootTasksRoute,
@@ -218,8 +216,8 @@ const AppRootRouteWithChildren = AppRootRoute._addFileChildren(AppRootRouteChild
 
 export interface FileRoutesByFullPath {
   "": typeof AppRootRouteWithChildren
+  "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
-  "/chat": typeof AppRootChatRoute
   "/file": typeof AppRootFileRoute
   "/settings": typeof AppRootSettingsRoute
   "/tasks": typeof AppRootTasksRoute
@@ -232,8 +230,8 @@ export interface FileRoutesByFullPath {
 }
 
 export interface FileRoutesByTo {
+  "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
-  "/chat": typeof AppRootChatRoute
   "/file": typeof AppRootFileRoute
   "/settings": typeof AppRootSettingsRoute
   "/tasks": typeof AppRootTasksRoute
@@ -248,8 +246,8 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   "/_appRoot": typeof AppRootRouteWithChildren
+  "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
-  "/_appRoot/chat": typeof AppRootChatRoute
   "/_appRoot/file": typeof AppRootFileRoute
   "/_appRoot/settings": typeof AppRootSettingsRoute
   "/_appRoot/tasks": typeof AppRootTasksRoute
@@ -265,8 +263,8 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | ""
+    | "/ai"
     | "/quick-note"
-    | "/chat"
     | "/file"
     | "/settings"
     | "/tasks"
@@ -278,8 +276,8 @@ export interface FileRouteTypes {
     | "/tags"
   fileRoutesByTo: FileRoutesByTo
   to:
+    | "/ai"
     | "/quick-note"
-    | "/chat"
     | "/file"
     | "/settings"
     | "/tasks"
@@ -292,8 +290,8 @@ export interface FileRouteTypes {
   id:
     | "__root__"
     | "/_appRoot"
+    | "/ai"
     | "/quick-note"
-    | "/_appRoot/chat"
     | "/_appRoot/file"
     | "/_appRoot/settings"
     | "/_appRoot/tasks"
@@ -308,12 +306,14 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   AppRootRoute: typeof AppRootRouteWithChildren
+  AiRoute: typeof AiRoute
   QuickNoteRoute: typeof QuickNoteRoute
   ShareGistIdRoute: typeof ShareGistIdRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   AppRootRoute: AppRootRouteWithChildren,
+  AiRoute: AiRoute,
   QuickNoteRoute: QuickNoteRoute,
   ShareGistIdRoute: ShareGistIdRoute,
 }
@@ -329,6 +329,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/_appRoot",
+        "/ai",
         "/quick-note",
         "/share/$gistId"
       ]
@@ -336,7 +337,6 @@ export const routeTree = rootRoute
     "/_appRoot": {
       "filePath": "_appRoot.tsx",
       "children": [
-        "/_appRoot/chat",
         "/_appRoot/file",
         "/_appRoot/settings",
         "/_appRoot/tasks",
@@ -347,12 +347,11 @@ export const routeTree = rootRoute
         "/_appRoot/tags/"
       ]
     },
+    "/ai": {
+      "filePath": "ai.tsx"
+    },
     "/quick-note": {
       "filePath": "quick-note.tsx"
-    },
-    "/_appRoot/chat": {
-      "filePath": "_appRoot.chat.tsx",
-      "parent": "/_appRoot"
     },
     "/_appRoot/file": {
       "filePath": "_appRoot.file.tsx",

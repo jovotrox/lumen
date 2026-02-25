@@ -106,7 +106,7 @@ function GitHubSection() {
   if (!githubUser) {
     return (
       <SettingsSection title="GitHub">
-        <div className="text-text-secondary">You're not signed in.</div>
+        <div className="text-text-secondary">You're not signed in</div>
       </SettingsSection>
     )
   }
