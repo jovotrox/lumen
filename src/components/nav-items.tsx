@@ -22,6 +22,7 @@ import {
   OfflineIcon16,
   SettingsFillIcon16,
   SettingsIcon16,
+  LinkIcon16,
   TagFillIcon16,
   TagIcon16,
   TaskListIcon16,
@@ -118,6 +119,16 @@ export function NavItems({
                 onNavigate={onNavigate}
               >
                 Tasks
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/links"
+                search={{ query: undefined, view: "grid" }}
+                icon={<LinkIcon16 />}
+                onNavigate={onNavigate}
+              >
+                Links
               </NavLink>
             </li>
             <li>

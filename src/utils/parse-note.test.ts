@@ -66,6 +66,57 @@ describe("parseNote", () => {
       },
     ])
   })
+
+  test("extracts external links from markdown links", () => {
+    const note = parseNote(
+      "1234",
+      "Check [Google](https://google.com) and [GitHub](https://github.com)",
+    )
+    expect(note.externalLinks).toEqual([
+      { url: "https://google.com", text: "Google" },
+      { url: "https://github.com", text: "GitHub" },
+    ])
+  })
+
+  test("extracts external links from title link", () => {
+    const note = parseNote("1234", "# [My Site](https://example.com)\n\nSome content")
+    expect(note.externalLinks).toEqual([{ url: "https://example.com", text: "My Site" }])
+  })
+
+  test("extracts external links from frontmatter url", () => {
+    const note = parseNote("1234", "---\nurl: https://example.com\n---\n# Title")
+    expect(note.externalLinks).toEqual([
+      { url: "https://example.com", text: "https://example.com" },
+    ])
+  })
+
+  test("does not extract non-http links", () => {
+    const note = parseNote("1234", "[local](file:///tmp/test) and [mail](mailto:test@test.com)")
+    expect(note.externalLinks).toEqual([])
+  })
+
+  test("extracts links inside task items", () => {
+    const note = parseNote("1234", "- [ ] Check [this link](https://example.com)")
+    expect(note.externalLinks).toEqual([{ url: "https://example.com", text: "this link" }])
+  })
+
+  test("extracts bare URLs (autolinks)", () => {
+    const note = parseNote(
+      "1234",
+      "- [ ] https://x.com/user/status/123 and https://collider.com/best-movies/",
+    )
+    expect(note.externalLinks).toEqual([
+      { url: "https://x.com/user/status/123", text: "https://x.com/user/status/123" },
+      { url: "https://collider.com/best-movies/", text: "https://collider.com/best-movies/" },
+    ])
+  })
+
+  test("extracts bare URL in plain text", () => {
+    const note = parseNote("1234", "Visit https://example.com for more info")
+    expect(note.externalLinks).toEqual([
+      { url: "https://example.com", text: "https://example.com" },
+    ])
+  })
 })
 
 describe("isNoteEmpty", () => {

@@ -1,8 +1,10 @@
 import memoize from "fast-memoize"
 import { fromMarkdown } from "mdast-util-from-markdown"
 import { Node, Root } from "mdast-util-from-markdown/lib"
+import { gfmAutolinkLiteralFromMarkdown } from "mdast-util-gfm-autolink-literal"
 import { gfmTaskListItemFromMarkdown } from "mdast-util-gfm-task-list-item"
 import { toString } from "mdast-util-to-string"
+import { gfmAutolinkLiteral } from "micromark-extension-gfm-autolink-literal"
 import { gfmTaskListItem } from "micromark-extension-gfm-task-list-item"
 import { visit } from "unist-util-visit"
 import { z } from "zod"
@@ -10,7 +12,7 @@ import { embed, embedFromMarkdown } from "../remark-plugins/embed"
 import { priority, priorityFromMarkdown } from "../remark-plugins/priority"
 import { tag, tagFromMarkdown } from "../remark-plugins/tag"
 import { wikilink, wikilinkFromMarkdown } from "../remark-plugins/wikilink"
-import { Note, NoteId, NoteType, Task, Template, templateSchema } from "../schema"
+import { ExternalLink, Note, NoteId, NoteType, Task, Template, templateSchema } from "../schema"
 import {
   formatDate,
   formatWeek,
@@ -38,6 +40,7 @@ function _parseNote(id: NoteId, content: string): Note {
   const dates = new Set<string>()
   const links = new Set<NoteId>()
   const tasks: Task[] = []
+  const externalLinks: ExternalLink[] = []
 
   const { frontmatter, content: contentWithoutFrontmatter } = parseFrontmatter(content)
   // Calculate the offset to convert from contentWithoutFrontmatter positions to full content positions
@@ -83,6 +86,17 @@ function _parseNote(id: NoteId, content: string): Note {
           break
         }
 
+        case "link": {
+          const linkUrl = (node as { url?: string }).url
+          if (linkUrl && /^https?:\/\//i.test(linkUrl)) {
+            const text = toString(node) || linkUrl
+            if (!externalLinks.some((l) => l.url === linkUrl && l.text === text)) {
+              externalLinks.push({ url: linkUrl, text })
+            }
+          }
+          break
+        }
+
         case "listItem": {
           if (typeof node.checked === "boolean") {
             const taskContent = getTaskContent(node, value)
@@ -110,9 +124,10 @@ function _parseNote(id: NoteId, content: string): Note {
   // It's important that embed is included after wikilink.
   // embed is a subset of wikilink. In other words, all embeds are also wikilinks.
   // If embed is included before wikilink, all embeds are parsed as wikilinks.
-  const extensions = [gfmTaskListItem(), wikilink(), embed(), tag(), priority()]
+  const extensions = [gfmTaskListItem(), gfmAutolinkLiteral, wikilink(), embed(), tag(), priority()]
   const mdastExtensions = [
     gfmTaskListItemFromMarkdown(),
+    gfmAutolinkLiteralFromMarkdown,
     wikilinkFromMarkdown(),
     embedFromMarkdown(),
     tagFromMarkdown(),
@@ -252,6 +267,13 @@ function _parseNote(id: NoteId, content: string): Note {
     url = frontmatter.url
   }
 
+  // Add frontmatter url to external links if it's http/https and not already captured
+  if (url && /^https?:\/\//i.test(url)) {
+    if (!externalLinks.some((l) => l.url === url)) {
+      externalLinks.push({ url, text: title || url })
+    }
+  }
+
   return {
     id,
     content,
@@ -267,6 +289,7 @@ function _parseNote(id: NoteId, content: string): Note {
     links: Array.from(links),
     tags: Array.from(tags),
     tasks,
+    externalLinks,
     backlinks: [],
   }
 }

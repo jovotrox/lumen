@@ -23,6 +23,7 @@ function makeNote(overrides: Partial<Note> = {}): Note {
     dates: [],
     tags: [],
     tasks: [],
+    externalLinks: [],
     backlinks: [],
     ...overrides,
   }

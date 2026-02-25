@@ -34,6 +34,7 @@ export function WeekLink({ week, text, className }: WeekLinkProps) {
       dates: [],
       tags: [],
       tasks: [],
+      externalLinks: [],
       backlinks,
     }
   }, [existingNote, week, backlinks])

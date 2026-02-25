@@ -18,6 +18,7 @@ import { Route as AppRootIndexImport } from "./routes/_appRoot.index"
 import { Route as ShareGistIdImport } from "./routes/share.$gistId"
 import { Route as AppRootTasksImport } from "./routes/_appRoot.tasks"
 import { Route as AppRootSettingsImport } from "./routes/_appRoot.settings"
+import { Route as AppRootLinksImport } from "./routes/_appRoot.links"
 import { Route as AppRootFileImport } from "./routes/_appRoot.file"
 import { Route as AppRootTagsIndexImport } from "./routes/_appRoot.tags.index"
 import { Route as AppRootNotesIndexImport } from "./routes/_appRoot.notes.index"
@@ -64,6 +65,12 @@ const AppRootTasksRoute = AppRootTasksImport.update({
 const AppRootSettingsRoute = AppRootSettingsImport.update({
   id: "/settings",
   path: "/settings",
+  getParentRoute: () => AppRootRoute,
+} as any)
+
+const AppRootLinksRoute = AppRootLinksImport.update({
+  id: "/links",
+  path: "/links",
   getParentRoute: () => AppRootRoute,
 } as any)
 
@@ -129,6 +136,13 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppRootFileImport
       parentRoute: typeof AppRootImport
     }
+    "/_appRoot/links": {
+      id: "/_appRoot/links"
+      path: "/links"
+      fullPath: "/links"
+      preLoaderRoute: typeof AppRootLinksImport
+      parentRoute: typeof AppRootImport
+    }
     "/_appRoot/settings": {
       id: "/_appRoot/settings"
       path: "/settings"
@@ -192,6 +206,7 @@ declare module "@tanstack/react-router" {
 
 interface AppRootRouteChildren {
   AppRootFileRoute: typeof AppRootFileRoute
+  AppRootLinksRoute: typeof AppRootLinksRoute
   AppRootSettingsRoute: typeof AppRootSettingsRoute
   AppRootTasksRoute: typeof AppRootTasksRoute
   AppRootIndexRoute: typeof AppRootIndexRoute
@@ -203,6 +218,7 @@ interface AppRootRouteChildren {
 
 const AppRootRouteChildren: AppRootRouteChildren = {
   AppRootFileRoute: AppRootFileRoute,
+  AppRootLinksRoute: AppRootLinksRoute,
   AppRootSettingsRoute: AppRootSettingsRoute,
   AppRootTasksRoute: AppRootTasksRoute,
   AppRootIndexRoute: AppRootIndexRoute,
@@ -219,6 +235,7 @@ export interface FileRoutesByFullPath {
   "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
   "/file": typeof AppRootFileRoute
+  "/links": typeof AppRootLinksRoute
   "/settings": typeof AppRootSettingsRoute
   "/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
@@ -233,6 +250,7 @@ export interface FileRoutesByTo {
   "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
   "/file": typeof AppRootFileRoute
+  "/links": typeof AppRootLinksRoute
   "/settings": typeof AppRootSettingsRoute
   "/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
@@ -249,6 +267,7 @@ export interface FileRoutesById {
   "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
   "/_appRoot/file": typeof AppRootFileRoute
+  "/_appRoot/links": typeof AppRootLinksRoute
   "/_appRoot/settings": typeof AppRootSettingsRoute
   "/_appRoot/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
@@ -266,6 +285,7 @@ export interface FileRouteTypes {
     | "/ai"
     | "/quick-note"
     | "/file"
+    | "/links"
     | "/settings"
     | "/tasks"
     | "/share/$gistId"
@@ -279,6 +299,7 @@ export interface FileRouteTypes {
     | "/ai"
     | "/quick-note"
     | "/file"
+    | "/links"
     | "/settings"
     | "/tasks"
     | "/share/$gistId"
@@ -293,6 +314,7 @@ export interface FileRouteTypes {
     | "/ai"
     | "/quick-note"
     | "/_appRoot/file"
+    | "/_appRoot/links"
     | "/_appRoot/settings"
     | "/_appRoot/tasks"
     | "/share/$gistId"
@@ -338,6 +360,7 @@ export const routeTree = rootRoute
       "filePath": "_appRoot.tsx",
       "children": [
         "/_appRoot/file",
+        "/_appRoot/links",
         "/_appRoot/settings",
         "/_appRoot/tasks",
         "/_appRoot/",
@@ -355,6 +378,10 @@ export const routeTree = rootRoute
     },
     "/_appRoot/file": {
       "filePath": "_appRoot.file.tsx",
+      "parent": "/_appRoot"
+    },
+    "/_appRoot/links": {
+      "filePath": "_appRoot.links.tsx",
       "parent": "/_appRoot"
     },
     "/_appRoot/settings": {

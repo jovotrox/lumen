@@ -856,6 +856,25 @@ export const taskSearcherAtom = atom((get) => {
 })
 
 // -----------------------------------------------------------------------------
+// External Links
+// -----------------------------------------------------------------------------
+
+export const externalLinksAtom = atom((get) => {
+  const notes = get(notesAtom)
+  return [...notes.values()].flatMap((note) =>
+    note.externalLinks.map((link) => ({ ...link, note })),
+  )
+})
+
+export const externalLinkSearcherAtom = atom((get) => {
+  const links = get(externalLinksAtom)
+  return new Searcher(links, {
+    keySelector: (link) => [link.url, link.text, link.note.displayName],
+    threshold: 0.8,
+  })
+})
+
+// -----------------------------------------------------------------------------
 // UI state
 // -----------------------------------------------------------------------------
 

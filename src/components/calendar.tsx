@@ -222,6 +222,7 @@ function CalendarWeek({
       dates: [],
       tags: [],
       tasks: [],
+      externalLinks: [],
       backlinks,
     }
   }, [existingNote, weekString, backlinks])
@@ -273,6 +274,7 @@ function CalendarDate({ date, isActive = false }: { date: Date; isActive?: boole
       dates: [],
       tags: [],
       tasks: [],
+      externalLinks: [],
       backlinks,
     }
   }, [existingNote, dateString, backlinks])
@@ -469,6 +471,7 @@ function MonthWeekRow({
       dates: [],
       tags: [],
       tasks: [],
+      externalLinks: [],
       backlinks,
     }
   }, [existingNote, weekString, backlinks])
@@ -574,6 +577,7 @@ function MonthDateCell({
       dates: [],
       tags: [],
       tasks: [],
+      externalLinks: [],
       backlinks,
     }
   }, [existingNote, dateString, backlinks])

@@ -45,6 +45,8 @@ export type Note = {
   tags: string[]
   /** The tasks in the note (e.g. `- [ ] Do laundry` → `{ completed: false, text: "Do laundry" }`) */
   tasks: Task[]
+  /** External URLs (http/https) found in the note content */
+  externalLinks: ExternalLink[]
 
   // ↓ Derived from links
 
@@ -90,6 +92,15 @@ export const fontSchema = z.enum(["sans", "serif", "handwriting", "mono"])
 export type Font = z.infer<typeof fontSchema>
 
 export type TaskWithNote = Task & {
+  note: Note
+}
+
+export type ExternalLink = {
+  url: string
+  text: string
+}
+
+export type LinkWithNote = ExternalLink & {
   note: Note
 }
 

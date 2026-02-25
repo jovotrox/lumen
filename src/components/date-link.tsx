@@ -34,6 +34,7 @@ export function DateLink({ date, text, className }: DateLinkProps) {
       dates: [],
       tags: [],
       tasks: [],
+      externalLinks: [],
       backlinks,
     }
   }, [existingNote, date, backlinks])

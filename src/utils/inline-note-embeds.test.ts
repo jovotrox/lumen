@@ -19,6 +19,7 @@ function createNote(id: NoteId, content: string): Note {
     links: [],
     tags: [],
     tasks: [],
+    externalLinks: [],
     backlinks: [],
   }
 }

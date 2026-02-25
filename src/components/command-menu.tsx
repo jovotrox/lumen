@@ -19,6 +19,7 @@ import {
   CopyIcon16,
   ExternalLinkIcon16,
   GlobeIcon16,
+  LinkIcon16,
   NoteIcon16,
   PinFillIcon12,
   PlusIcon16,
@@ -119,6 +120,19 @@ export function CommandMenu() {
             },
             search: {
               mode: getHasDailyNote() ? "read" : "write",
+              query: undefined,
+              view: "grid",
+            },
+          })
+        },
+      },
+      {
+        label: "Links",
+        icon: <LinkIcon16 />,
+        onSelect: () => {
+          navigate({
+            to: "/links",
+            search: {
               query: undefined,
               view: "grid",
             },
