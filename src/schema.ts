@@ -2,7 +2,7 @@ import { z } from "zod"
 
 export type NoteId = string
 
-export type NoteType = "note" | "daily" | "weekly" | "template"
+export type NoteType = "note" | "daily" | "weekly" | "template" | "project" | "person" | "inbox"
 
 export type Task = {
   completed: boolean
