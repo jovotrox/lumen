@@ -206,7 +206,11 @@ function _parseNote(id: NoteId, content: string): Note {
   }
 
   // Determine the type of the note
-  if (isValidDateString(id)) {
+  // Frontmatter type field takes priority for entity types
+  const fmType = frontmatter.type
+  if (fmType === "project" || fmType === "person" || fmType === "inbox") {
+    type = fmType
+  } else if (isValidDateString(id)) {
     type = "daily"
     // Add the daily note's date to its dates array
     dates.add(id)
@@ -227,6 +231,15 @@ function _parseNote(id: NoteId, content: string): Note {
       break
     case "template":
       displayName = `${(frontmatter.template as Template).name} template`
+      break
+    case "project":
+      displayName = title ? removeLeadingEmoji(title) : id
+      break
+    case "person":
+      displayName = title ? removeLeadingEmoji(title) : id
+      break
+    case "inbox":
+      displayName = title ? removeLeadingEmoji(title) : `Inbox ${id}`
       break
     case "note":
       // If there's a title, use it as the display name
