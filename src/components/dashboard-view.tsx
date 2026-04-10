@@ -261,7 +261,7 @@ export function DashboardView() {
                 })
               }
             }}
-            className="flex items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
           >
             <CalendarPlus size={14} />
             Daily note
@@ -286,7 +286,7 @@ export function DashboardView() {
                 search: { mode: "write", query: undefined, view: "grid" },
               })
             }}
-            className="flex items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
           >
             <ListPlus size={14} />
             New task
@@ -300,7 +300,7 @@ export function DashboardView() {
                 search: { mode: "write", query: undefined, view: "grid" },
               })
             }}
-            className="flex items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
           >
             <FilePlus size={14} />
             New note
