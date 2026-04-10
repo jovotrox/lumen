@@ -18,6 +18,7 @@ import {
   Sparkles,
   Sun,
   Wind,
+  X,
 } from "lucide-react"
 import {
   aiProviderAtom,
@@ -27,6 +28,7 @@ import {
   nicknameAtom,
   notesAtom,
   openaiKeyAtom,
+  nudgeDismissVersionAtom,
   nudgesAtom,
   projectsAtom,
   sortedNotesAtom,
@@ -36,6 +38,7 @@ import {
 } from "../global-state"
 import { generateAISummary } from "../utils/dashboard-ai"
 import { generateNoteId } from "../utils/note-id"
+import { dismissNudge } from "../utils/nudges"
 import { updateTaskCompletion } from "../utils/task"
 import { Checkbox } from "./checkbox"
 import type { Note, Task } from "../schema"
@@ -58,6 +61,12 @@ export function DashboardView() {
   const navigate = useNavigate()
   const tempUnit = useAtomValue(tempUnitAtom)
   const nudges = useAtomValue(nudgesAtom)
+  const setDismissVersion = useSetAtom(nudgeDismissVersionAtom)
+
+  const handleDismissNudge = (id: string) => {
+    dismissNudge(id)
+    setDismissVersion((v) => v + 1)
+  }
   const nickname = useAtomValue(nicknameAtom)
 
   const aiProvider = useAtomValue(aiProviderAtom)
@@ -352,6 +361,13 @@ export function DashboardView() {
                     Process
                   </Link>
                 ) : null}
+                <button
+                  onClick={() => handleDismissNudge(nudge.id)}
+                  className="shrink-0 cursor-pointer rounded p-0.5 text-text-tertiary hover:bg-bg-secondary hover:text-text-secondary"
+                  aria-label="Dismiss"
+                >
+                  <X size={12} />
+                </button>
               </li>
             ))}
           </ul>

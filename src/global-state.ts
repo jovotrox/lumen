@@ -27,7 +27,7 @@ import {
   gitRemove,
   isRepoSynced,
 } from "./utils/git"
-import { detectNudges } from "./utils/nudges"
+import { detectNudges, getDismissedNudges } from "./utils/nudges"
 import { parseNote } from "./utils/parse-note"
 import { removeTemplateFrontmatter } from "./utils/remove-template-frontmatter"
 import { getSampleMarkdownFiles } from "./utils/sample-markdown-files"
@@ -1092,12 +1092,16 @@ export const nudgeInactiveProjectDaysAtom = atomWithStorage<number>(
 export const nudgeInboxThresholdAtom = atomWithStorage<number>("nudge_inbox_threshold", 5)
 export const nudgeNotificationsAtom = atomWithStorage<boolean>("nudge_notifications_enabled", true)
 
+/** Tracks dismissed nudge version — increment to re-evaluate */
+export const nudgeDismissVersionAtom = atom(0)
+
 export const nudgesAtom = atom((get) => {
+  get(nudgeDismissVersionAtom) // re-evaluate when a nudge is dismissed
   const notes = get(notesAtom)
   const settings = {
     staleTaskDays: get(nudgeStaleTaskDaysAtom),
     inactiveProjectDays: get(nudgeInactiveProjectDaysAtom),
     inboxThreshold: get(nudgeInboxThresholdAtom),
   }
-  return detectNudges(notes, settings)
+  return detectNudges(notes, settings, getDismissedNudges())
 })
