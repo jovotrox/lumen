@@ -125,6 +125,12 @@ function QuickNoteComponent() {
   // Keyboard shortcuts
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Cmd/Ctrl + Enter to save and close
+      if ((e.metaKey || e.ctrlKey) && e.key === "Enter") {
+        e.preventDefault()
+        handleSave().then(() => closeWindow())
+        return
+      }
       // Cmd/Ctrl + S to save
       if ((e.metaKey || e.ctrlKey) && e.key === "s") {
         e.preventDefault()
@@ -138,7 +144,7 @@ function QuickNoteComponent() {
     }
     window.addEventListener("keydown", handleKeyDown)
     return () => window.removeEventListener("keydown", handleKeyDown)
-  }, [handleSave, handleEsc])
+  }, [handleSave, handleEsc, closeWindow])
 
   return (
     <div className="flex h-screen flex-col bg-bg font-content text-text">
@@ -187,7 +193,7 @@ function QuickNoteComponent() {
           </div>
         ) : (
           <div className="flex items-center justify-between text-[10px] text-text-tertiary">
-            <span>⌘S to save</span>
+            <span>⌘S save · ⌘↵ save+close</span>
             <span>ESC to close</span>
           </div>
         )}
