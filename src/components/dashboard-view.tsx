@@ -228,10 +228,22 @@ export function DashboardView() {
         {aiSummary ? (
           <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
             {aiSummary}
+            {nudges.length > 0 ? (
+              <span className="text-text-pending">
+                {" "}
+                {nudges.length} item{nudges.length > 1 ? "s" : ""} need your attention.
+              </span>
+            ) : null}
           </p>
         ) : summaryParts.length > 0 ? (
           <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
             You have {joinNodes(summaryParts)}.
+            {nudges.length > 0 ? (
+              <span className="text-text-pending">
+                {" "}
+                {nudges.length} item{nudges.length > 1 ? "s" : ""} need your attention.
+              </span>
+            ) : null}
           </p>
         ) : (
           <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
