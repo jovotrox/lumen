@@ -60,6 +60,8 @@ type NoteEditorProps = {
   indentWithTab?: boolean
   /** Enable Obsidian-style live preview (hides syntax on inactive lines) */
   livePreview?: boolean
+  /** When set, enables autocomplete for frontmatter values of this specific key (used in property editor) */
+  frontmatterKey?: string
 }
 
 const theme = createTheme({
@@ -112,6 +114,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
       disabled = false,
       indentWithTab = true,
       livePreview = false,
+      frontmatterKey,
     },
     ref,
   ) => {
@@ -153,6 +156,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
     const tagPropertyCompletion = useTagPropertyCompletion() // tags: [tag]
     const templateCompletion = useTemplateCompletion()
     const frontmatterValueCompletion = useFrontmatterValueCompletion()
+    const propertyValueCompletion = usePropertyValueCompletion(frontmatterKey)
 
     const extensions = React.useMemo(() => {
       const baseExtensions = [
@@ -167,16 +171,18 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
         ),
         yamlFrontmatter({ content: markdown({ base: markdownLanguage }) }),
         autocompletion({
-          override: [
-            // emojiCompletion,
-            dateCompletion,
-            frontmatterValueCompletion,
-            noteCompletion,
-            mentionCompletion,
-            tagSyntaxCompletion,
-            tagPropertyCompletion,
-            templateCompletion,
-          ],
+          override: frontmatterKey
+            ? [propertyValueCompletion]
+            : [
+                // emojiCompletion,
+                dateCompletion,
+                frontmatterValueCompletion,
+                noteCompletion,
+                mentionCompletion,
+                tagSyntaxCompletion,
+                tagPropertyCompletion,
+                templateCompletion,
+              ],
           icons: false,
         }),
         frontmatterExtension(),
@@ -215,12 +221,14 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
       onEnter,
       vimMode,
       livePreview,
+      frontmatterKey,
       noteCompletion,
       mentionCompletion,
       tagPropertyCompletion,
       tagSyntaxCompletion,
       templateCompletion,
       frontmatterValueCompletion,
+      propertyValueCompletion,
       navigate,
     ])
 
@@ -651,6 +659,37 @@ function useFrontmatterValueCompletion() {
       }
     },
     [getValues],
+  )
+
+  return completion
+}
+
+/** Completion for property value fields in the Properties panel (read mode) */
+function usePropertyValueCompletion(frontmatterKey?: string) {
+  const getValues = useAtomCallback(React.useCallback((get) => get(frontmatterValuesAtom), []))
+
+  const completion = React.useCallback(
+    async (context: CompletionContext): Promise<CompletionResult | null> => {
+      if (!frontmatterKey) return null
+
+      const values = getValues()
+      const existing = values[frontmatterKey]
+      if (!existing || existing.length === 0) return null
+
+      // Match any text typed so far
+      const doc = context.state.doc.toString()
+      const typed = doc.slice(0, context.pos)
+
+      return {
+        from: 0,
+        options: existing
+          .filter((v) => !typed || v.toLowerCase().includes(typed.toLowerCase()))
+          .slice(0, 10)
+          .map((v) => ({ label: v })),
+        filter: false,
+      }
+    },
+    [getValues, frontmatterKey],
   )
 
   return completion

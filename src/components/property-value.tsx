@@ -280,6 +280,7 @@ export function PropertyValueEditor({
               autoFocus={true}
               className="px-2 py-0.5 coarse:px-3 coarse:py-1.5"
               indentWithTab={false}
+              frontmatterKey={key}
               onChange={(text) => {
                 const parsed = parsePrimitiveFromString(text)
                 onChange(parsed)
