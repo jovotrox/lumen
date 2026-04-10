@@ -10,6 +10,7 @@ import {
   isHelpPanelOpenAtom,
   notesAtom,
   pinnedNotesAtom,
+  unprocessedInboxCountAtom,
 } from "../global-state"
 import { cx } from "../utils/cx"
 import { isValidDateString, isValidWeekString, toDateString } from "../utils/date"
@@ -44,6 +45,7 @@ export function NavItems({
 }) {
   const pinnedNotes = useAtomValue(pinnedNotesAtom)
   const hasDailyNote = useAtomValue(hasDailyNoteAtom)
+  const inboxCount = useAtomValue(unprocessedInboxCountAtom)
   const syncText = useSyncStatusText()
   const send = useSetAtom(globalStateMachineAtom)
   const { online } = useNetworkState()
@@ -170,7 +172,14 @@ export function NavItems({
                 icon={<Inbox size={16} />}
                 onNavigate={onNavigate}
               >
-                Inbox
+                <span className="flex items-center gap-2">
+                  Inbox
+                  {inboxCount > 0 ? (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-border-focus px-1 text-[10px] font-medium text-bg">
+                      {inboxCount}
+                    </span>
+                  ) : null}
+                </span>
               </NavLink>
             </li>
           </ul>

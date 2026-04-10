@@ -912,6 +912,17 @@ export const inboxAtom = atom((get) => {
   return items.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
 })
 
+export const unprocessedInboxCountAtom = atom((get) => {
+  const notes = get(notesAtom)
+  let count = 0
+  for (const note of notes.values()) {
+    if (note.type === "inbox" && note.frontmatter.status === "unprocessed") {
+      count++
+    }
+  }
+  return count
+})
+
 // -----------------------------------------------------------------------------
 // Tasks
 // -----------------------------------------------------------------------------
