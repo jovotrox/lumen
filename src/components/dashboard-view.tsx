@@ -199,38 +199,42 @@ export function DashboardView() {
 
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-      {/* Date header */}
-      <header className="flex items-start justify-between">
-        <h1 className="text-4xl font-bold tracking-tight">{dayName}</h1>
-        <div className="flex flex-col items-end gap-0.5 pt-1 text-sm text-text-secondary">
-          <span>{fullDate}</span>
-          {weather ? (
-            <span className="flex items-center gap-1.5">
-              {weather.icon}
-              {weather.temp}°{tempUnit} · {weather.description}
-            </span>
-          ) : null}
-        </div>
-      </header>
+      {/* Date + weather */}
+      <div className="flex items-center justify-between text-sm text-text-secondary">
+        <span>
+          {dayName}, {fullDate}
+        </span>
+        {weather ? (
+          <span className="flex items-center gap-1.5">
+            {weather.icon}
+            {weather.temp}°{tempUnit} · {weather.description}
+          </span>
+        ) : null}
+      </div>
 
       {/* Greeting */}
       <section>
-        <p className="text-2xl font-semibold tracking-tight">
+        <h1 className="text-3xl font-bold leading-snug tracking-tight">
           {getGreeting()}
           {nickname ? `, ${nickname}` : ""}.
-        </p>
-        {aiSummary ? (
-          <p className="mt-2 text-lg leading-relaxed text-text-secondary">{aiSummary}</p>
-        ) : summaryParts.length > 0 ? (
-          <p className="mt-2 text-lg leading-relaxed text-text-secondary">
-            You have {joinNodes(summaryParts)}.
-          </p>
-        ) : (
-          <p className="mt-2 text-lg leading-relaxed text-text-secondary">
-            Nothing pending. Enjoy your day.
-          </p>
-        )}
+          {aiSummary ? (
+            <span className="font-medium text-text-secondary"> {aiSummary}</span>
+          ) : summaryParts.length > 0 ? (
+            <span className="font-medium text-text-secondary">
+              {" "}
+              You have {joinNodes(summaryParts)}.
+            </span>
+          ) : (
+            <span className="font-medium text-text-secondary">
+              {" "}
+              Nothing pending. Enjoy your day.
+            </span>
+          )}
+        </h1>
       </section>
+
+      {/* Divider */}
+      <div className="h-px bg-border-secondary" />
 
       {/* Inbox */}
       {unprocessed.length > 0 ? (
