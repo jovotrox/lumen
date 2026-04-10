@@ -167,6 +167,12 @@ feature/* ← Branches temporales para desarrollo
 | Version Polling   | Check cada 12h + al enfocar, auto-refresh         | `src/hooks/use-update-notifier.ts`                        |
 | Double Escape     | Doble Esc en write mode → save + read mode        | `src/routes/_appRoot.notes_.$.tsx`                        |
 | Auto-save         | Guardado automático cada 2 min en write mode      | `src/routes/_appRoot.notes_.$.tsx`                        |
+| FlowOS Entities   | Project/Person note types via frontmatter         | `src/schema.ts`, `src/utils/parse-note.ts`, `src/global-state.ts` |
+| Projects View     | /projects page con status, owner, task progress   | `src/components/projects-view.tsx`, `src/routes/_appRoot.projects.tsx` |
+| People View       | /people page con roles y task counts              | `src/components/people-view.tsx`, `src/routes/_appRoot.people.tsx` |
+| Mention Picker    | @ y [[ triggers con entity picker agrupado        | `src/components/note-editor.tsx`                          |
+| Smart Inbox       | Quick Note dual mode + /inbox con AI classify     | `src/routes/quick-note.tsx`, `src/components/inbox-view.tsx` |
+| AI Classification | OpenAI/Claude/heuristic para clasificar inbox     | `src/utils/ai-classify.ts`, `src/routes/_appRoot.settings.tsx` |
 
 ### Flujo de Trabajo para Nuevas Features
 

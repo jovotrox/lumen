@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Última actualización:** 2026-02-25
+**Última actualización:** 2026-04-10
 
 ---
 
@@ -10,9 +10,9 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 ### Branch Activo
 
-- **Branch:** `personal`
-- **Estado:** Limpio (sin cambios pendientes)
-- **Último commit:** `caaa11f` - feat: unify task rendering using ListItem from upstream + fix Vercel build
+- **Branch:** `feature/flowos-integration` (desde `personal`)
+- **Estado:** En desarrollo activo — FlowOS integration
+- **Último commit:** Phase 2 Smart Inbox complete
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -127,10 +127,21 @@ upstream/main ──────┐
 | `404.html`                                  | Nuevo          | GitHub Pages SPA fallback                                                  |
 | `src/utils/themes.ts`                       | Nuevo          | Sistema de temas (6 built-in + custom)                                     |
 | `src/utils/theme-sync.ts`                   | Nuevo          | Sync themes a `.lumen/themes.json`                                         |
+| `src/utils/ai-classify.ts`                  | Nuevo          | AI classification (OpenAI, Claude, heuristic fallback)                     |
 | `src/hooks/use-theme-sync.ts`               | Nuevo          | Hook para sincronizar themes en repo                                       |
-| `src/routes/_appRoot.settings.tsx`          | Modificado     | Theme selector + modal + Notes section                                     |
-| `src/global-state.ts`                       | Modificado     | Atoms para theme + custom themes + hideCompletedTasks                      |
-| `src/routes/_appRoot.tsx`                   | Modificado     | Apply theme + titlebar + theme sync                                        |
+| `src/components/projects-view.tsx`          | Nuevo          | Vista de proyectos con status badges y task counts                         |
+| `src/components/people-view.tsx`            | Nuevo          | Vista de personas con roles y task counts                                  |
+| `src/components/inbox-view.tsx`             | Nuevo          | Vista inbox con AI classification y acciones                               |
+| `src/components/ai-key-input.tsx`           | Nuevo          | Input reusable para API keys                                               |
+| `src/routes/_appRoot.projects.tsx`          | Nuevo          | Ruta /projects                                                             |
+| `src/routes/_appRoot.people.tsx`            | Nuevo          | Ruta /people                                                               |
+| `src/routes/_appRoot.inbox.tsx`             | Nuevo          | Ruta /inbox                                                                |
+| `src/routes/_appRoot.settings.tsx`          | Modificado     | Theme selector + AI provider + Claude key                                  |
+| `src/global-state.ts`                       | Modificado     | Atoms: theme, entities, inbox, AI config                                   |
+| `src/routes/_appRoot.tsx`                   | Modificado     | Apply theme + titlebar + inbox mode handler                                |
+| `src/schema.ts`                             | Modificado     | NoteType extended con project/person/inbox                                 |
+| `src/utils/parse-note.ts`                   | Modificado     | Detecta type desde frontmatter                                             |
+| `src/components/note-editor.tsx`            | Modificado     | @ mention trigger + entity type labels en [[                               |
 | `src/routes/_appRoot.notes_.$.tsx`          | Modificado     | isReadMode prop for hide completed tasks                                   |
 | `src/components/app-layout.tsx`             | Modificado     | Titlebar padding (collapsed sidebar)                                       |
 | `src/components/sidebar.tsx`                | Modificado     | Titlebar padding + drag + border extend                                    |
@@ -207,6 +218,27 @@ git push origin personal
 ---
 
 ## Historial de Cambios Importantes
+
+### 2026-04-10
+
+- **FlowOS Integration — Phase 1: Entities + Mention Picker**
+  - `NoteType` extended with `"project" | "person" | "inbox"`
+  - Notes with `type: project/person` in frontmatter detected by `parseNote()`
+  - `projectsAtom`, `peopleAtom` derived from `notesAtom`
+  - `/projects` and `/people` routes with list views, search, status badges
+  - `@` mention trigger in CodeMirror editor opens grouped entity picker (People/Projects/Notes)
+  - `[[` completion enhanced with entity type labels
+  - Lucide React installed for new icons
+  - Archivos: `schema.ts`, `parse-note.ts`, `global-state.ts`, `nav-items.tsx`, `projects-view.tsx`, `people-view.tsx`, `note-editor.tsx`, + route files
+- **FlowOS Integration — Phase 2: Smart Inbox + AI Classification**
+  - Quick Note has Note/Inbox toggle (SegmentedControl)
+  - Inbox mode saves with `type: inbox`, `status: unprocessed`, `source: quick-note` frontmatter
+  - `/inbox` route shows unprocessed items with AI classification
+  - AI classification: OpenAI (gpt-4o-mini) or Claude (haiku) with heuristic fallback
+  - Settings: Claude API key input + AI provider selector (OpenAI/Claude)
+  - Archivos: `quick-note.tsx`, `_appRoot.tsx`, `global-state.ts`, `ai-classify.ts`, `inbox-view.tsx`, `ai-key-input.tsx`, `_appRoot.settings.tsx`, + route files
+- **Theme updates**: Updated GitHub (Primer v2), Notion, VS Code (2025), Obsidian colors. Added live preview for custom theme creation.
+- **Sync workflow fix**: Moved sync-upstream.yml to run from `personal` branch. Reset `main` to mirror upstream.
 
 ### 2026-02-25
 
