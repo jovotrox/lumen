@@ -213,24 +213,22 @@ export function DashboardView() {
       </div>
 
       {/* Greeting */}
-      <section>
-        <h1 className="text-5xl font-bold leading-tight tracking-tight">
+      <section className="flex flex-col gap-3">
+        <h1 className="text-5xl font-bold tracking-tight">
           {getGreeting()}
           {nickname ? `, ${nickname}` : ""}.
-          {aiSummary ? (
-            <span className="font-medium text-text-secondary"> {aiSummary}</span>
-          ) : summaryParts.length > 0 ? (
-            <span className="font-medium text-text-secondary">
-              {" "}
-              You have {joinNodes(summaryParts)}.
-            </span>
-          ) : (
-            <span className="font-medium text-text-secondary">
-              {" "}
-              Nothing pending. Enjoy your day.
-            </span>
-          )}
         </h1>
+        {aiSummary ? (
+          <p className="text-2xl leading-snug text-text-secondary">{aiSummary}</p>
+        ) : summaryParts.length > 0 ? (
+          <p className="text-2xl leading-snug text-text-secondary">
+            You have {joinNodes(summaryParts)}.
+          </p>
+        ) : (
+          <p className="text-2xl leading-snug text-text-secondary">
+            Nothing pending. Enjoy your day.
+          </p>
+        )}
       </section>
 
       {/* Divider */}
