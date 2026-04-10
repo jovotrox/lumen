@@ -1,3 +1,4 @@
+import { FolderOpen, User } from "lucide-react"
 import { Link, LinkComponentProps, useLocation } from "@tanstack/react-router"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { selectAtom } from "jotai/utils"
@@ -140,6 +141,26 @@ export function NavItems({
                 onNavigate={onNavigate}
               >
                 Tags
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/projects"
+                search={{ query: undefined, view: "list" }}
+                icon={<FolderOpen size={16} />}
+                onNavigate={onNavigate}
+              >
+                Projects
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/people"
+                search={{ query: undefined, view: "list" }}
+                icon={<User size={16} />}
+                onNavigate={onNavigate}
+              >
+                People
               </NavLink>
             </li>
           </ul>
