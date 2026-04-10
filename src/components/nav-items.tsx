@@ -93,13 +93,19 @@ export function NavItems({
             </li>
             <li>
               <NavLink
-                to="/notes"
-                search={{ query: undefined, view: "grid" }}
-                activeIcon={<NoteFillIcon16 />}
-                icon={<NoteIcon16 />}
+                to="/inbox"
+                search={{ query: undefined }}
+                icon={<Inbox size={16} />}
                 onNavigate={onNavigate}
               >
-                Notes
+                <span className="flex items-center gap-2">
+                  Inbox
+                  {inboxCount > 0 ? (
+                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-border-focus px-1 text-[10px] font-medium text-bg">
+                      {inboxCount}
+                    </span>
+                  ) : null}
+                </span>
               </NavLink>
             </li>
             <li>
@@ -117,6 +123,27 @@ export function NavItems({
                 onNavigate={onNavigate}
               >
                 Calendar
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/notes"
+                search={{ query: undefined, view: "grid" }}
+                activeIcon={<NoteFillIcon16 />}
+                icon={<NoteIcon16 />}
+                onNavigate={onNavigate}
+              >
+                Notes
+              </NavLink>
+            </li>
+            <li>
+              <NavLink
+                to="/projects"
+                search={{ query: undefined, view: "list" }}
+                icon={<FolderOpen size={16} />}
+                onNavigate={onNavigate}
+              >
+                Projects
               </NavLink>
             </li>
             <li>
@@ -141,27 +168,6 @@ export function NavItems({
             </li>
             <li>
               <NavLink
-                to="/tags"
-                search={{ query: undefined, sort: "name", view: "list" }}
-                activeIcon={<TagFillIcon16 />}
-                icon={<TagIcon16 />}
-                onNavigate={onNavigate}
-              >
-                Tags
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
-                to="/projects"
-                search={{ query: undefined, view: "list" }}
-                icon={<FolderOpen size={16} />}
-                onNavigate={onNavigate}
-              >
-                Projects
-              </NavLink>
-            </li>
-            <li>
-              <NavLink
                 to="/people"
                 search={{ query: undefined, view: "list" }}
                 icon={<User size={16} />}
@@ -172,19 +178,13 @@ export function NavItems({
             </li>
             <li>
               <NavLink
-                to="/inbox"
-                search={{ query: undefined }}
-                icon={<Inbox size={16} />}
+                to="/tags"
+                search={{ query: undefined, sort: "name", view: "list" }}
+                activeIcon={<TagFillIcon16 />}
+                icon={<TagIcon16 />}
                 onNavigate={onNavigate}
               >
-                <span className="flex items-center gap-2">
-                  Inbox
-                  {inboxCount > 0 ? (
-                    <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-border-focus px-1 text-[10px] font-medium text-bg">
-                      {inboxCount}
-                    </span>
-                  ) : null}
-                </span>
+                Tags
               </NavLink>
             </li>
           </ul>
