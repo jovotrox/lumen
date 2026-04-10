@@ -20,6 +20,8 @@ import {
   epaperAtom,
   globalStateMachineAtom,
   notesAtom,
+  nudgeNotificationsAtom,
+  nudgesAtom,
   tagsAtom,
   templatesAtom,
   themeAtom,
@@ -77,6 +79,37 @@ function RouteComponent() {
   useEvent("online", () => {
     send("SYNC")
   })
+
+  // Nudge notifications (once per day, on visibility change)
+  const nudges = useAtomValue(nudgesAtom)
+  const nudgeNotifications = useAtomValue(nudgeNotificationsAtom)
+
+  React.useEffect(() => {
+    if (!nudgeNotifications || nudges.length === 0) return
+    if (!("Notification" in window)) return
+
+    const today = new Date().toDateString()
+    const lastNotified = localStorage.getItem("nudge_last_notified")
+    if (lastNotified === today) return
+
+    if (Notification.permission === "default") {
+      Notification.requestPermission()
+      return
+    }
+    if (Notification.permission !== "granted") return
+
+    localStorage.setItem("nudge_last_notified", today)
+    const top3 = nudges
+      .slice(0, 3)
+      .map((n) => n.message)
+      .join("\n")
+    new Notification(
+      `Lumen — ${nudges.length} item${nudges.length > 1 ? "s" : ""} need attention`,
+      {
+        body: top3,
+      },
+    )
+  }, [nudges, nudgeNotifications])
 
   // Listen for quick-note save events from the quick-note window (Tauri only)
   React.useEffect(() => {

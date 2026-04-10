@@ -29,6 +29,10 @@ import {
   hideCompletedTasksAtom,
   isCloningRepoAtom,
   nicknameAtom,
+  nudgeInactiveProjectDaysAtom,
+  nudgeInboxThresholdAtom,
+  nudgeNotificationsAtom,
+  nudgeStaleTaskDaysAtom,
   tempUnitAtom,
   isRepoClonedAtom,
   isRepoNotClonedAtom,
@@ -60,6 +64,7 @@ function RouteComponent() {
         <div className="mx-auto flex max-w-xl flex-col gap-6">
           <GitHubSection />
           <HomeSection />
+          <NudgesSection />
           <AppearanceSection />
           <EditorSection />
           <NotesSection />
@@ -204,6 +209,68 @@ function HomeSection() {
             °F
           </SegmentedControl.Segment>
         </SegmentedControl>
+      </div>
+    </section>
+  )
+}
+
+function NudgesSection() {
+  const [staleDays, setStaleDays] = useAtom(nudgeStaleTaskDaysAtom)
+  const [inactiveDays, setInactiveDays] = useAtom(nudgeInactiveProjectDaysAtom)
+  const [inboxThreshold, setInboxThreshold] = useAtom(nudgeInboxThresholdAtom)
+  const [notifications, setNotifications] = useAtom(nudgeNotificationsAtom)
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="leading-4 text-text-secondary">Nudges</h2>
+      <div className="flex items-center justify-between">
+        <span className="leading-4">Stale task after</span>
+        <div className="flex items-center gap-1">
+          <TextInput
+            className="w-16 text-center"
+            type="number"
+            min={1}
+            value={String(staleDays)}
+            onChange={(e) => setStaleDays(Math.max(1, parseInt(e.target.value) || 7))}
+          />
+          <span className="text-sm text-text-secondary">days</span>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="leading-4">Inactive project after</span>
+        <div className="flex items-center gap-1">
+          <TextInput
+            className="w-16 text-center"
+            type="number"
+            min={1}
+            value={String(inactiveDays)}
+            onChange={(e) => setInactiveDays(Math.max(1, parseInt(e.target.value) || 14))}
+          />
+          <span className="text-sm text-text-secondary">days</span>
+        </div>
+      </div>
+      <div className="flex items-center justify-between">
+        <span className="leading-4">Inbox pileup at</span>
+        <div className="flex items-center gap-1">
+          <TextInput
+            className="w-16 text-center"
+            type="number"
+            min={1}
+            value={String(inboxThreshold)}
+            onChange={(e) => setInboxThreshold(Math.max(1, parseInt(e.target.value) || 5))}
+          />
+          <span className="text-sm text-text-secondary">items</span>
+        </div>
+      </div>
+      <div className="flex items-center gap-2">
+        <Switch
+          id="nudge-notifications"
+          checked={notifications}
+          onCheckedChange={setNotifications}
+        />
+        <label htmlFor="nudge-notifications" className="select-none">
+          Desktop notifications
+        </label>
       </div>
     </section>
   )

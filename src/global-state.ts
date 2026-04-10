@@ -27,6 +27,7 @@ import {
   gitRemove,
   isRepoSynced,
 } from "./utils/git"
+import { detectNudges } from "./utils/nudges"
 import { parseNote } from "./utils/parse-note"
 import { removeTemplateFrontmatter } from "./utils/remove-template-frontmatter"
 import { getSampleMarkdownFiles } from "./utils/sample-markdown-files"
@@ -1078,3 +1079,25 @@ export const quickNoteModeAtom = atomWithStorage<"note" | "inbox">("quick_note_m
 export const tempUnitAtom = atomWithStorage<"C" | "F">("temp_unit", "C")
 
 export const nicknameAtom = atomWithStorage<string>("nickname", "")
+
+// -----------------------------------------------------------------------------
+// Nudges
+// -----------------------------------------------------------------------------
+
+export const nudgeStaleTaskDaysAtom = atomWithStorage<number>("nudge_stale_task_days", 7)
+export const nudgeInactiveProjectDaysAtom = atomWithStorage<number>(
+  "nudge_inactive_project_days",
+  14,
+)
+export const nudgeInboxThresholdAtom = atomWithStorage<number>("nudge_inbox_threshold", 5)
+export const nudgeNotificationsAtom = atomWithStorage<boolean>("nudge_notifications_enabled", true)
+
+export const nudgesAtom = atom((get) => {
+  const notes = get(notesAtom)
+  const settings = {
+    staleTaskDays: get(nudgeStaleTaskDaysAtom),
+    inactiveProjectDays: get(nudgeInactiveProjectDaysAtom),
+    inboxThreshold: get(nudgeInboxThresholdAtom),
+  }
+  return detectNudges(notes, settings)
+})

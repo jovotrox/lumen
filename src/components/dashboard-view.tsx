@@ -27,6 +27,7 @@ import {
   nicknameAtom,
   notesAtom,
   openaiKeyAtom,
+  nudgesAtom,
   projectsAtom,
   sortedNotesAtom,
   tempUnitAtom,
@@ -56,6 +57,7 @@ export function DashboardView() {
   const send = useSetAtom(globalStateMachineAtom)
   const navigate = useNavigate()
   const tempUnit = useAtomValue(tempUnitAtom)
+  const nudges = useAtomValue(nudgesAtom)
   const nickname = useAtomValue(nicknameAtom)
 
   const aiProvider = useAtomValue(aiProviderAtom)
@@ -311,6 +313,39 @@ export function DashboardView() {
       {/* Divider */}
       <div className="h-px bg-border-secondary" />
 
+      {/* Nudges */}
+      {nudges.length > 0 ? (
+        <DashboardSection
+          icon={<AlertTriangle size={16} />}
+          title="Needs attention"
+          count={nudges.length}
+          titleClassName="text-text-pending"
+        >
+          <ul className="flex flex-col gap-1.5">
+            {nudges.slice(0, 8).map((nudge, i) => (
+              <li key={i} className="flex items-start gap-2 text-sm">
+                <NudgeIcon type={nudge.type} />
+                <span className="flex-1 text-text-secondary">{nudge.message}</span>
+                {nudge.noteId ? (
+                  <Link
+                    to="/notes/$"
+                    params={{ _splat: nudge.noteId }}
+                    search={{ mode: "read", query: undefined, view: "grid" }}
+                    className="link shrink-0 text-xs"
+                  >
+                    View
+                  </Link>
+                ) : nudge.type === "inbox_pileup" ? (
+                  <Link to="/inbox" search={{ query: undefined }} className="link shrink-0 text-xs">
+                    Process
+                  </Link>
+                ) : null}
+              </li>
+            ))}
+          </ul>
+        </DashboardSection>
+      ) : null}
+
       {/* Inbox */}
       {unprocessed.length > 0 ? (
         <DashboardSection icon={<Inbox size={16} />} title="Inbox" count={unprocessed.length}>
@@ -547,6 +582,21 @@ function joinNodes(nodes: React.ReactNode[]): React.ReactNode {
       {node}
     </>
   ))
+}
+
+function NudgeIcon({ type }: { type: string }) {
+  switch (type) {
+    case "overdue_followup":
+      return <AlertTriangle size={14} className="mt-0.5 shrink-0 text-text-danger" />
+    case "stale_task":
+      return <Clock size={14} className="mt-0.5 shrink-0 text-text-pending" />
+    case "inactive_project":
+      return <FolderOpen size={14} className="mt-0.5 shrink-0 text-text-pending" />
+    case "inbox_pileup":
+      return <Inbox size={14} className="mt-0.5 shrink-0 text-text-secondary" />
+    default:
+      return <AlertTriangle size={14} className="mt-0.5 shrink-0 text-text-tertiary" />
+  }
 }
 
 function friendlyTitle(item: Note): string {
