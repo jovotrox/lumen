@@ -36,9 +36,7 @@ Rules:
 - suggested_type "task" = actionable item, "note" = information, "project" = new project, "person" = new person entry
 - priority 1 = highest urgency`
 
-function buildPrompt(
-  context: { people: Note[]; projects: Note[]; recentNotes: Note[] },
-): string {
+function buildPrompt(context: { people: Note[]; projects: Note[]; recentNotes: Note[] }): string {
   const people = context.people.map((p) => `${p.id} (${p.displayName})`).join(", ") || "none"
   const projects = context.projects.map((p) => `${p.id} (${p.displayName})`).join(", ") || "none"
   const recentNotes =

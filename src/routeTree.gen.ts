@@ -18,7 +18,10 @@ import { Route as AppRootIndexImport } from "./routes/_appRoot.index"
 import { Route as ShareGistIdImport } from "./routes/share.$gistId"
 import { Route as AppRootTasksImport } from "./routes/_appRoot.tasks"
 import { Route as AppRootSettingsImport } from "./routes/_appRoot.settings"
+import { Route as AppRootProjectsImport } from "./routes/_appRoot.projects"
+import { Route as AppRootPeopleImport } from "./routes/_appRoot.people"
 import { Route as AppRootLinksImport } from "./routes/_appRoot.links"
+import { Route as AppRootInboxImport } from "./routes/_appRoot.inbox"
 import { Route as AppRootFileImport } from "./routes/_appRoot.file"
 import { Route as AppRootTagsIndexImport } from "./routes/_appRoot.tags.index"
 import { Route as AppRootNotesIndexImport } from "./routes/_appRoot.notes.index"
@@ -68,9 +71,27 @@ const AppRootSettingsRoute = AppRootSettingsImport.update({
   getParentRoute: () => AppRootRoute,
 } as any)
 
+const AppRootProjectsRoute = AppRootProjectsImport.update({
+  id: "/projects",
+  path: "/projects",
+  getParentRoute: () => AppRootRoute,
+} as any)
+
+const AppRootPeopleRoute = AppRootPeopleImport.update({
+  id: "/people",
+  path: "/people",
+  getParentRoute: () => AppRootRoute,
+} as any)
+
 const AppRootLinksRoute = AppRootLinksImport.update({
   id: "/links",
   path: "/links",
+  getParentRoute: () => AppRootRoute,
+} as any)
+
+const AppRootInboxRoute = AppRootInboxImport.update({
+  id: "/inbox",
+  path: "/inbox",
   getParentRoute: () => AppRootRoute,
 } as any)
 
@@ -136,11 +157,32 @@ declare module "@tanstack/react-router" {
       preLoaderRoute: typeof AppRootFileImport
       parentRoute: typeof AppRootImport
     }
+    "/_appRoot/inbox": {
+      id: "/_appRoot/inbox"
+      path: "/inbox"
+      fullPath: "/inbox"
+      preLoaderRoute: typeof AppRootInboxImport
+      parentRoute: typeof AppRootImport
+    }
     "/_appRoot/links": {
       id: "/_appRoot/links"
       path: "/links"
       fullPath: "/links"
       preLoaderRoute: typeof AppRootLinksImport
+      parentRoute: typeof AppRootImport
+    }
+    "/_appRoot/people": {
+      id: "/_appRoot/people"
+      path: "/people"
+      fullPath: "/people"
+      preLoaderRoute: typeof AppRootPeopleImport
+      parentRoute: typeof AppRootImport
+    }
+    "/_appRoot/projects": {
+      id: "/_appRoot/projects"
+      path: "/projects"
+      fullPath: "/projects"
+      preLoaderRoute: typeof AppRootProjectsImport
       parentRoute: typeof AppRootImport
     }
     "/_appRoot/settings": {
@@ -206,7 +248,10 @@ declare module "@tanstack/react-router" {
 
 interface AppRootRouteChildren {
   AppRootFileRoute: typeof AppRootFileRoute
+  AppRootInboxRoute: typeof AppRootInboxRoute
   AppRootLinksRoute: typeof AppRootLinksRoute
+  AppRootPeopleRoute: typeof AppRootPeopleRoute
+  AppRootProjectsRoute: typeof AppRootProjectsRoute
   AppRootSettingsRoute: typeof AppRootSettingsRoute
   AppRootTasksRoute: typeof AppRootTasksRoute
   AppRootIndexRoute: typeof AppRootIndexRoute
@@ -218,7 +263,10 @@ interface AppRootRouteChildren {
 
 const AppRootRouteChildren: AppRootRouteChildren = {
   AppRootFileRoute: AppRootFileRoute,
+  AppRootInboxRoute: AppRootInboxRoute,
   AppRootLinksRoute: AppRootLinksRoute,
+  AppRootPeopleRoute: AppRootPeopleRoute,
+  AppRootProjectsRoute: AppRootProjectsRoute,
   AppRootSettingsRoute: AppRootSettingsRoute,
   AppRootTasksRoute: AppRootTasksRoute,
   AppRootIndexRoute: AppRootIndexRoute,
@@ -235,7 +283,10 @@ export interface FileRoutesByFullPath {
   "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
   "/file": typeof AppRootFileRoute
+  "/inbox": typeof AppRootInboxRoute
   "/links": typeof AppRootLinksRoute
+  "/people": typeof AppRootPeopleRoute
+  "/projects": typeof AppRootProjectsRoute
   "/settings": typeof AppRootSettingsRoute
   "/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
@@ -250,7 +301,10 @@ export interface FileRoutesByTo {
   "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
   "/file": typeof AppRootFileRoute
+  "/inbox": typeof AppRootInboxRoute
   "/links": typeof AppRootLinksRoute
+  "/people": typeof AppRootPeopleRoute
+  "/projects": typeof AppRootProjectsRoute
   "/settings": typeof AppRootSettingsRoute
   "/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
@@ -267,7 +321,10 @@ export interface FileRoutesById {
   "/ai": typeof AiRoute
   "/quick-note": typeof QuickNoteRoute
   "/_appRoot/file": typeof AppRootFileRoute
+  "/_appRoot/inbox": typeof AppRootInboxRoute
   "/_appRoot/links": typeof AppRootLinksRoute
+  "/_appRoot/people": typeof AppRootPeopleRoute
+  "/_appRoot/projects": typeof AppRootProjectsRoute
   "/_appRoot/settings": typeof AppRootSettingsRoute
   "/_appRoot/tasks": typeof AppRootTasksRoute
   "/share/$gistId": typeof ShareGistIdRoute
@@ -285,7 +342,10 @@ export interface FileRouteTypes {
     | "/ai"
     | "/quick-note"
     | "/file"
+    | "/inbox"
     | "/links"
+    | "/people"
+    | "/projects"
     | "/settings"
     | "/tasks"
     | "/share/$gistId"
@@ -299,7 +359,10 @@ export interface FileRouteTypes {
     | "/ai"
     | "/quick-note"
     | "/file"
+    | "/inbox"
     | "/links"
+    | "/people"
+    | "/projects"
     | "/settings"
     | "/tasks"
     | "/share/$gistId"
@@ -314,7 +377,10 @@ export interface FileRouteTypes {
     | "/ai"
     | "/quick-note"
     | "/_appRoot/file"
+    | "/_appRoot/inbox"
     | "/_appRoot/links"
+    | "/_appRoot/people"
+    | "/_appRoot/projects"
     | "/_appRoot/settings"
     | "/_appRoot/tasks"
     | "/share/$gistId"
@@ -360,7 +426,10 @@ export const routeTree = rootRoute
       "filePath": "_appRoot.tsx",
       "children": [
         "/_appRoot/file",
+        "/_appRoot/inbox",
         "/_appRoot/links",
+        "/_appRoot/people",
+        "/_appRoot/projects",
         "/_appRoot/settings",
         "/_appRoot/tasks",
         "/_appRoot/",
@@ -380,8 +449,20 @@ export const routeTree = rootRoute
       "filePath": "_appRoot.file.tsx",
       "parent": "/_appRoot"
     },
+    "/_appRoot/inbox": {
+      "filePath": "_appRoot.inbox.tsx",
+      "parent": "/_appRoot"
+    },
     "/_appRoot/links": {
       "filePath": "_appRoot.links.tsx",
+      "parent": "/_appRoot"
+    },
+    "/_appRoot/people": {
+      "filePath": "_appRoot.people.tsx",
+      "parent": "/_appRoot"
+    },
+    "/_appRoot/projects": {
+      "filePath": "_appRoot.projects.tsx",
       "parent": "/_appRoot"
     },
     "/_appRoot/settings": {

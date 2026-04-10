@@ -1,1 +1,31 @@
-{"default":{"identifier":"default","description":"Default capabilities for Lumen","local":true,"windows":["main","quick-note"],"permissions":["core:default","core:window:allow-close","core:window:allow-hide","core:window:allow-show","core:window:allow-set-focus","core:event:default","core:event:allow-emit","core:event:allow-emit-to","core:event:allow-listen","shell:allow-open",{"identifier":"http:default","allow":[{"url":"https://github.com/**"},{"url":"https://api.github.com/**"},{"url":"https://jovotrox.github.io/**"}]},"global-shortcut:allow-register","global-shortcut:allow-unregister","global-shortcut:allow-is-registered"]}}
+{
+  "default": {
+    "identifier": "default",
+    "description": "Default capabilities for Lumen",
+    "local": true,
+    "windows": ["main", "quick-note"],
+    "permissions": [
+      "core:default",
+      "core:window:allow-close",
+      "core:window:allow-hide",
+      "core:window:allow-show",
+      "core:window:allow-set-focus",
+      "core:event:default",
+      "core:event:allow-emit",
+      "core:event:allow-emit-to",
+      "core:event:allow-listen",
+      "shell:allow-open",
+      {
+        "identifier": "http:default",
+        "allow": [
+          { "url": "https://github.com/**" },
+          { "url": "https://api.github.com/**" },
+          { "url": "https://jovotrox.github.io/**" }
+        ]
+      },
+      "global-shortcut:allow-register",
+      "global-shortcut:allow-unregister",
+      "global-shortcut:allow-is-registered"
+    ]
+  }
+}

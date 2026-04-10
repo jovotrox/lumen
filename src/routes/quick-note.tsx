@@ -112,7 +112,7 @@ function QuickNoteComponent() {
         console.error("Failed to save note:", error)
       }
     }
-  }, [content, noteId])
+  }, [content, noteId, mode])
 
   // Handle content change
   const handleChange = React.useCallback((newContent: string) => {
@@ -145,16 +145,10 @@ function QuickNoteComponent() {
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-border-secondary px-3 py-2">
         <SegmentedControl aria-label="Quick note mode" size="small">
-          <SegmentedControl.Segment
-            selected={mode === "note"}
-            onClick={() => setMode("note")}
-          >
+          <SegmentedControl.Segment selected={mode === "note"} onClick={() => setMode("note")}>
             Note
           </SegmentedControl.Segment>
-          <SegmentedControl.Segment
-            selected={mode === "inbox"}
-            onClick={() => setMode("inbox")}
-          >
+          <SegmentedControl.Segment selected={mode === "inbox"} onClick={() => setMode("inbox")}>
             Inbox
           </SegmentedControl.Segment>
         </SegmentedControl>

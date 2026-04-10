@@ -38,9 +38,7 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
   const taskCounts = useMemo(() => {
     const counts: Record<string, number> = {}
     for (const person of people) {
-      counts[person.id] = allTasks.filter(
-        (t) => !t.completed && t.links.includes(person.id),
-      ).length
+      counts[person.id] = allTasks.filter((t) => !t.completed && t.links.includes(person.id)).length
     }
     return counts
   }, [people, allTasks])
@@ -56,7 +54,9 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
         <DropdownMenu>
           <DropdownMenu.Trigger
             render={
-              <IconButton aria-label="View">{view === "grid" ? <GridIcon16 /> : <ListIcon16 />}</IconButton>
+              <IconButton aria-label="View">
+                {view === "grid" ? <GridIcon16 /> : <ListIcon16 />}
+              </IconButton>
             }
           />
           <DropdownMenu.Content align="end" width={160}>
