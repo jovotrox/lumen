@@ -1,11 +1,14 @@
-import { useAtomValue } from "jotai"
+import { useAtomValue, useSetAtom } from "jotai"
 import React, { useDeferredValue, useMemo } from "react"
-import { Link } from "@tanstack/react-router"
-import { projectsAtom } from "../global-state"
+import { Link, useNavigate } from "@tanstack/react-router"
+import { globalStateMachineAtom, projectsAtom } from "../global-state"
+import { generateNoteId } from "../utils/note-id"
+import { Plus } from "lucide-react"
 import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
 import { IconButton } from "./icon-button"
 import { GridIcon16, ListIcon16 } from "./icons"
+import { Button } from "./button"
 import type { Note } from "../schema"
 
 type ProjectsViewProps = {
@@ -17,7 +20,23 @@ type ProjectsViewProps = {
 
 export function ProjectsView({ query, view, onQueryChange, onViewChange }: ProjectsViewProps) {
   const projects = useAtomValue(projectsAtom)
+  const send = useSetAtom(globalStateMachineAtom)
+  const navigate = useNavigate()
   const deferredQuery = useDeferredValue(query)
+
+  const createProject = () => {
+    const id = generateNoteId()
+    const content = `---\ntype: project\nstatus: active\n---\n\n# New Project\n`
+    send({
+      type: "WRITE_FILES",
+      markdownFiles: { [`${id}.md`]: content },
+    })
+    navigate({
+      to: "/notes/$",
+      params: { _splat: id },
+      search: { mode: "write", query: undefined, view: "grid" },
+    })
+  }
 
   const filteredProjects = useMemo(() => {
     if (!deferredQuery) return projects
@@ -39,6 +58,10 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
           value={query}
           onChange={onQueryChange}
         />
+        <Button size="small" onClick={createProject}>
+          <Plus size={14} />
+          New
+        </Button>
         <DropdownMenu>
           <DropdownMenu.Trigger
             render={

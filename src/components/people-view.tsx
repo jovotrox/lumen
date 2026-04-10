@@ -1,11 +1,14 @@
-import { useAtomValue } from "jotai"
+import { useAtomValue, useSetAtom } from "jotai"
 import React, { useDeferredValue, useMemo } from "react"
-import { Link } from "@tanstack/react-router"
-import { peopleAtom, tasksAtom } from "../global-state"
+import { Link, useNavigate } from "@tanstack/react-router"
+import { globalStateMachineAtom, peopleAtom, tasksAtom } from "../global-state"
+import { generateNoteId } from "../utils/note-id"
+import { Plus } from "lucide-react"
 import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
 import { IconButton } from "./icon-button"
 import { GridIcon16, ListIcon16 } from "./icons"
+import { Button } from "./button"
 import type { Note } from "../schema"
 
 type PeopleViewProps = {
@@ -18,7 +21,23 @@ type PeopleViewProps = {
 export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleViewProps) {
   const people = useAtomValue(peopleAtom)
   const allTasks = useAtomValue(tasksAtom)
+  const send = useSetAtom(globalStateMachineAtom)
+  const navigate = useNavigate()
   const deferredQuery = useDeferredValue(query)
+
+  const createPerson = () => {
+    const id = generateNoteId()
+    const content = `---\ntype: person\n---\n\n# New Person\n`
+    send({
+      type: "WRITE_FILES",
+      markdownFiles: { [`${id}.md`]: content },
+    })
+    navigate({
+      to: "/notes/$",
+      params: { _splat: id },
+      search: { mode: "write", query: undefined, view: "grid" },
+    })
+  }
 
   const filteredPeople = useMemo(() => {
     if (!deferredQuery) return people
@@ -51,6 +70,10 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
           value={query}
           onChange={onQueryChange}
         />
+        <Button size="small" onClick={createPerson}>
+          <Plus size={14} />
+          New
+        </Button>
         <DropdownMenu>
           <DropdownMenu.Trigger
             render={
