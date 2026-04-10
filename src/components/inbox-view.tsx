@@ -180,12 +180,9 @@ function InboxItemCard({ item }: { item: Note }) {
 
   const convertToNote = (type: string) => {
     const properties: Record<string, unknown> = {
-      type: type === "task" ? undefined : type,
+      type: type === "task" ? null : type,
       status: type === "project" ? "active" : "converted",
-    }
-
-    if (type !== "inbox") {
-      properties.source = undefined
+      source: null,
     }
 
     if (suggestion?.priority) {
