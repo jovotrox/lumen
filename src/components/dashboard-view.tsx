@@ -2,6 +2,21 @@ import { useAtomValue, useSetAtom } from "jotai"
 import React, { useEffect, useMemo, useState } from "react"
 import { Link } from "@tanstack/react-router"
 import {
+  AlertTriangle,
+  CheckSquare,
+  Clock,
+  Cloud,
+  CloudDrizzle,
+  CloudLightning,
+  CloudSnow,
+  CloudSun,
+  FolderOpen,
+  Inbox,
+  Sparkles,
+  Sun,
+  Wind,
+} from "lucide-react"
+import {
   aiProviderAtom,
   claudeApiKeyAtom,
   globalStateMachineAtom,
@@ -15,11 +30,17 @@ import {
   todayTasksAtom,
   urgentTasksAtom,
 } from "../global-state"
-import { generateTemplateSummary, type DashboardData } from "../utils/dashboard-templates"
 import { generateAISummary } from "../utils/dashboard-ai"
 import { updateTaskCompletion } from "../utils/task"
 import { Checkbox } from "./checkbox"
 import type { Note, Task } from "../schema"
+
+function getGreeting(): string {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
+}
 
 export function DashboardView() {
   const inboxItems = useAtomValue(inboxAtom)
@@ -50,67 +71,34 @@ export function DashboardView() {
 
   const incompleteTodayTasks = useMemo(() => todayTasks.filter((t) => !t.completed), [todayTasks])
 
-  const completedTodayTasks = useMemo(() => todayTasks.filter((t) => t.completed), [todayTasks])
-
-  const topProject = useMemo(() => {
-    if (activeProjects.length === 0) return null
-    return activeProjects.reduce(
-      (best, p) => (p.tasks.length > best.tasks.length ? p : best),
-      activeProjects[0],
-    )
-  }, [activeProjects])
-
-  const dashboardData: DashboardData = useMemo(
-    () => ({
-      inbox: unprocessed.length,
-      tasks: incompleteTodayTasks.length,
-      todayCompleted: completedTodayTasks.length,
-      urgentTasks: urgentTasks.length,
-      projects: activeProjects.length,
-      topProject: topProject?.displayName ?? null,
-      topProjectProgress: topProject
-        ? `${topProject.tasks.filter((t) => t.completed).length}/${topProject.tasks.length}`
-        : null,
-      nickname,
-    }),
-    [
-      unprocessed,
-      incompleteTodayTasks,
-      completedTodayTasks,
-      urgentTasks,
-      activeProjects,
-      topProject,
-      nickname,
-    ],
-  )
-
   // AI summary
   const [aiSummary, setAiSummary] = useState<string | null>(null)
-  const templateSummary = useMemo(() => generateTemplateSummary(dashboardData), [dashboardData])
 
   useEffect(() => {
     if (!hasKey) return
     const projectNames = activeProjects.map((p) => p.displayName)
     const urgentTexts = urgentTasks.map((u) => u.task.text)
-    generateAISummary(
-      dashboardData,
-      aiProvider as "openai" | "claude",
-      apiKey,
-      projectNames,
-      urgentTexts,
-    )
+    const data = {
+      inbox: unprocessed.length,
+      tasks: incompleteTodayTasks.length,
+      todayCompleted: todayTasks.filter((t) => t.completed).length,
+      urgentTasks: urgentTasks.length,
+      projects: activeProjects.length,
+      topProject: null,
+      topProjectProgress: null,
+      nickname,
+    }
+    generateAISummary(data, aiProvider as "openai" | "claude", apiKey, projectNames, urgentTexts)
       .then(setAiSummary)
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const summary = aiSummary ?? templateSummary
-
   // Weather
   const [weather, setWeather] = useState<{
     temp: number
     description: string
-    icon: string
+    icon: React.ReactNode
   } | null>(null)
 
   useEffect(() => {
@@ -142,41 +130,111 @@ export function DashboardView() {
 
   // Date
   const now = new Date()
-  const dayName = now.toLocaleDateString("en-US", { weekday: "short" })
+  const dayName = now.toLocaleDateString("en-US", { weekday: "long" })
   const fullDate = now.toLocaleDateString("en-US", {
     month: "long",
     day: "numeric",
     year: "numeric",
   })
 
+  // Build summary parts as linked fragments
+  const summaryParts: React.ReactNode[] = []
+  if (incompleteTodayTasks.length > 0) {
+    summaryParts.push(
+      <Link
+        key="tasks"
+        to="/notes/$"
+        params={{ _splat: todayNoteId }}
+        search={{ mode: "read", query: undefined, view: "grid" }}
+        className="text-text hover:underline"
+      >
+        <CheckSquare size={16} className="mb-0.5 mr-1 inline" />
+        <strong>
+          {incompleteTodayTasks.length} task{incompleteTodayTasks.length > 1 ? "s" : ""} today
+        </strong>
+      </Link>,
+    )
+  }
+  if (unprocessed.length > 0) {
+    summaryParts.push(
+      <Link
+        key="inbox"
+        to="/inbox"
+        search={{ query: undefined }}
+        className="text-text hover:underline"
+      >
+        <Inbox size={16} className="mb-0.5 mr-1 inline" />
+        <strong>{unprocessed.length} in inbox</strong>
+      </Link>,
+    )
+  }
+  if (activeProjects.length > 0) {
+    summaryParts.push(
+      <Link
+        key="projects"
+        to="/projects"
+        search={{ query: undefined, view: "list" }}
+        className="text-text hover:underline"
+      >
+        <FolderOpen size={16} className="mb-0.5 mr-1 inline" />
+        <strong>
+          {activeProjects.length} active project{activeProjects.length > 1 ? "s" : ""}
+        </strong>
+      </Link>,
+    )
+  }
+  if (urgentTasks.length > 0) {
+    summaryParts.push(
+      <Link
+        key="urgent"
+        to="/tasks"
+        search={{ query: undefined, view: "grid" }}
+        className="text-text-danger hover:underline"
+      >
+        <AlertTriangle size={16} className="mb-0.5 mr-1 inline" />
+        <strong>{urgentTasks.length} urgent</strong>
+      </Link>,
+    )
+  }
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
       {/* Date header */}
-      <header className="flex items-end justify-between">
-        <div>
-          <h1 className="text-4xl font-bold tracking-tight">{dayName}</h1>
-        </div>
-        <div className="text-right text-sm text-text-secondary">
-          <div>{fullDate}</div>
+      <header className="flex items-start justify-between">
+        <h1 className="text-4xl font-bold tracking-tight">{dayName}</h1>
+        <div className="flex flex-col items-end gap-0.5 pt-1 text-sm text-text-secondary">
+          <span>{fullDate}</span>
+          {weather ? (
+            <span className="flex items-center gap-1.5">
+              {weather.icon}
+              {weather.temp}°{tempUnit} · {weather.description}
+            </span>
+          ) : null}
         </div>
       </header>
 
-      {/* Greeting / Summary */}
+      {/* Greeting */}
       <section>
-        <p className="text-xl font-medium leading-relaxed tracking-tight">{summary}</p>
-        {weather ? (
-          <div className="mt-3 flex items-center gap-4 text-sm text-text-secondary">
-            <span>
-              {weather.icon} {weather.temp}°{tempUnit}
-            </span>
-            <span>{weather.description}</span>
-          </div>
-        ) : null}
+        <p className="text-2xl font-semibold tracking-tight">
+          {getGreeting()}
+          {nickname ? `, ${nickname}` : ""}.
+        </p>
+        {aiSummary ? (
+          <p className="mt-2 text-lg leading-relaxed text-text-secondary">{aiSummary}</p>
+        ) : summaryParts.length > 0 ? (
+          <p className="mt-2 text-lg leading-relaxed text-text-secondary">
+            You have {joinNodes(summaryParts)}.
+          </p>
+        ) : (
+          <p className="mt-2 text-lg leading-relaxed text-text-secondary">
+            Nothing pending. Enjoy your day.
+          </p>
+        )}
       </section>
 
       {/* Inbox */}
       {unprocessed.length > 0 ? (
-        <DashboardSection title="📥 Inbox" count={unprocessed.length}>
+        <DashboardSection icon={<Inbox size={16} />} title="Inbox" count={unprocessed.length}>
           <ul className="flex flex-col gap-1">
             {unprocessed.slice(0, 3).map((item) => (
               <li key={item.id}>
@@ -192,14 +250,18 @@ export function DashboardView() {
             ))}
           </ul>
           <Link to="/inbox" search={{ query: undefined }} className="link text-sm font-medium">
-            Procesar inbox →
+            Process inbox →
           </Link>
         </DashboardSection>
       ) : null}
 
       {/* Today's tasks */}
       {incompleteTodayTasks.length > 0 ? (
-        <DashboardSection title="☑️ Hoy" count={incompleteTodayTasks.length}>
+        <DashboardSection
+          icon={<CheckSquare size={16} />}
+          title="Today"
+          count={incompleteTodayTasks.length}
+        >
           <ul className="flex flex-col gap-1.5">
             {incompleteTodayTasks.map((task, i) => (
               <li key={i} className="flex items-start gap-2">
@@ -218,14 +280,19 @@ export function DashboardView() {
             search={{ mode: "read", query: undefined, view: "grid" }}
             className="link text-sm font-medium"
           >
-            Ver nota del día →
+            Open today's note →
           </Link>
         </DashboardSection>
       ) : null}
 
       {/* Urgent tasks */}
       {urgentTasks.length > 0 ? (
-        <DashboardSection title="🔴 Urgentes" count={urgentTasks.length}>
+        <DashboardSection
+          icon={<AlertTriangle size={16} />}
+          title="Urgent"
+          count={urgentTasks.length}
+          titleClassName="text-text-danger"
+        >
           <ul className="flex flex-col gap-1.5">
             {urgentTasks.slice(0, 5).map((u, i) => (
               <li key={i} className="flex items-start gap-2 text-sm">
@@ -247,10 +314,10 @@ export function DashboardView() {
         </DashboardSection>
       ) : null}
 
-      {/* Empty state — nothing pending */}
+      {/* Empty state */}
       {!hasPendingItems ? (
         <section className="flex flex-col items-center gap-3 rounded-lg border border-border-secondary py-8 text-center">
-          <span className="text-3xl">✨</span>
+          <Sparkles size={32} className="text-text-tertiary" />
           <p className="text-text-secondary">No pending tasks — you're all clear!</p>
           {!hasDailyNote ? (
             <Link
@@ -276,7 +343,11 @@ export function DashboardView() {
 
       {/* Active projects */}
       {activeProjects.length > 0 ? (
-        <DashboardSection title="📁 Proyectos" count={activeProjects.length}>
+        <DashboardSection
+          icon={<FolderOpen size={16} />}
+          title="Projects"
+          count={activeProjects.length}
+        >
           <ul className="flex flex-col gap-2">
             {activeProjects.map((project) => {
               const total = project.tasks.length
@@ -319,7 +390,7 @@ export function DashboardView() {
       ) : null}
 
       {/* Recent notes */}
-      <DashboardSection title="🕐 Recientes">
+      <DashboardSection icon={<Clock size={16} />} title="Recent">
         {recent.length > 0 ? (
           <ul className="flex flex-col gap-1">
             {recent.map((note) => (
@@ -348,25 +419,32 @@ export function DashboardView() {
       {/* Link to all notes */}
       <div className="pb-4 text-center">
         <Link to="/notes" search={{ query: undefined, view: "grid" }} className="link text-sm">
-          Ver todas las notas →
+          View all notes →
         </Link>
       </div>
     </div>
   )
 }
 
+// --- Helpers ---
+
 function DashboardSection({
+  icon,
   title,
   count,
+  titleClassName,
   children,
 }: {
+  icon: React.ReactNode
   title: string
   count?: number
+  titleClassName?: string
   children: React.ReactNode
 }) {
   return (
     <section className="card-1 flex flex-col gap-3 rounded-lg p-4">
-      <h2 className="flex items-center gap-2 text-sm font-bold">
+      <h2 className={`flex items-center gap-2 text-sm font-bold ${titleClassName ?? ""}`}>
+        {icon}
         {title}
         {count != null ? (
           <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-bg-tertiary px-1 text-xs font-medium text-text-secondary">
@@ -377,6 +455,19 @@ function DashboardSection({
       {children}
     </section>
   )
+}
+
+/** Join React nodes with commas and "and" */
+function joinNodes(nodes: React.ReactNode[]): React.ReactNode {
+  if (nodes.length === 0) return null
+  if (nodes.length === 1) return nodes[0]
+  return nodes.reduce((acc, node, i) => (
+    <>
+      {acc}
+      {i === nodes.length - 1 ? " and " : ", "}
+      {node}
+    </>
+  ))
 }
 
 function friendlyTitle(item: Note): string {
@@ -396,34 +487,38 @@ function formatRelativeTime(timestamp: number): string {
   const now = Date.now()
   const diff = now - timestamp
   const minutes = Math.floor(diff / 60000)
-  if (minutes < 1) return "ahora"
-  if (minutes < 60) return `hace ${minutes}m`
+  if (minutes < 1) return "now"
+  if (minutes < 60) return `${minutes}m ago`
   const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `hace ${hours}h`
+  if (hours < 24) return `${hours}h ago`
   const days = Math.floor(hours / 24)
-  if (days === 1) return "ayer"
-  if (days < 7) return `hace ${days}d`
-  return `hace ${Math.floor(days / 7)}sem`
+  if (days === 1) return "yesterday"
+  if (days < 7) return `${days}d ago`
+  return `${Math.floor(days / 7)}w ago`
 }
 
-// Weather via wttr.in (free, no API key)
-const weatherIcons: Record<string, string> = {
-  Clear: "☀️",
-  "Partly cloudy": "⛅",
-  Cloudy: "☁️",
-  Overcast: "☁️",
-  Mist: "🌫️",
-  Fog: "🌫️",
-  Rain: "🌧️",
-  "Light rain": "🌦️",
-  "Heavy rain": "🌧️",
-  Snow: "🌨️",
-  Thunderstorm: "⛈️",
+// --- Weather ---
+
+const weatherIconMap: Record<string, React.ReactNode> = {
+  Clear: <Sun size={14} />,
+  Sunny: <Sun size={14} />,
+  "Partly cloudy": <CloudSun size={14} />,
+  "Partly Cloudy": <CloudSun size={14} />,
+  Cloudy: <Cloud size={14} />,
+  Overcast: <Cloud size={14} />,
+  Mist: <Wind size={14} />,
+  Fog: <Wind size={14} />,
+  Rain: <CloudDrizzle size={14} />,
+  "Light rain": <CloudDrizzle size={14} />,
+  "Light drizzle": <CloudDrizzle size={14} />,
+  "Heavy rain": <CloudDrizzle size={14} />,
+  Snow: <CloudSnow size={14} />,
+  Thunderstorm: <CloudLightning size={14} />,
 }
 
 async function fetchWeather(
   unit: "C" | "F",
-): Promise<{ temp: number; description: string; icon: string }> {
+): Promise<{ temp: number; description: string; icon: React.ReactNode }> {
   const response = await fetch("https://wttr.in/?format=j1", {
     headers: { Accept: "application/json" },
   })
@@ -434,6 +529,6 @@ async function fetchWeather(
   const current = data.current_condition[0]
   const temp = parseInt(unit === "C" ? current.temp_C : current.temp_F, 10)
   const description = current.weatherDesc[0]?.value ?? "Unknown"
-  const icon = weatherIcons[description] ?? "🌤️"
+  const icon = weatherIconMap[description] ?? <CloudSun size={14} />
   return { temp, description, icon }
 }
