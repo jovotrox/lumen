@@ -28,7 +28,14 @@ import { pasteExtension } from "../codemirror-extensions/paste"
 import { spellcheckExtension } from "../codemirror-extensions/spellcheck"
 import { wikilinkExtension } from "../codemirror-extensions/wikilink"
 import { livePreviewExtension } from "../codemirror-extensions/live-preview"
-import { isSignedOutAtom, tagsAtom, templatesAtom, vimModeAtom } from "../global-state"
+import {
+  isSignedOutAtom,
+  peopleAtom,
+  projectsAtom,
+  tagsAtom,
+  templatesAtom,
+  vimModeAtom,
+} from "../global-state"
 import { useAttachFile } from "../hooks/attach-file"
 import { useSaveNote } from "../hooks/note"
 import { useStableSearchNotes } from "../hooks/search-notes"
@@ -140,6 +147,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
 
     // Completions
     const noteCompletion = useNoteCompletion()
+    const mentionCompletion = useMentionCompletion()
     const tagSyntaxCompletion = useTagSyntaxCompletion() // #tag
     const tagPropertyCompletion = useTagPropertyCompletion() // tags: [tag]
     const templateCompletion = useTemplateCompletion()
@@ -161,6 +169,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
             // emojiCompletion,
             dateCompletion,
             noteCompletion,
+            mentionCompletion,
             tagSyntaxCompletion,
             tagPropertyCompletion,
             templateCompletion,
@@ -204,6 +213,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
       vimMode,
       livePreview,
       noteCompletion,
+      mentionCompletion,
       tagPropertyCompletion,
       tagSyntaxCompletion,
       templateCompletion,
@@ -417,13 +427,19 @@ function useNoteCompletion() {
         },
       }
 
-      const options = searchResults.slice(0, 5).map((note): Completion => {
+      const typeLabels: Record<string, string> = {
+        person: "person",
+        project: "project",
+        daily: "daily",
+        weekly: "weekly",
+        template: "template",
+      }
+      const options = searchResults.slice(0, 10).map((note): Completion => {
         const linkText = note.alias || note.displayName
         return {
           label: note.displayName,
-          detail: linkText !== note.displayName ? linkText : undefined,
+          detail: typeLabels[note.type] ?? undefined,
           apply: (view, completion, from, to) => {
-            // Insert link to note
             insertWikilink({ view, from, to, noteId: note.id, label: linkText })
           },
         }
@@ -443,6 +459,98 @@ function useNoteCompletion() {
   )
 
   return noteCompletion
+}
+
+function useMentionCompletion() {
+  const searchNotes = useStableSearchNotes()
+  const projects = useAtomValue(projectsAtom)
+  const people = useAtomValue(peopleAtom)
+
+  const mentionCompletion = React.useCallback(
+    async (context: CompletionContext): Promise<CompletionResult | null> => {
+      const word = context.matchBefore(/@[\w-]*/)
+
+      if (!word) return null
+
+      const query = word.text.slice(1) // Remove @ prefix
+
+      // Build grouped options: People first, then Projects, then Notes
+      const options: Completion[] = []
+
+      // People matches
+      const matchedPeople = people
+        .filter(
+          (p) =>
+            !query ||
+            p.displayName.toLowerCase().includes(query.toLowerCase()) ||
+            p.id.toLowerCase().includes(query.toLowerCase()),
+        )
+        .slice(0, 5)
+
+      for (const person of matchedPeople) {
+        const linkText = person.alias || person.displayName
+        options.push({
+          label: person.displayName,
+          detail: "person",
+          apply: (view, completion, from, to) => {
+            insertWikilink({ view, from, to, noteId: person.id, label: linkText })
+          },
+        })
+      }
+
+      // Project matches
+      const matchedProjects = projects
+        .filter(
+          (p) =>
+            !query ||
+            p.displayName.toLowerCase().includes(query.toLowerCase()) ||
+            p.id.toLowerCase().includes(query.toLowerCase()),
+        )
+        .slice(0, 5)
+
+      for (const project of matchedProjects) {
+        const linkText = project.alias || project.displayName
+        options.push({
+          label: project.displayName,
+          detail: "project",
+          apply: (view, completion, from, to) => {
+            insertWikilink({ view, from, to, noteId: project.id, label: linkText })
+          },
+        })
+      }
+
+      // General note matches (exclude people/projects already shown)
+      const shownIds = new Set([
+        ...matchedPeople.map((p) => p.id),
+        ...matchedProjects.map((p) => p.id),
+      ])
+      const noteResults = searchNotes(query)
+        .filter((n) => !shownIds.has(n.id))
+        .slice(0, 5)
+
+      for (const note of noteResults) {
+        const linkText = note.alias || note.displayName
+        options.push({
+          label: note.displayName,
+          detail: "note",
+          apply: (view, completion, from, to) => {
+            insertWikilink({ view, from, to, noteId: note.id, label: linkText })
+          },
+        })
+      }
+
+      if (options.length === 0) return null
+
+      return {
+        from: word.from,
+        options,
+        filter: false,
+      }
+    },
+    [searchNotes, projects, people],
+  )
+
+  return mentionCompletion
 }
 
 type InsertWikilinkParams = {
