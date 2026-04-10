@@ -214,18 +214,20 @@ export function DashboardView() {
 
       {/* Greeting */}
       <section className="flex flex-col gap-3">
-        <h1 className="text-5xl font-bold tracking-tight">
+        <h1 className="font-bold tracking-tight" style={{ fontSize: "2.5rem", lineHeight: 1.1 }}>
           {getGreeting()}
           {nickname ? `, ${nickname}` : ""}.
         </h1>
         {aiSummary ? (
-          <p className="text-2xl leading-snug text-text-secondary">{aiSummary}</p>
+          <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
+            {aiSummary}
+          </p>
         ) : summaryParts.length > 0 ? (
-          <p className="text-2xl leading-snug text-text-secondary">
+          <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
             You have {joinNodes(summaryParts)}.
           </p>
         ) : (
-          <p className="text-2xl leading-snug text-text-secondary">
+          <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
             Nothing pending. Enjoy your day.
           </p>
         )}
