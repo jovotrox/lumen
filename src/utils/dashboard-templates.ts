@@ -16,8 +16,7 @@ const greetings = {
 
 function getGreeting(): string {
   const hour = new Date().getHours()
-  const pool =
-    hour < 12 ? greetings.morning : hour < 18 ? greetings.afternoon : greetings.evening
+  const pool = hour < 12 ? greetings.morning : hour < 18 ? greetings.afternoon : greetings.evening
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
