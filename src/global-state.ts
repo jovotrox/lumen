@@ -924,6 +924,31 @@ export const unprocessedInboxCountAtom = atom((get) => {
 })
 
 // -----------------------------------------------------------------------------
+// Frontmatter values (for autocomplete)
+// -----------------------------------------------------------------------------
+
+/** Collects all unique values for each frontmatter key across all notes */
+export const frontmatterValuesAtom = atom((get) => {
+  const notes = get(notesAtom)
+  const values: Record<string, Set<string>> = {}
+
+  for (const note of notes.values()) {
+    for (const [key, value] of Object.entries(note.frontmatter)) {
+      if (typeof value !== "string" || !value) continue
+      if (!values[key]) values[key] = new Set()
+      values[key].add(value)
+    }
+  }
+
+  // Convert Sets to sorted arrays
+  const result: Record<string, string[]> = {}
+  for (const [key, set] of Object.entries(values)) {
+    result[key] = [...set].sort()
+  }
+  return result
+})
+
+// -----------------------------------------------------------------------------
 // Tasks
 // -----------------------------------------------------------------------------
 

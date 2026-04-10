@@ -29,6 +29,7 @@ import { spellcheckExtension } from "../codemirror-extensions/spellcheck"
 import { wikilinkExtension } from "../codemirror-extensions/wikilink"
 import { livePreviewExtension } from "../codemirror-extensions/live-preview"
 import {
+  frontmatterValuesAtom,
   isSignedOutAtom,
   peopleAtom,
   projectsAtom,
@@ -151,6 +152,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
     const tagSyntaxCompletion = useTagSyntaxCompletion() // #tag
     const tagPropertyCompletion = useTagPropertyCompletion() // tags: [tag]
     const templateCompletion = useTemplateCompletion()
+    const frontmatterValueCompletion = useFrontmatterValueCompletion()
 
     const extensions = React.useMemo(() => {
       const baseExtensions = [
@@ -168,6 +170,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
           override: [
             // emojiCompletion,
             dateCompletion,
+            frontmatterValueCompletion,
             noteCompletion,
             mentionCompletion,
             tagSyntaxCompletion,
@@ -217,6 +220,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
       tagPropertyCompletion,
       tagSyntaxCompletion,
       templateCompletion,
+      frontmatterValueCompletion,
       navigate,
     ])
 
@@ -605,6 +609,53 @@ function useTemplateCompletion() {
   )
 
   return tagCompletion
+}
+
+function useFrontmatterValueCompletion() {
+  const getValues = useAtomCallback(
+    React.useCallback((get) => get(frontmatterValuesAtom), []),
+  )
+
+  const completion = React.useCallback(
+    async (context: CompletionContext): Promise<CompletionResult | null> => {
+      // Only activate inside frontmatter (between --- markers)
+      const doc = context.state.doc.toString()
+      const pos = context.pos
+
+      // Find frontmatter boundaries
+      if (!doc.startsWith("---\n")) return null
+      const endIdx = doc.indexOf("\n---", 4)
+      if (endIdx === -1 || pos > endIdx) return null
+
+      // Match "key: value" pattern on current line
+      const line = context.state.doc.lineAt(pos)
+      const lineText = line.text
+      const match = lineText.match(/^(\w[\w-]*): *(.*)$/)
+      if (!match) return null
+
+      const key = match[1]
+      const valueStart = line.from + lineText.indexOf(": ") + 2
+      if (pos < valueStart) return null
+
+      const values = getValues()
+      const existing = values[key]
+      if (!existing || existing.length === 0) return null
+
+      const typed = match[2]
+
+      return {
+        from: valueStart,
+        options: existing
+          .filter((v) => !typed || v.toLowerCase().includes(typed.toLowerCase()))
+          .slice(0, 10)
+          .map((v) => ({ label: v })),
+        filter: false,
+      }
+    },
+    [getValues],
+  )
+
+  return completion
 }
 
 // function emojiCompletion(context: CompletionContext): CompletionResult | null {
