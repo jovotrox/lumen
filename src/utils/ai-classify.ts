@@ -173,6 +173,8 @@ export function classifyWithHeuristics(
   const words = lower.split(/\s+/).filter((w) => w.length > 3)
   const related_notes = context.recentNotes
     .filter((n) => {
+      // Skip inbox items — only relate to real notes/projects/people
+      if (n.type === "inbox") return false
       const noteText = (n.displayName + " " + n.id).toLowerCase()
       return words.some((w) => noteText.includes(w))
     })

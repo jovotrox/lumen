@@ -1,7 +1,14 @@
 import { useAtomValue, useSetAtom } from "jotai"
 import React, { useDeferredValue, useMemo, useState } from "react"
 import { Link } from "@tanstack/react-router"
-import { CheckSquare, FileText, FolderOpen, Inbox as InboxIcon, User } from "lucide-react"
+import {
+  CheckSquare,
+  ChevronDown,
+  FileText,
+  FolderOpen,
+  Inbox as InboxIcon,
+  User,
+} from "lucide-react"
 import {
   aiProviderAtom,
   claudeApiKeyAtom,
@@ -15,6 +22,8 @@ import {
 } from "../global-state"
 import { SearchInput } from "./search-input"
 import { Button } from "./button"
+import { DropdownMenu } from "./dropdown-menu"
+import { Tooltip } from "./tooltip"
 import { LoadingIcon16 } from "./icons"
 import { classifyInboxItem, type InboxSuggestion } from "../utils/ai-classify"
 import { updateFrontmatterValue } from "../utils/frontmatter"
@@ -268,31 +277,15 @@ function InboxItemCard({ item }: { item: Note }) {
             </span>
           </div>
           {suggestion.related_notes.length > 0 ? (
-            <div className="text-xs text-text-secondary">
-              Related:{" "}
-              {suggestion.related_notes.map((id, i) => (
-                <span key={id}>
-                  {i > 0 ? ", " : ""}
-                  <Link
-                    to="/notes/$"
-                    params={{ _splat: id }}
-                    search={{ mode: "read", query: undefined, view: "grid" }}
-                    className="link"
-                  >
-                    {renderPreview(`[[${id}]]`)}
-                  </Link>
-                </span>
+            <div className="flex items-center gap-1 text-xs text-text-secondary">
+              <span>Related:</span>
+              {suggestion.related_notes.map((id) => (
+                <RelatedNoteLink key={id} noteId={id} notes={notes} />
               ))}
             </div>
           ) : null}
           <div className="flex gap-2">
-            <Button
-              size="small"
-              variant="primary"
-              onClick={() => convertToNote(suggestion.suggested_type)}
-            >
-              Convert to {suggestion.suggested_type}
-            </Button>
+            <ConvertButton suggestedType={suggestion.suggested_type} onConvert={convertToNote} />
             {hasKey ? (
               <Button size="small" onClick={classify} disabled={loading}>
                 {loading ? (
@@ -330,5 +323,101 @@ function InboxItemCard({ item }: { item: Note }) {
 
       {error ? <p className="text-xs text-text-danger">{error}</p> : null}
     </div>
+  )
+}
+
+const convertTypes = [
+  { type: "task", icon: <CheckSquare size={14} />, label: "Task" },
+  { type: "note", icon: <FileText size={14} />, label: "Note" },
+  { type: "project", icon: <FolderOpen size={14} />, label: "Project" },
+  { type: "person", icon: <User size={14} />, label: "Person" },
+] as const
+
+function ConvertButton({
+  suggestedType,
+  onConvert,
+}: {
+  suggestedType: string
+  onConvert: (type: string) => void
+}) {
+  const suggested = convertTypes.find((t) => t.type === suggestedType) ?? convertTypes[0]
+  const others = convertTypes.filter((t) => t.type !== suggestedType)
+
+  return (
+    <div className="flex">
+      <Button
+        size="small"
+        variant="primary"
+        className="rounded-r-none"
+        onClick={() => onConvert(suggested.type)}
+      >
+        Convert to {suggested.label}
+      </Button>
+      <DropdownMenu>
+        <DropdownMenu.Trigger
+          render={
+            <button className="flex items-center rounded-r bg-border-focus px-1 text-bg hover:brightness-110">
+              <ChevronDown size={14} />
+            </button>
+          }
+        />
+        <DropdownMenu.Content align="start" width={180}>
+          {others.map((t) => (
+            <DropdownMenu.Item key={t.type} icon={t.icon} onClick={() => onConvert(t.type)}>
+              Convert to {t.label}
+            </DropdownMenu.Item>
+          ))}
+        </DropdownMenu.Content>
+      </DropdownMenu>
+    </div>
+  )
+}
+
+function RelatedNoteLink({ noteId, notes }: { noteId: string; notes: Map<string, Note> }) {
+  const note = notes.get(noteId)
+  if (!note) return null
+
+  const displayName = note.displayName
+  const role = note.frontmatter.role as string | undefined
+  const team = note.frontmatter.team as string | undefined
+  const status = note.frontmatter.status as string | undefined
+  const previewBody = note.content
+    .replace(/^---[\s\S]*?---\n*/, "")
+    .trim()
+    .slice(0, 200)
+
+  return (
+    <Tooltip>
+      <Tooltip.Trigger
+        render={
+          <Link
+            to="/notes/$"
+            params={{ _splat: noteId }}
+            search={{ mode: "read", query: undefined, view: "grid" }}
+            className="link"
+          >
+            {displayName}
+          </Link>
+        }
+      />
+      <Tooltip.Content side="top" className="max-w-64 text-xs">
+        <div className="flex flex-col gap-1">
+          <span className="font-medium">{displayName}</span>
+          {note.type !== "note" && note.type !== "daily" ? (
+            <span className="text-text-secondary">{note.type}</span>
+          ) : null}
+          {role ? (
+            <span className="text-text-secondary">
+              {role}
+              {team ? ` · ${team}` : ""}
+            </span>
+          ) : null}
+          {status ? <span className="text-text-secondary">Status: {status}</span> : null}
+          {previewBody ? (
+            <p className="line-clamp-3 text-text-secondary">{renderPreview(previewBody)}</p>
+          ) : null}
+        </div>
+      </Tooltip.Content>
+    </Tooltip>
   )
 }
