@@ -71,7 +71,7 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
         />
         <IconButton
           aria-label="New person"
-          className="h-10 w-10 shrink-0 rounded-lg bg-text text-bg hover:opacity-90 active:opacity-80 coarse:h-12 coarse:w-12"
+          className="h-10 w-10 shrink-0 rounded-lg bg-bg-secondary text-text hover:bg-bg-secondary-hover! active:bg-bg-secondary-active! epaper:ring-1 epaper:ring-inset epaper:ring-border epaper:focus-visible:ring-2 coarse:h-12 coarse:w-12"
           onClick={createPerson}
         >
           <Plus size={16} />
