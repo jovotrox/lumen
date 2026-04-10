@@ -1,8 +1,9 @@
 import { useAtomValue, useSetAtom } from "jotai"
 import React, { useEffect, useMemo, useState } from "react"
-import { Link } from "@tanstack/react-router"
+import { Link, useNavigate } from "@tanstack/react-router"
 import {
   AlertTriangle,
+  CalendarPlus,
   CheckSquare,
   Clock,
   Cloud,
@@ -10,8 +11,10 @@ import {
   CloudLightning,
   CloudSnow,
   CloudSun,
+  FilePlus,
   FolderOpen,
   Inbox,
+  ListPlus,
   Sparkles,
   Sun,
   Wind,
@@ -31,6 +34,7 @@ import {
   urgentTasksAtom,
 } from "../global-state"
 import { generateAISummary } from "../utils/dashboard-ai"
+import { generateNoteId } from "../utils/note-id"
 import { updateTaskCompletion } from "../utils/task"
 import { Checkbox } from "./checkbox"
 import type { Note, Task } from "../schema"
@@ -50,6 +54,7 @@ export function DashboardView() {
   const recentNotes = useAtomValue(sortedNotesAtom)
   const notes = useAtomValue(notesAtom)
   const send = useSetAtom(globalStateMachineAtom)
+  const navigate = useNavigate()
   const tempUnit = useAtomValue(tempUnitAtom)
   const nickname = useAtomValue(nicknameAtom)
 
@@ -231,6 +236,76 @@ export function DashboardView() {
             Nothing pending. Enjoy your day.
           </p>
         )}
+
+        {/* Quick actions */}
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={() => {
+              const today = todayNoteId
+              const existing = notes.get(today)
+              if (existing) {
+                navigate({
+                  to: "/notes/$",
+                  params: { _splat: today },
+                  search: { mode: "write", query: undefined, view: "grid" },
+                })
+              } else {
+                send({
+                  type: "WRITE_FILES",
+                  markdownFiles: { [`${today}.md`]: `# ${today}\n\n` },
+                })
+                navigate({
+                  to: "/notes/$",
+                  params: { _splat: today },
+                  search: { mode: "write", query: undefined, view: "grid" },
+                })
+              }
+            }}
+            className="flex items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+          >
+            <CalendarPlus size={14} />
+            Daily note
+          </button>
+          <button
+            onClick={() => {
+              const today = todayNoteId
+              const existing = notes.get(today)
+              const taskLine = `- [ ] `
+              if (existing) {
+                const content = existing.content.trimEnd() + "\n" + taskLine
+                send({ type: "WRITE_FILES", markdownFiles: { [`${today}.md`]: content } })
+              } else {
+                send({
+                  type: "WRITE_FILES",
+                  markdownFiles: { [`${today}.md`]: `# ${today}\n\n${taskLine}` },
+                })
+              }
+              navigate({
+                to: "/notes/$",
+                params: { _splat: today },
+                search: { mode: "write", query: undefined, view: "grid" },
+              })
+            }}
+            className="flex items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+          >
+            <ListPlus size={14} />
+            New task
+          </button>
+          <button
+            onClick={() => {
+              const noteId = generateNoteId()
+              navigate({
+                to: "/notes/$",
+                params: { _splat: noteId },
+                search: { mode: "write", query: undefined, view: "grid" },
+              })
+            }}
+            className="flex items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+          >
+            <FilePlus size={14} />
+            New note
+          </button>
+        </div>
       </section>
 
       {/* Divider */}
