@@ -612,9 +612,7 @@ function useTemplateCompletion() {
 }
 
 function useFrontmatterValueCompletion() {
-  const getValues = useAtomCallback(
-    React.useCallback((get) => get(frontmatterValuesAtom), []),
-  )
+  const getValues = useAtomCallback(React.useCallback((get) => get(frontmatterValuesAtom), []))
 
   const completion = React.useCallback(
     async (context: CompletionContext): Promise<CompletionResult | null> => {
