@@ -37,17 +37,17 @@ export const builtInThemes: Theme[] = [
     id: "github",
     name: "GitHub",
     builtIn: true,
-    // GitHub dark mode (Primer design system)
+    // GitHub dark mode (Primer v2 design system, 2024)
     // Sources: github.com/primer/primitives, primer.style/design/foundations/color
     colors: {
       bg: "#0d1117",
-      bgSecondary: "#161b22",
-      text: "#c9d1d9",
-      textSecondary: "#8b949e",
-      border: "#30363d",
-      accent: "#58a6ff",
-      accentText: "#58a6ff",
-      syntaxHighlight: "#79c0ff",
+      bgSecondary: "#151b23",
+      text: "#f0f6fc",
+      textSecondary: "#9198a1",
+      border: "#3d444d",
+      accent: "#4493f8",
+      accentText: "#4493f8",
+      syntaxHighlight: "#4493f8",
     },
   },
   {
@@ -55,33 +55,33 @@ export const builtInThemes: Theme[] = [
     name: "Notion",
     builtIn: true,
     // Notion dark mode colors
-    // Sources: notion.so dark mode, notionanswers.com, notionavenue.co
+    // Sources: matthiasfrank.de/en/notion-colors
     colors: {
       bg: "#191919",
-      bgSecondary: "#202020",
-      text: "#e3e3e1",
-      textSecondary: "#9b9a97",
-      border: "#2f3437",
-      accent: "#529cca",
-      accentText: "#529cca",
-      syntaxHighlight: "#529cca",
+      bgSecondary: "#252525",
+      text: "#d4d4d4",
+      textSecondary: "#9b9b9b",
+      border: "#2f2f2f",
+      accent: "#447acb",
+      accentText: "#447acb",
+      syntaxHighlight: "#447acb",
     },
   },
   {
     id: "vscode",
     name: "VS Code",
     builtIn: true,
-    // VS Code Dark+ theme colors
-    // Sources: code.visualstudio.com/api/references/theme-color, github.com/javifm86 gist
+    // VS Code Dark theme (2025)
+    // Sources: github.com/microsoft/vscode, extensions/theme-defaults/themes
     colors: {
-      bg: "#1e1e1e",
-      bgSecondary: "#252526",
-      text: "#d4d4d4",
-      textSecondary: "#858585",
-      border: "#444444",
-      accent: "#007acc",
-      accentText: "#3794ff",
-      syntaxHighlight: "#3794ff",
+      bg: "#121314",
+      bgSecondary: "#191a1b",
+      text: "#bbbebf",
+      textSecondary: "#8c8c8c",
+      border: "#2a2b2c",
+      accent: "#3994bc",
+      accentText: "#48a0c7",
+      syntaxHighlight: "#3994bc",
     },
   },
   {
@@ -95,7 +95,7 @@ export const builtInThemes: Theme[] = [
       bgSecondary: "#161616",
       text: "#dcddde",
       textSecondary: "#999999",
-      border: "#2f3136",
+      border: "#333333",
       accent: "#7f6df2",
       accentText: "#a68df4",
       syntaxHighlight: "#7f6df2",

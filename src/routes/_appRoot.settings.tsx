@@ -33,7 +33,13 @@ import {
 } from "../global-state"
 import { cx } from "../utils/cx"
 import { saveCustomThemes } from "../hooks/use-theme-sync"
-import { builtInThemes, getAllThemes, type Theme, type ThemeColors } from "../utils/themes"
+import {
+  applyTheme,
+  builtInThemes,
+  getAllThemes,
+  type Theme,
+  type ThemeColors,
+} from "../utils/themes"
 
 export const Route = createFileRoute("/_appRoot/settings")({
   component: RouteComponent,
@@ -174,6 +180,8 @@ function AppearanceSection() {
   const [customThemes, setCustomThemes] = useAtom(customThemesAtom)
   const [themeDialogOpen, setThemeDialogOpen] = useState(false)
   const [editingTheme, setEditingTheme] = useState<Theme | undefined>(undefined)
+  const previousThemeRef = React.useRef<Theme | null>(null)
+  const savedRef = React.useRef(false)
 
   const allThemes = getAllThemes(customThemes)
 
@@ -187,6 +195,7 @@ function AppearanceSection() {
   }
 
   const handleSaveCustomTheme = (theme: Theme) => {
+    savedRef.current = true
     setCustomThemes((prev) => {
       const existing = prev.findIndex((t) => t.id === theme.id)
       let updated: Theme[]
@@ -205,14 +214,27 @@ function AppearanceSection() {
   }
 
   const openCreateDialog = () => {
+    previousThemeRef.current = allThemes.find((t) => t.id === themeId) ?? null
+    savedRef.current = false
     setEditingTheme(undefined)
     setThemeDialogOpen(true)
   }
 
   const openEditDialog = (id: string) => {
+    previousThemeRef.current = allThemes.find((t) => t.id === themeId) ?? null
+    savedRef.current = false
     setEditingTheme(customThemes.find((t) => t.id === id))
     setThemeDialogOpen(true)
   }
+
+  const handlePreview = React.useCallback((colors: ThemeColors) => {
+    applyTheme({
+      id: "__preview__",
+      name: "Preview",
+      colors,
+      builtIn: false,
+    })
+  }, [])
 
   return (
     <SettingsSection title="Appearance">
@@ -313,8 +335,14 @@ function AppearanceSection() {
       <Dialog
         open={themeDialogOpen}
         onOpenChange={(open) => {
+          if (!open) {
+            if (!savedRef.current) {
+              applyTheme(previousThemeRef.current)
+            }
+            savedRef.current = false
+            setEditingTheme(undefined)
+          }
           setThemeDialogOpen(open)
-          if (!open) setEditingTheme(undefined)
         }}
       >
         <Dialog.Content title={editingTheme ? "Edit theme" : "Create custom theme"}>
@@ -322,9 +350,11 @@ function AppearanceSection() {
             theme={editingTheme}
             onSave={handleSaveCustomTheme}
             onCancel={() => {
+              applyTheme(previousThemeRef.current)
               setThemeDialogOpen(false)
               setEditingTheme(undefined)
             }}
+            onPreview={handlePreview}
           />
         </Dialog.Content>
       </Dialog>
@@ -358,13 +388,19 @@ function CustomThemeForm({
   theme,
   onSave,
   onCancel,
+  onPreview,
 }: {
   theme?: Theme
   onSave: (theme: Theme) => void
   onCancel: () => void
+  onPreview?: (colors: ThemeColors) => void
 }) {
   const [name, setName] = useState(theme?.name ?? "")
   const [colors, setColors] = useState<ThemeColors>(theme?.colors ?? defaultCustomColors)
+
+  React.useEffect(() => {
+    onPreview?.(colors)
+  }, [colors, onPreview])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
