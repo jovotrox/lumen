@@ -77,6 +77,7 @@
     "jotai": "^2.0.3",
     "jotai-xstate": "^0.3.0",
     "lodash.debounce": "^4.0.8",
+    "lucide-react": "^1.8.0",
     "mdast-util-from-markdown": "^1.2.0",
     "mdast-util-gfm-task-list-item": "^2.0.0",
     "mdast-util-to-markdown": "^2.1.0",
