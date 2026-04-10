@@ -924,6 +924,46 @@ export const unprocessedInboxCountAtom = atom((get) => {
 })
 
 // -----------------------------------------------------------------------------
+// Dashboard
+// -----------------------------------------------------------------------------
+
+/** Tasks with priority 1 or 2 from any note */
+export const urgentTasksAtom = atom((get) => {
+  const notes = get(notesAtom)
+  const urgent: { task: import("./schema").Task; note: Note }[] = []
+  for (const note of notes.values()) {
+    for (const task of note.tasks) {
+      if (!task.completed && (task.priority === 1 || task.priority === 2)) {
+        urgent.push({ task, note })
+      }
+    }
+  }
+  return urgent.sort((a, b) => (a.task.priority ?? 3) - (b.task.priority ?? 3))
+})
+
+/** Incomplete tasks from today's daily note */
+export const todayTasksAtom = atom((get) => {
+  const notes = get(notesAtom)
+  const today = new Date()
+  const year = today.getFullYear().toString().padStart(4, "0")
+  const month = (today.getMonth() + 1).toString().padStart(2, "0")
+  const day = today.getDate().toString().padStart(2, "0")
+  const todayId = `${year}-${month}-${day}`
+  const dailyNote = notes.get(todayId)
+  if (!dailyNote) return { tasks: [] as import("./schema").Task[], noteId: todayId, content: "" }
+  return { tasks: dailyNote.tasks, noteId: todayId, content: dailyNote.content }
+})
+
+/** Whether the dashboard should show instead of the notes list */
+export const shouldShowDashboardAtom = atom((get) => {
+  const unprocessed = get(unprocessedInboxCountAtom)
+  const { tasks: todayTasks } = get(todayTasksAtom)
+  const urgentTasks = get(urgentTasksAtom)
+  const incompleteTodayTasks = todayTasks.filter((t) => !t.completed).length
+  return unprocessed > 0 || incompleteTodayTasks > 0 || urgentTasks.length > 0
+})
+
+// -----------------------------------------------------------------------------
 // Frontmatter values (for autocomplete)
 // -----------------------------------------------------------------------------
 
