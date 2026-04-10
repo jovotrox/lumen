@@ -8,7 +8,6 @@ import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
 import { IconButton } from "./icon-button"
 import { GridIcon16, ListIcon16 } from "./icons"
-import { Button } from "./button"
 import type { Note } from "../schema"
 
 type PeopleViewProps = {
@@ -70,10 +69,13 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
           value={query}
           onChange={onQueryChange}
         />
-        <Button size="small" onClick={createPerson}>
-          <Plus size={14} />
-          New
-        </Button>
+        <IconButton
+          aria-label="New person"
+          className="h-10 w-10 shrink-0 rounded-lg bg-text text-bg hover:opacity-90 active:opacity-80 coarse:h-12 coarse:w-12"
+          onClick={createPerson}
+        >
+          <Plus size={16} />
+        </IconButton>
         <DropdownMenu>
           <DropdownMenu.Trigger
             render={

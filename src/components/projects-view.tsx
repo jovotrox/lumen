@@ -8,7 +8,6 @@ import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
 import { IconButton } from "./icon-button"
 import { GridIcon16, ListIcon16 } from "./icons"
-import { Button } from "./button"
 import type { Note } from "../schema"
 
 type ProjectsViewProps = {
@@ -58,10 +57,13 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
           value={query}
           onChange={onQueryChange}
         />
-        <Button size="small" onClick={createProject}>
-          <Plus size={14} />
-          New
-        </Button>
+        <IconButton
+          aria-label="New project"
+          className="h-10 w-10 shrink-0 rounded-lg bg-text text-bg hover:opacity-90 active:opacity-80 coarse:h-12 coarse:w-12"
+          onClick={createProject}
+        >
+          <Plus size={16} />
+        </IconButton>
         <DropdownMenu>
           <DropdownMenu.Trigger
             render={

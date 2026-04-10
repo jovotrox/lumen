@@ -356,7 +356,7 @@ function ConvertButton({
       <DropdownMenu>
         <DropdownMenu.Trigger
           render={
-            <button className="flex items-center rounded-r bg-border-focus px-1 text-bg hover:brightness-110">
+            <button className="flex h-6 items-center rounded-r bg-text px-1 text-bg hover:opacity-90 active:opacity-80">
               <ChevronDown size={14} />
             </button>
           }
