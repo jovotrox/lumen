@@ -9,6 +9,7 @@ import { FormControl } from "../components/form-control"
 import { useSignOut } from "../components/github-auth"
 import { GitHubAvatar } from "../components/github-avatar"
 import { ChevronDownIcon16, LoadingIcon16, SettingsIcon16 } from "../components/icons"
+import { AIKeyInput } from "../components/ai-key-input"
 import { OpenAIKeyInput } from "../components/openai-key-input"
 import { PageLayout } from "../components/page-layout"
 import { RepoForm } from "../components/repo-form"
@@ -17,6 +18,8 @@ import { SegmentedControl } from "../components/segmented-control"
 import { Switch } from "../components/switch"
 import { TextInput } from "../components/text-input"
 import {
+  aiProviderAtom,
+  claudeApiKeyAtom,
   customThemesAtom,
   defaultFontAtom,
   epaperAtom,
@@ -517,11 +520,31 @@ function NotesSection() {
 function AISection() {
   const hasOpenAIKey = useAtomValue(hasOpenAIKeyAtom)
   const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useAtom(voiceAssistantEnabledAtom)
+  const [aiProvider, setAiProvider] = useAtom(aiProviderAtom)
 
   return (
     <SettingsSection title="AI">
       <div className="flex flex-col gap-4">
         <OpenAIKeyInput />
+        <AIKeyInput label="Claude key" atom={claudeApiKeyAtom} placeholder="sk-ant-…" />
+        <div role="separator" className="h-px bg-border-secondary" />
+        <div className="flex items-center justify-between">
+          <span className="leading-4">AI provider</span>
+          <SegmentedControl aria-label="AI provider" size="small">
+            <SegmentedControl.Segment
+              selected={aiProvider === "openai"}
+              onClick={() => setAiProvider("openai")}
+            >
+              OpenAI
+            </SegmentedControl.Segment>
+            <SegmentedControl.Segment
+              selected={aiProvider === "claude"}
+              onClick={() => setAiProvider("claude")}
+            >
+              Claude
+            </SegmentedControl.Segment>
+          </SegmentedControl>
+        </div>
         <div role="separator" className="h-px bg-border-secondary" />
         <div className="flex flex-col gap-3 leading-4 coarse:gap-4">
           <div className="flex items-start gap-2.5">
