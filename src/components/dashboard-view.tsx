@@ -214,7 +214,7 @@ export function DashboardView() {
 
       {/* Greeting */}
       <section className="flex flex-col gap-3">
-        <h1 className="font-bold tracking-tight" style={{ fontSize: "2.5rem", lineHeight: 1.1 }}>
+        <h1 className="font-bold tracking-tight" style={{ fontSize: "2rem", lineHeight: 1.1 }}>
           {getGreeting()}
           {nickname ? `, ${nickname}` : ""}.
         </h1>
