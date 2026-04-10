@@ -839,6 +839,62 @@ export const weeklyTemplateAtom = selectAtom(templatesAtom, (templates) =>
 )
 
 // -----------------------------------------------------------------------------
+// Projects
+// -----------------------------------------------------------------------------
+
+export const projectsAtom = atom((get) => {
+  const notes = get(notesAtom)
+  const projects: Note[] = []
+
+  for (const note of notes.values()) {
+    if (note.type === "project") {
+      projects.push(note)
+    }
+  }
+
+  // Sort by priority (ascending, nulls last), then by displayName
+  return projects.sort((a, b) => {
+    const pa = (a.frontmatter.priority as number) ?? 99
+    const pb = (b.frontmatter.priority as number) ?? 99
+    if (pa !== pb) return pa - pb
+    return a.displayName.localeCompare(b.displayName)
+  })
+})
+
+export const projectSearcherAtom = atom((get) => {
+  const projects = get(projectsAtom)
+  return new Searcher(projects, {
+    keySelector: (p) => [p.displayName, p.id],
+    threshold: 0.8,
+  })
+})
+
+// -----------------------------------------------------------------------------
+// People
+// -----------------------------------------------------------------------------
+
+export const peopleAtom = atom((get) => {
+  const notes = get(notesAtom)
+  const people: Note[] = []
+
+  for (const note of notes.values()) {
+    if (note.type === "person") {
+      people.push(note)
+    }
+  }
+
+  return people.sort((a, b) => a.displayName.localeCompare(b.displayName))
+})
+
+export const personSearcherAtom = atom((get) => {
+  const people = get(peopleAtom)
+  return new Searcher(people, {
+    keySelector: (p) => [p.displayName, p.id],
+    threshold: 0.8,
+  })
+})
+
+// -----------------------------------------------------------------------------
 // Tasks
 // -----------------------------------------------------------------------------
 
