@@ -895,6 +895,24 @@ export const personSearcherAtom = atom((get) => {
 })
 
 // -----------------------------------------------------------------------------
+// Inbox
+// -----------------------------------------------------------------------------
+
+export const inboxAtom = atom((get) => {
+  const notes = get(notesAtom)
+  const items: Note[] = []
+
+  for (const note of notes.values()) {
+    if (note.type === "inbox") {
+      items.push(note)
+    }
+  }
+
+  // Sort by updatedAt descending (newest first)
+  return items.sort((a, b) => (b.updatedAt ?? 0) - (a.updatedAt ?? 0))
+})
+
+// -----------------------------------------------------------------------------
 // Tasks
 // -----------------------------------------------------------------------------
 
@@ -966,3 +984,17 @@ export const openaiKeyAtom = atomWithStorage<string>(OPENAI_KEY_STORAGE_KEY, "")
 export const hasOpenAIKeyAtom = selectAtom(openaiKeyAtom, (key) => key !== "")
 
 export const voiceAssistantEnabledAtom = atomWithStorage<boolean>("voice_assistant_enabled", false)
+
+// -----------------------------------------------------------------------------
+// AI Classification
+// -----------------------------------------------------------------------------
+
+export const CLAUDE_KEY_STORAGE_KEY = "claude_api_key"
+
+export const claudeApiKeyAtom = atomWithStorage<string>(CLAUDE_KEY_STORAGE_KEY, "")
+
+export const hasClaudeKeyAtom = selectAtom(claudeApiKeyAtom, (key) => key !== "")
+
+export const aiProviderAtom = atomWithStorage<"openai" | "claude">("ai_provider", "openai")
+
+export const quickNoteModeAtom = atomWithStorage<"note" | "inbox">("quick_note_mode", "inbox")
