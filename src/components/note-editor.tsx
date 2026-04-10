@@ -3,6 +3,7 @@ import {
   Completion,
   CompletionContext,
   CompletionResult,
+  startCompletion,
 } from "@codemirror/autocomplete"
 import { markdown, markdownLanguage } from "@codemirror/lang-markdown"
 import { yamlFrontmatter } from "@codemirror/lang-yaml"
@@ -184,6 +185,8 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
                 templateCompletion,
               ],
           icons: false,
+          // For property fields, activate immediately on any input
+          ...(frontmatterKey ? { activateOnTypingDelay: 0 } : {}),
         }),
         frontmatterExtension(),
         ellipsisExtension(),
@@ -261,6 +264,11 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
             view.dispatch({
               selection: EditorSelection.cursor(view.state.doc.sliceString(0).length),
             })
+          }
+          // For property value fields, show autocomplete immediately on focus
+          if (frontmatterKey) {
+            // Small delay to ensure the editor is fully initialized
+            setTimeout(() => startCompletion(view), 0)
           }
         }}
         onUpdate={onStateChange}
@@ -672,13 +680,14 @@ function usePropertyValueCompletion(frontmatterKey?: string) {
     async (context: CompletionContext): Promise<CompletionResult | null> => {
       if (!frontmatterKey) return null
 
+      // Allow activation on explicit trigger (startCompletion) or any typing
+      if (!context.explicit && !context.matchBefore(/.*/)) return null
+
       const values = getValues()
       const existing = values[frontmatterKey]
       if (!existing || existing.length === 0) return null
 
-      // Match any text typed so far
-      const doc = context.state.doc.toString()
-      const typed = doc.slice(0, context.pos)
+      const typed = context.state.doc.toString()
 
       return {
         from: 0,
