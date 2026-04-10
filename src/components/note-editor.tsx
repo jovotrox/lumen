@@ -672,6 +672,26 @@ function useFrontmatterValueCompletion() {
   return completion
 }
 
+/** Predefined values for known frontmatter keys, with optional color indicator */
+const knownPropertyValues: Record<string, { value: string; detail?: string }[]> = {
+  status: [
+    { value: "active", detail: "🟢" },
+    { value: "paused", detail: "🟡" },
+    { value: "completed", detail: "⚪" },
+    { value: "cancelled", detail: "🔴" },
+  ],
+  priority: [
+    { value: "1", detail: "🔴 highest" },
+    { value: "2", detail: "🟡 medium" },
+    { value: "3", detail: "🔵 low" },
+  ],
+  type: [
+    { value: "project", detail: "📁" },
+    { value: "person", detail: "👤" },
+    { value: "inbox", detail: "📥" },
+  ],
+}
+
 /** Completion for property value fields in the Properties panel (read mode) */
 function usePropertyValueCompletion(frontmatterKey?: string) {
   const getValues = useAtomCallback(React.useCallback((get) => get(frontmatterValuesAtom), []))
@@ -684,17 +704,36 @@ function usePropertyValueCompletion(frontmatterKey?: string) {
       if (!context.explicit && !context.matchBefore(/.*/)) return null
 
       const values = getValues()
-      const existing = values[frontmatterKey]
-      if (!existing || existing.length === 0) return null
+      const existing = values[frontmatterKey] ?? []
+      const known = knownPropertyValues[frontmatterKey] ?? []
+
+      // Merge known values with dynamic ones, known first, then unique dynamic
+      const knownValues = new Set(known.map((k) => k.value))
+      const knownMap = new Map(known.map((k) => [k.value, k.detail]))
+
+      const allOptions: Completion[] = []
+
+      // Add known values first (with detail/color)
+      for (const k of known) {
+        allOptions.push({ label: k.value, detail: k.detail })
+      }
+
+      // Add dynamic values not already in known set
+      for (const v of existing) {
+        if (!knownValues.has(v)) {
+          allOptions.push({ label: v, detail: knownMap.get(v) })
+        }
+      }
+
+      if (allOptions.length === 0) return null
 
       const typed = context.state.doc.toString()
 
       return {
         from: 0,
-        options: existing
-          .filter((v) => !typed || v.toLowerCase().includes(typed.toLowerCase()))
-          .slice(0, 10)
-          .map((v) => ({ label: v })),
+        options: allOptions
+          .filter((o) => !typed || o.label.toLowerCase().includes(typed.toLowerCase()))
+          .slice(0, 10),
         filter: false,
       }
     },
