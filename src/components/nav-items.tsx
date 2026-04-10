@@ -1,4 +1,4 @@
-import { FolderOpen, Inbox, User } from "lucide-react"
+import { FolderOpen, Home, Inbox, User } from "lucide-react"
 import { Link, LinkComponentProps, useLocation } from "@tanstack/react-router"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { selectAtom } from "jotai/utils"
@@ -87,8 +87,13 @@ export function NavItems({
         <div className="flex flex-col gap-2">
           <ul className="flex flex-col gap-1">
             <li>
+              <NavLink to="/" icon={<Home size={16} />} onNavigate={onNavigate}>
+                Home
+              </NavLink>
+            </li>
+            <li>
               <NavLink
-                to="/"
+                to="/notes"
                 search={{ query: undefined, view: "grid" }}
                 activeIcon={<NoteFillIcon16 />}
                 icon={<NoteIcon16 />}

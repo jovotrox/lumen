@@ -10,6 +10,7 @@ import {
   openaiKeyAtom,
   projectsAtom,
   sortedNotesAtom,
+  tempUnitAtom,
   todayTasksAtom,
   urgentTasksAtom,
 } from "../global-state"
@@ -19,11 +20,7 @@ import { updateTaskCompletion } from "../utils/task"
 import { Checkbox } from "./checkbox"
 import type { Note, Task } from "../schema"
 
-type DashboardViewProps = {
-  onShowNotes?: () => void
-}
-
-export function DashboardView({ onShowNotes }: DashboardViewProps) {
+export function DashboardView() {
   const inboxItems = useAtomValue(inboxAtom)
   const { tasks: todayTasks, noteId: todayNoteId } = useAtomValue(todayTasksAtom)
   const urgentTasks = useAtomValue(urgentTasksAtom)
@@ -31,6 +28,7 @@ export function DashboardView({ onShowNotes }: DashboardViewProps) {
   const recentNotes = useAtomValue(sortedNotesAtom)
   const notes = useAtomValue(notesAtom)
   const send = useSetAtom(globalStateMachineAtom)
+  const tempUnit = useAtomValue(tempUnitAtom)
 
   const aiProvider = useAtomValue(aiProviderAtom)
   const openaiKey = useAtomValue(openaiKeyAtom)
@@ -104,6 +102,19 @@ export function DashboardView({ onShowNotes }: DashboardViewProps) {
 
   const summary = aiSummary ?? templateSummary
 
+  // Weather
+  const [weather, setWeather] = useState<{
+    temp: number
+    description: string
+    icon: string
+  } | null>(null)
+
+  useEffect(() => {
+    fetchWeather(tempUnit)
+      .then(setWeather)
+      .catch(() => {})
+  }, [tempUnit])
+
   // Toggle today's task
   const toggleTodayTask = (task: Task, completed: boolean) => {
     const todayNote = notes.get(todayNoteId)
@@ -121,11 +132,39 @@ export function DashboardView({ onShowNotes }: DashboardViewProps) {
     [recentNotes],
   )
 
+  const hasDailyNote = notes.has(todayNoteId)
+  const hasPendingItems =
+    unprocessed.length > 0 || incompleteTodayTasks.length > 0 || urgentTasks.length > 0
+
+  // Date
+  const now = new Date()
+  const dayName = now.toLocaleDateString("en-US", { weekday: "short" })
+  const fullDate = now.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  })
+
   return (
     <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
-      {/* Greeting */}
-      <section>
-        <p className="text-lg leading-relaxed">{summary}</p>
+      {/* Date header */}
+      <header className="flex items-end justify-between">
+        <div>
+          <h1 className="text-4xl font-bold tracking-tight">{dayName}</h1>
+        </div>
+        <div className="text-right text-sm text-text-secondary">
+          <div>{fullDate}</div>
+          {weather ? (
+            <div>
+              {weather.icon} {weather.temp}°{tempUnit} · {weather.description}
+            </div>
+          ) : null}
+        </div>
+      </header>
+
+      {/* Greeting / Summary */}
+      <section className="rounded-lg border border-border-secondary p-4">
+        <p className="leading-relaxed">{summary}</p>
       </section>
 
       {/* Inbox */}
@@ -201,6 +240,33 @@ export function DashboardView({ onShowNotes }: DashboardViewProps) {
         </DashboardSection>
       ) : null}
 
+      {/* Empty state — nothing pending */}
+      {!hasPendingItems ? (
+        <section className="flex flex-col items-center gap-3 rounded-lg border border-border-secondary py-8 text-center">
+          <span className="text-3xl">✨</span>
+          <p className="text-text-secondary">No pending tasks — you're all clear!</p>
+          {!hasDailyNote ? (
+            <Link
+              to="/notes/$"
+              params={{ _splat: todayNoteId }}
+              search={{ mode: "write", query: undefined, view: "grid" }}
+              className="link text-sm font-medium"
+            >
+              Start today's note →
+            </Link>
+          ) : (
+            <Link
+              to="/notes/$"
+              params={{ _splat: todayNoteId }}
+              search={{ mode: "read", query: undefined, view: "grid" }}
+              className="link text-sm font-medium"
+            >
+              Open today's note →
+            </Link>
+          )}
+        </section>
+      ) : null}
+
       {/* Active projects */}
       {activeProjects.length > 0 ? (
         <DashboardSection title="📁 Proyectos" count={activeProjects.length}>
@@ -246,8 +312,8 @@ export function DashboardView({ onShowNotes }: DashboardViewProps) {
       ) : null}
 
       {/* Recent notes */}
-      {recent.length > 0 ? (
-        <DashboardSection title="🕐 Recientes">
+      <DashboardSection title="🕐 Recientes">
+        {recent.length > 0 ? (
           <ul className="flex flex-col gap-1">
             {recent.map((note) => (
               <li key={note.id} className="flex items-center justify-between gap-2">
@@ -267,14 +333,16 @@ export function DashboardView({ onShowNotes }: DashboardViewProps) {
               </li>
             ))}
           </ul>
-        </DashboardSection>
-      ) : null}
+        ) : (
+          <p className="text-sm text-text-tertiary">No recent notes yet.</p>
+        )}
+      </DashboardSection>
 
-      {/* Footer link to notes */}
+      {/* Link to all notes */}
       <div className="pb-4 text-center">
-        <button onClick={onShowNotes} className="link text-sm">
+        <Link to="/notes" search={{ query: undefined, view: "grid" }} className="link text-sm">
           Ver todas las notas →
-        </button>
+        </Link>
       </div>
     </div>
   )
@@ -329,4 +397,36 @@ function formatRelativeTime(timestamp: number): string {
   if (days === 1) return "ayer"
   if (days < 7) return `hace ${days}d`
   return `hace ${Math.floor(days / 7)}sem`
+}
+
+// Weather via wttr.in (free, no API key)
+const weatherIcons: Record<string, string> = {
+  Clear: "☀️",
+  "Partly cloudy": "⛅",
+  Cloudy: "☁️",
+  Overcast: "☁️",
+  Mist: "🌫️",
+  Fog: "🌫️",
+  Rain: "🌧️",
+  "Light rain": "🌦️",
+  "Heavy rain": "🌧️",
+  Snow: "🌨️",
+  Thunderstorm: "⛈️",
+}
+
+async function fetchWeather(
+  unit: "C" | "F",
+): Promise<{ temp: number; description: string; icon: string }> {
+  const response = await fetch("https://wttr.in/?format=j1", {
+    headers: { Accept: "application/json" },
+  })
+  if (!response.ok) throw new Error("Weather fetch failed")
+  const data = (await response.json()) as {
+    current_condition: { temp_C: string; temp_F: string; weatherDesc: { value: string }[] }[]
+  }
+  const current = data.current_condition[0]
+  const temp = parseInt(unit === "C" ? current.temp_C : current.temp_F, 10)
+  const description = current.weatherDesc[0]?.value ?? "Unknown"
+  const icon = weatherIcons[description] ?? "🌤️"
+  return { temp, description, icon }
 }
