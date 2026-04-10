@@ -6,8 +6,9 @@ import { generateNoteId } from "../utils/note-id"
 import { isTauri } from "../utils/tauri"
 import { Button } from "../components/button"
 import { CheckIcon16 } from "../components/icons"
-import { useAtomValue } from "jotai"
-import { customThemesAtom, defaultFontAtom, themeAtom } from "../global-state"
+import { useAtom, useAtomValue } from "jotai"
+import { customThemesAtom, defaultFontAtom, quickNoteModeAtom, themeAtom } from "../global-state"
+import { SegmentedControl } from "../components/segmented-control"
 
 export const Route = createFileRoute("/quick-note")({
   component: QuickNoteComponent,
@@ -24,6 +25,7 @@ function QuickNoteComponent() {
   const defaultFont = useAtomValue(defaultFontAtom)
   const themeId = useAtomValue(themeAtom)
   const customThemes = useAtomValue(customThemesAtom)
+  const [mode, setMode] = useAtom(quickNoteModeAtom)
 
   // Apply font style
   React.useEffect(() => {
@@ -99,6 +101,7 @@ function QuickNoteComponent() {
         await emitTo("main", "quick-note-save", {
           noteId,
           content,
+          mode,
         })
         setHasUnsavedChanges(false)
         setSaved(true)
@@ -141,7 +144,20 @@ function QuickNoteComponent() {
     <div className="flex h-screen flex-col bg-bg font-content text-text">
       {/* Header */}
       <div className="flex shrink-0 items-center justify-between border-b border-border-secondary px-3 py-2">
-        <span className="text-xs font-medium text-text-secondary">Quick Note</span>
+        <SegmentedControl aria-label="Quick note mode" size="small">
+          <SegmentedControl.Segment
+            selected={mode === "note"}
+            onClick={() => setMode("note")}
+          >
+            Note
+          </SegmentedControl.Segment>
+          <SegmentedControl.Segment
+            selected={mode === "inbox"}
+            onClick={() => setMode("inbox")}
+          >
+            Inbox
+          </SegmentedControl.Segment>
+        </SegmentedControl>
         <div className="flex items-center gap-1">
           {saved && (
             <span className="flex items-center gap-1 text-xs text-text-success">
