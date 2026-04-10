@@ -1,4 +1,4 @@
-type DashboardData = {
+export type DashboardData = {
   inbox: number
   tasks: number
   todayCompleted: number
@@ -6,42 +6,95 @@ type DashboardData = {
   projects: number
   topProject: string | null
   topProjectProgress: string | null
-}
-
-const greetings = {
-  morning: ["Buenos días", "Good morning"],
-  afternoon: ["Buenas tardes", "Good afternoon"],
-  evening: ["Buenas noches", "Good evening"],
+  nickname: string
 }
 
 function getGreeting(): string {
   const hour = new Date().getHours()
-  const pool = hour < 12 ? greetings.morning : hour < 18 ? greetings.afternoon : greetings.evening
-  return pool[Math.floor(Math.random() * pool.length)]
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
 }
 
-type TemplateFunction = (data: DashboardData, greeting: string) => string
+type TemplateFunction = (d: DashboardData) => string
 
 const templates: TemplateFunction[] = [
-  (d, g) =>
-    `${g}. Tienes 📥 ${d.inbox} items en inbox, ☑️ ${d.tasks} tareas para hoy y 📁 ${d.projects} proyectos activos.`,
-  (d, g) =>
-    `${g}. 📥 ${d.inbox} por procesar, ☑️ ${d.tasks} pendientes.${d.topProject ? ` ${d.topProject} está al ${d.topProjectProgress}.` : ""}`,
-  (d, g) =>
-    `Tu día: 🔴 ${d.urgentTasks} urgentes, 📥 ${d.inbox} en inbox.${d.topProject ? ` 📁 ${d.topProject} avanza con ${d.topProjectProgress}.` : ""}`,
-  (d, g) =>
-    `${g}. You have 📥 ${d.inbox} inbox items, ☑️ ${d.tasks} tasks today and 📁 ${d.projects} active projects.`,
-  (d, g) =>
-    `${g}. 📥 ${d.inbox} to process, ☑️ ${d.tasks} tasks due today.${d.urgentTasks > 0 ? ` ${d.urgentTasks} are 🔴 urgent.` : ""}`,
-  (d, g) =>
-    `Resumen: 📁 ${d.projects} proyectos activos, ☑️ ${d.todayCompleted} tareas completadas hoy. ${d.inbox} 📥 pendientes en inbox.`,
-  (d) =>
-    d.tasks + d.inbox <= 2
-      ? `Todo tranquilo — solo 📥 ${d.inbox} en inbox y ☑️ ${d.tasks} tareas pendientes.`
-      : `Hoy tienes ☑️ ${d.tasks} tareas.${d.topProject ? ` Tu proyecto más activo es 📁 ${d.topProject} (${d.topProjectProgress}).` : ""} 📥 ${d.inbox} en inbox.`,
-  (d, g) =>
-    `${g}. ${d.urgentTasks > 0 ? `🔴 ${d.urgentTasks} urgente${d.urgentTasks > 1 ? "s" : ""} primero. ` : ""}📥 ${d.inbox} en inbox, ☑️ ${d.tasks} tareas, 📁 ${d.projects} proyectos.`,
+  (d) => {
+    const hi = `${getGreeting()}${d.nickname ? `, ${d.nickname}` : ""}. `
+    const parts: string[] = []
+    if (d.tasks > 0) parts.push(`☑️ ${d.tasks} task${d.tasks > 1 ? "s" : ""} today`)
+    if (d.inbox > 0) parts.push(`📥 ${d.inbox} in inbox`)
+    if (d.projects > 0) parts.push(`📁 ${d.projects} active project${d.projects > 1 ? "s" : ""}`)
+    if (d.urgentTasks > 0) parts.push(`🔴 ${d.urgentTasks} urgent`)
+    if (parts.length === 0) return `${hi}You're all clear today. Nothing pending.`
+    return `${hi}You have ${joinParts(parts)}.${d.topProject ? ` ${d.topProject} is at ${d.topProjectProgress}.` : ""}`
+  },
+  (d) => {
+    const hi = `${getGreeting()}${d.nickname ? `, ${d.nickname}` : ""}. `
+    if (d.tasks === 0 && d.inbox === 0 && d.urgentTasks === 0) {
+      return `${hi}All quiet — enjoy your day.`
+    }
+    let msg = hi
+    if (d.urgentTasks > 0) msg += `🔴 ${d.urgentTasks} urgent first. `
+    if (d.tasks > 0) msg += `☑️ ${d.tasks} task${d.tasks > 1 ? "s" : ""} for today. `
+    if (d.inbox > 0) msg += `📥 ${d.inbox} to process. `
+    if (d.topProject) msg += `📁 ${d.topProject} at ${d.topProjectProgress}.`
+    return msg.trim()
+  },
+  (d) => {
+    const hi = `Hey${d.nickname ? ` ${d.nickname}` : ""}! `
+    const parts: string[] = []
+    if (d.inbox > 0) parts.push(`📥 ${d.inbox} inbox item${d.inbox > 1 ? "s" : ""}`)
+    if (d.tasks > 0) parts.push(`☑️ ${d.tasks} pending task${d.tasks > 1 ? "s" : ""}`)
+    if (d.urgentTasks > 0) parts.push(`🔴 ${d.urgentTasks} marked urgent`)
+    if (parts.length === 0) return `${hi}Nothing on your plate. Time to create something new.`
+    return `${hi}Today you have ${joinParts(parts)}.${d.todayCompleted > 0 ? ` Already done: ☑️ ${d.todayCompleted}.` : ""}`
+  },
+  (d) => {
+    const hi = `Hola${d.nickname ? ` ${d.nickname}` : ""}. `
+    const parts: string[] = []
+    if (d.tasks > 0) parts.push(`☑️ ${d.tasks} tarea${d.tasks > 1 ? "s" : ""} hoy`)
+    if (d.inbox > 0) parts.push(`📥 ${d.inbox} en inbox`)
+    if (d.urgentTasks > 0) parts.push(`🔴 ${d.urgentTasks} urgente${d.urgentTasks > 1 ? "s" : ""}`)
+    if (d.projects > 0)
+      parts.push(
+        `📁 ${d.projects} proyecto${d.projects > 1 ? "s" : ""} activo${d.projects > 1 ? "s" : ""}`,
+      )
+    if (parts.length === 0) return `${hi}Todo en orden. Sin pendientes por ahora.`
+    return `${hi}Tienes ${joinParts(parts)}.${d.topProject ? ` ${d.topProject} va en ${d.topProjectProgress}.` : ""}`
+  },
+  (d) => {
+    const hi = `${getGreeting()}${d.nickname ? `, ${d.nickname}` : ""}. `
+    if (d.tasks + d.inbox + d.urgentTasks === 0) {
+      return `${hi}Clear skies ahead — no tasks, no inbox. Maybe start a new note?`
+    }
+    const summary = [
+      d.urgentTasks > 0 && `🔴 ${d.urgentTasks} urgent`,
+      d.tasks > 0 && `☑️ ${d.tasks} to do`,
+      d.inbox > 0 && `📥 ${d.inbox} to sort`,
+    ]
+      .filter(Boolean)
+      .join(", ")
+    return `${hi}Here's your day: ${summary}.${d.topProject ? ` Your most active project is 📁 ${d.topProject} (${d.topProjectProgress}).` : ""}`
+  },
+  (d) => {
+    const hi = `Buenos días${d.nickname ? `, ${d.nickname}` : ""}. `
+    if (d.tasks + d.inbox + d.urgentTasks === 0) {
+      return `${hi}No hay pendientes. Buen momento para organizar ideas.`
+    }
+    let msg = `${hi}Tu resumen: `
+    if (d.tasks > 0) msg += `☑️ ${d.tasks} tarea${d.tasks > 1 ? "s" : ""}. `
+    if (d.inbox > 0) msg += `📥 ${d.inbox} por procesar. `
+    if (d.urgentTasks > 0) msg += `🔴 ${d.urgentTasks} urgente${d.urgentTasks > 1 ? "s" : ""}. `
+    if (d.topProject) msg += `📁 ${d.topProject} al ${d.topProjectProgress}.`
+    return msg.trim()
+  },
 ]
+
+function joinParts(parts: string[]): string {
+  if (parts.length <= 1) return parts[0] ?? ""
+  return parts.slice(0, -1).join(", ") + " and " + parts[parts.length - 1]
+}
 
 function dateSeededIndex(length: number): number {
   const today = new Date()
@@ -51,8 +104,5 @@ function dateSeededIndex(length: number): number {
 
 export function generateTemplateSummary(data: DashboardData): string {
   const index = dateSeededIndex(templates.length)
-  const greeting = getGreeting()
-  return templates[index](data, greeting)
+  return templates[index](data)
 }
-
-export type { DashboardData }

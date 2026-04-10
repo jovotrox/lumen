@@ -6,6 +6,7 @@ import {
   claudeApiKeyAtom,
   globalStateMachineAtom,
   inboxAtom,
+  nicknameAtom,
   notesAtom,
   openaiKeyAtom,
   projectsAtom,
@@ -29,6 +30,7 @@ export function DashboardView() {
   const notes = useAtomValue(notesAtom)
   const send = useSetAtom(globalStateMachineAtom)
   const tempUnit = useAtomValue(tempUnitAtom)
+  const nickname = useAtomValue(nicknameAtom)
 
   const aiProvider = useAtomValue(aiProviderAtom)
   const openaiKey = useAtomValue(openaiKeyAtom)
@@ -69,6 +71,7 @@ export function DashboardView() {
       topProjectProgress: topProject
         ? `${topProject.tasks.filter((t) => t.completed).length}/${topProject.tasks.length}`
         : null,
+      nickname,
     }),
     [
       unprocessed,
@@ -77,6 +80,7 @@ export function DashboardView() {
       urgentTasks,
       activeProjects,
       topProject,
+      nickname,
     ],
   )
 
@@ -154,17 +158,20 @@ export function DashboardView() {
         </div>
         <div className="text-right text-sm text-text-secondary">
           <div>{fullDate}</div>
-          {weather ? (
-            <div>
-              {weather.icon} {weather.temp}°{tempUnit} · {weather.description}
-            </div>
-          ) : null}
         </div>
       </header>
 
       {/* Greeting / Summary */}
-      <section className="rounded-lg border border-border-secondary p-4">
-        <p className="leading-relaxed">{summary}</p>
+      <section>
+        <p className="text-xl font-medium leading-relaxed tracking-tight">{summary}</p>
+        {weather ? (
+          <div className="mt-3 flex items-center gap-4 text-sm text-text-secondary">
+            <span>
+              {weather.icon} {weather.temp}°{tempUnit}
+            </span>
+            <span>{weather.description}</span>
+          </div>
+        ) : null}
       </section>
 
       {/* Inbox */}

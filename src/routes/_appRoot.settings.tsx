@@ -28,6 +28,8 @@ import {
   hasOpenAIKeyAtom,
   hideCompletedTasksAtom,
   isCloningRepoAtom,
+  nicknameAtom,
+  tempUnitAtom,
   isRepoClonedAtom,
   isRepoNotClonedAtom,
   themeAtom,
@@ -57,6 +59,7 @@ function RouteComponent() {
       <div className="p-4 pb-6">
         <div className="mx-auto flex max-w-xl flex-col gap-6">
           <GitHubSection />
+          <HomeSection />
           <AppearanceSection />
           <EditorSection />
           <NotesSection />
@@ -173,6 +176,36 @@ function GitHubSection() {
         ) : null}
       </div>
     </SettingsSection>
+  )
+}
+
+function HomeSection() {
+  const [nickname, setNickname] = useAtom(nicknameAtom)
+  const [tempUnit, setTempUnit] = useAtom(tempUnitAtom)
+
+  return (
+    <section className="flex flex-col gap-4">
+      <h2 className="leading-4 text-text-secondary">Home</h2>
+      <FormControl htmlFor="nickname" label="Nickname" description="Used in the Home greeting">
+        <TextInput
+          id="nickname"
+          placeholder="Your name"
+          value={nickname}
+          onChange={(event) => setNickname(event.target.value)}
+        />
+      </FormControl>
+      <div className="flex items-center justify-between">
+        <span className="leading-4">Temperature</span>
+        <SegmentedControl aria-label="Temperature unit" size="small">
+          <SegmentedControl.Segment selected={tempUnit === "C"} onClick={() => setTempUnit("C")}>
+            °C
+          </SegmentedControl.Segment>
+          <SegmentedControl.Segment selected={tempUnit === "F"} onClick={() => setTempUnit("F")}>
+            °F
+          </SegmentedControl.Segment>
+        </SegmentedControl>
+      </div>
+    </section>
   )
 }
 

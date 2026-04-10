@@ -1076,3 +1076,5 @@ export const aiProviderAtom = atomWithStorage<"openai" | "claude">("ai_provider"
 export const quickNoteModeAtom = atomWithStorage<"note" | "inbox">("quick_note_mode", "inbox")
 
 export const tempUnitAtom = atomWithStorage<"C" | "F">("temp_unit", "C")
+
+export const nicknameAtom = atomWithStorage<string>("nickname", "")
