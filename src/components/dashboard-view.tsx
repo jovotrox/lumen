@@ -214,7 +214,7 @@ export function DashboardView() {
 
       {/* Greeting */}
       <section>
-        <h1 className="text-4xl font-bold leading-snug tracking-tight">
+        <h1 className="text-5xl font-bold leading-tight tracking-tight">
           {getGreeting()}
           {nickname ? `, ${nickname}` : ""}.
           {aiSummary ? (
