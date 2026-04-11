@@ -1,19 +1,22 @@
 import { Extension } from "@codemirror/state"
-import { EditorView, ViewPlugin } from "@codemirror/view"
+import { EditorView } from "@codemirror/view"
 
 /**
  * Autocomplete dropdown theme — matches DropdownMenu component exactly.
  *
- * Two-pronged approach:
- * 1. EditorView.theme() for structural styles (specificity over CM baseTheme)
- * 2. Injected <style> tag for backdrop-filter (style-mod mangles vendor prefixes)
+ * Uses EditorView.theme() for structural styles + a one-time global <style>
+ * injection for backdrop-filter (which style-mod can't handle).
  *
  * CM uses <completion-section> custom HTML elements for section headers.
  */
 
-// Inject raw CSS via a ViewPlugin that adds a <style> tag once
-const backdropCSS = ViewPlugin.define(() => {
+// One-time global CSS injection for properties that style-mod can't handle
+let injected = false
+function injectBackdropCSS() {
+  if (injected) return
+  injected = true
   const style = document.createElement("style")
+  style.id = "cm-autocomplete-backdrop"
   style.textContent = `
     .cm-tooltip.cm-tooltip-autocomplete {
       background-color: var(--color-bg-overlay-backdrop) !important;
@@ -26,13 +29,7 @@ const backdropCSS = ViewPlugin.define(() => {
     }
   `
   document.head.appendChild(style)
-
-  return {
-    destroy() {
-      style.remove()
-    },
-  }
-})
+}
 
 const theme = EditorView.theme({
   // Container
@@ -134,5 +131,6 @@ const theme = EditorView.theme({
 })
 
 export function autocompleteThemeExtension(): Extension {
-  return [theme, backdropCSS]
+  injectBackdropCSS()
+  return theme
 }
