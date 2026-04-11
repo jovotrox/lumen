@@ -8,7 +8,7 @@ import { Decoration, DecorationSet, EditorView, keymap, WidgetType } from "@code
  * and formatting is always rendered visually. The underlying document is still
  * markdown — use the format toolbar or keyboard shortcuts to change formatting.
  *
- * Features: Headers, Bold, Italic, Task Lists
+ * Features: Headers, Bold, Italic, Strikethrough, Inline Code, Blockquotes, Task Lists
  */
 
 // Regex patterns for markdown syntax
@@ -18,6 +18,9 @@ const TASK_REGEX = /^(\s*)-\s+\[([ xX])\]\s*/
 const BOLD_REGEX = /\*\*([^*]+)\*\*/g
 const ITALIC_STAR_REGEX = /(?<!\*)\*([^*]+)\*(?!\*)/g
 const ITALIC_UNDERSCORE_REGEX = /(?<!_)_([^_]+)_(?!_)/g
+const STRIKETHROUGH_REGEX = /~~([^~]+)~~/g
+const INLINE_CODE_REGEX = /(?<!`)(`[^`]+`)(?!`)/g
+const BLOCKQUOTE_REGEX = /^>\s?/
 
 // Widget to render nothing (hides syntax markers)
 class HiddenWidget extends WidgetType {
@@ -131,7 +134,30 @@ function createDecorations(state: EditorState): DecorationSet {
       continue
     }
 
-    // Process inline formatting (bold, italic)
+    // Process blockquotes (> text)
+    const blockquoteMatch = line.text.match(BLOCKQUOTE_REGEX)
+    if (blockquoteMatch) {
+      const prefixEnd = line.from + blockquoteMatch[0].length
+
+      // Add line decoration for blockquote styling (left border)
+      decorations.push(
+        Decoration.line({
+          class: "cm-live-blockquote-line",
+        }).range(line.from),
+      )
+
+      // Hide the "> " prefix
+      decorations.push(
+        Decoration.replace({ widget: new HiddenWidget() }).range(line.from, prefixEnd),
+      )
+
+      // Process inline formatting for blockquote content
+      const remainingText = line.text.slice(blockquoteMatch[0].length)
+      processInlineFormatting(remainingText, prefixEnd, decorations)
+      continue
+    }
+
+    // Process inline formatting (bold, italic, strikethrough, inline code)
     processInlineFormatting(line.text, line.from, decorations)
   }
 
@@ -213,17 +239,51 @@ function processInlineFormatting(
     const contentEnd = endPos - 1
 
     if (!isOverlapping(startPos, endPos)) {
-      // Hide opening _
       decorations.push(
         Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
       )
-
-      // Apply italic styling to content
       decorations.push(Decoration.mark({ class: "cm-live-italic" }).range(contentStart, contentEnd))
-
-      // Hide closing _
       decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
+      processedRanges.push({ from: startPos, to: endPos })
+    }
+  }
 
+  // Process strikethrough (~~text~~)
+  STRIKETHROUGH_REGEX.lastIndex = 0
+  while ((match = STRIKETHROUGH_REGEX.exec(text)) !== null) {
+    const startPos = lineStart + match.index
+    const endPos = startPos + match[0].length
+    const contentStart = startPos + 2
+    const contentEnd = endPos - 2
+
+    if (!isOverlapping(startPos, endPos)) {
+      decorations.push(
+        Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
+      )
+      decorations.push(
+        Decoration.mark({ class: "cm-live-strikethrough" }).range(contentStart, contentEnd),
+      )
+      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
+      processedRanges.push({ from: startPos, to: endPos })
+    }
+  }
+
+  // Process inline code (`code`)
+  INLINE_CODE_REGEX.lastIndex = 0
+  while ((match = INLINE_CODE_REGEX.exec(text)) !== null) {
+    const startPos = lineStart + match.index
+    const endPos = startPos + match[0].length
+    const contentStart = startPos + 1
+    const contentEnd = endPos - 1
+
+    if (!isOverlapping(startPos, endPos)) {
+      decorations.push(
+        Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
+      )
+      decorations.push(
+        Decoration.mark({ class: "cm-live-inline-code" }).range(contentStart, contentEnd),
+      )
+      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
       processedRanges.push({ from: startPos, to: endPos })
     }
   }
@@ -241,22 +301,45 @@ const livePreviewTheme = EditorView.baseTheme({
   },
   ".cm-live-header-1": {
     fontSize: "var(--font-size-xl)",
-    letterSpacing: "-0.01em",
   },
   ".cm-live-header-2": {
     fontSize: "var(--font-size-lg)",
   },
-  ".cm-live-header-3": {
-    fontSize: "var(--font-size-lg)",
-  },
-  ".cm-live-header-4, .cm-live-header-5, .cm-live-header-6": {
-    fontSize: "var(--font-size-base)",
-  },
+  ".cm-live-header-3, .cm-live-header-4, .cm-live-header-5, .cm-live-header-6": {},
   ".cm-live-bold": {
     fontWeight: "var(--font-weight-bold)",
   },
   ".cm-live-italic": {
     fontStyle: "italic",
+  },
+  ".cm-live-strikethrough": {
+    textDecoration: "line-through",
+    color: "var(--color-text-secondary)",
+  },
+  ".cm-live-inline-code": {
+    fontFamily: "var(--font-family-mono)",
+    fontSize: "0.9em",
+    borderRadius: "var(--border-radius-sm)",
+    backgroundColor: "var(--color-bg-secondary)",
+    paddingInline: "calc(var(--font-size-base) * 0.25)",
+  },
+  ".cm-live-blockquote-line": {
+    position: "relative",
+    paddingLeft: "calc(var(--font-size-base) * 1.25) !important",
+    marginLeft: "0 !important",
+    textIndent: "0 !important",
+    color: "var(--color-text-secondary)",
+    fontStyle: "italic",
+  },
+  ".cm-live-blockquote-line::before": {
+    content: '""',
+    position: "absolute",
+    top: "0",
+    bottom: "0",
+    left: "0",
+    width: "3px",
+    borderRadius: "var(--border-radius-sm)",
+    backgroundColor: "var(--color-border)",
   },
   // Checkbox container with margin for spacing
   ".cm-live-checkbox-container": {
