@@ -87,7 +87,7 @@
 /* Colored dot icons for status/priority completions */
 .cm-editor .cm-completionIcon {
   padding: 0;
-  margin-right: 0;
+  margin-right: 8px;
   opacity: 1;
 }
 
@@ -118,6 +118,22 @@
 .cm-editor .cm-completionIcon-cm-s-p3::after {
   content: "▼";
   color: var(--color-border-focus);
+}
+.cm-editor .cm-completionIcon-cm-s-project::after {
+  content: "◫";
+  color: var(--color-text-secondary);
+}
+.cm-editor .cm-completionIcon-cm-s-person::after {
+  content: "◉";
+  color: var(--color-text-secondary);
+}
+.cm-editor .cm-completionIcon-cm-s-inbox::after {
+  content: "▽";
+  color: var(--color-text-secondary);
+}
+.cm-editor .cm-completionIcon-cm-s-note::after {
+  content: "▤";
+  color: var(--color-text-secondary);
 }
 
 .cm-editor .cm-placeholder {

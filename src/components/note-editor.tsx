@@ -750,7 +750,7 @@ const knownPropertyValues: Record<string, KnownValue[]> = {
   ],
 }
 
-/** Map known values to a CSS type class for colored dot rendering */
+/** Map known values to a CSS type class for icon rendering */
 const statusColorType: Record<string, string> = {
   active: "cm-s-active",
   paused: "cm-s-paused",
@@ -759,6 +759,10 @@ const statusColorType: Record<string, string> = {
   "1": "cm-s-p1",
   "2": "cm-s-p2",
   "3": "cm-s-p3",
+  project: "cm-s-project",
+  person: "cm-s-person",
+  inbox: "cm-s-inbox",
+  note: "cm-s-note",
 }
 
 /** Completion for property value fields in the Properties panel (read mode) */
