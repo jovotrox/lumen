@@ -25,8 +25,8 @@ export function formatKeymapExtension() {
         run: (view) => {
           // Cycle heading: none → H1 → H2 → H3 → none
           const line = view.state.doc.lineAt(view.state.selection.main.from)
-          const match = line.text.match(/^(#{1,3})\s/)
-          const currentLevel = match ? match[1].length : 0
+          const match = line.text.match(/^(#{1,6}) /)
+          const currentLevel = match ? Math.min(match[1].length, 3) : 0
           const nextLevel = currentLevel >= 3 ? 0 : currentLevel + 1
           if (nextLevel === 0) {
             // Remove heading — setHeading with current level removes it
