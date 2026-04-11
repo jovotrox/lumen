@@ -59,25 +59,25 @@
 }
 
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul {
-  @apply font-mono text-[inherit];
+  @apply font-content text-sm text-[inherit];
 }
 
 .cm-editor .cm-tooltip.cm-completionInfo {
-  @apply card-2 aspect-[5/3] w-96 max-w-none overflow-hidden whitespace-pre-wrap p-1 px-3 py-2 font-mono text-[inherit];
+  @apply card-2 aspect-[5/3] w-96 max-w-none overflow-hidden whitespace-pre-wrap p-1 px-3 py-2 font-content text-sm text-[inherit];
   word-break: break-word;
 }
 
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li {
-  @apply flex rounded px-2 py-1 coarse:px-3 coarse:py-2;
+  @apply flex h-8 cursor-pointer select-none items-center rounded px-3 coarse:h-10 coarse:px-3;
 }
 
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
-  @apply bg-bg-secondary text-text;
+  @apply bg-bg-hover text-text;
   @apply epaper:bg-text epaper:text-bg;
 }
 
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li .cm-completionDetail {
-  @apply ml-3 italic text-text-secondary;
+  @apply ml-auto pl-3 text-sm text-text-tertiary;
 }
 
 .cm-editor .cm-completionMatchedText {
