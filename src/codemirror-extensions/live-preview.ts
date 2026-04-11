@@ -4,11 +4,11 @@ import { Decoration, DecorationSet, EditorView, keymap, WidgetType } from "@code
 /**
  * Live Preview Extension for CodeMirror
  *
- * Provides Obsidian-style live preview where:
- * - Lines NOT containing the cursor show rendered markdown (syntax hidden)
- * - The active line shows raw markdown syntax for editing
+ * Provides WYSIWYG-style live preview where markdown syntax is always hidden
+ * and formatting is always rendered visually. The underlying document is still
+ * markdown — use the format toolbar or keyboard shortcuts to change formatting.
  *
- * MVP Features: Headers, Bold, Italic
+ * Features: Headers, Bold, Italic, Task Lists
  */
 
 // Regex patterns for markdown syntax
@@ -55,8 +55,7 @@ function createLivePreviewField() {
       return createDecorations(state)
     },
     update(decorations, tr) {
-      // Update decorations if document or selection changed
-      if (tr.docChanged || tr.selection) {
+      if (tr.docChanged) {
         return createDecorations(tr.state)
       }
       return decorations
@@ -67,23 +66,9 @@ function createLivePreviewField() {
 
 function createDecorations(state: EditorState): DecorationSet {
   const decorations: Range<Decoration>[] = []
-  const { from: cursorFrom, to: cursorTo } = state.selection.main
-
-  // Get the line number where cursor is
-  const cursorLine = state.doc.lineAt(cursorFrom)
-  const cursorLineNumber = cursorLine.number
-
-  // Also check if selection spans multiple lines
-  const cursorEndLine = state.doc.lineAt(cursorTo)
-  const cursorEndLineNumber = cursorEndLine.number
 
   for (let i = 1; i <= state.doc.lines; i++) {
     const line = state.doc.line(i)
-
-    // Skip the active line(s) - show raw syntax there
-    if (i >= cursorLineNumber && i <= cursorEndLineNumber) {
-      continue
-    }
 
     // Process headers
     const headerMatch = line.text.match(HEADER_REGEX)
