@@ -44,7 +44,7 @@ export function NoteLink({
       align={hoverCardAlign}
       alignOffset={hoverCardAlignOffset}
     >
-      {text || id}
+      {text || note?.displayName || id}
     </NoteHoverCard>
   )
 }
