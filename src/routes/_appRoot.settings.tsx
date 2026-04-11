@@ -58,6 +58,13 @@ export const Route = createFileRoute("/_appRoot/settings")({
 })
 
 function RouteComponent() {
+  // Save settings to repo when leaving the settings page
+  React.useEffect(() => {
+    return () => {
+      import("../hooks/use-settings-sync").then(({ saveSettingsToRepo }) => saveSettingsToRepo())
+    }
+  }, [])
+
   return (
     <PageLayout title="Settings" icon={<SettingsIcon16 />} disableGuard>
       <div className="p-4 pb-6">
