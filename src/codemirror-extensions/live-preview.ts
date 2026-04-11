@@ -58,7 +58,7 @@ function createLivePreviewField() {
       return createDecorations(state)
     },
     update(decorations, tr) {
-      if (tr.docChanged) {
+      if (tr.docChanged || tr.selection) {
         return createDecorations(tr.state)
       }
       return decorations
@@ -70,8 +70,17 @@ function createLivePreviewField() {
 function createDecorations(state: EditorState): DecorationSet {
   const decorations: Range<Decoration>[] = []
 
+  // Track the active line(s) — we apply Decoration.mark() everywhere (styling)
+  // but only apply Decoration.replace() (hiding markers) on INACTIVE lines.
+  // This prevents cursor positioning issues from widget replacements.
+  const cursorFrom = state.selection.main.from
+  const cursorTo = state.selection.main.to
+  const cursorStartLine = state.doc.lineAt(cursorFrom).number
+  const cursorEndLine = state.doc.lineAt(cursorTo).number
+
   for (let i = 1; i <= state.doc.lines; i++) {
     const line = state.doc.line(i)
+    const isActiveLine = i >= cursorStartLine && i <= cursorEndLine
 
     // Process headers
     const headerMatch = line.text.match(HEADER_REGEX)
@@ -80,14 +89,17 @@ function createDecorations(state: EditorState): DecorationSet {
       const level = hashes.length
       const hashesEnd = line.from + hashes.length + 1 // +1 for space
 
-      // Hide the "# " part
-      decorations.push(
-        Decoration.replace({
-          widget: new HiddenWidget(),
-        }).range(line.from, hashesEnd),
-      )
+      if (!isActiveLine) {
+        // Hide the "# " part on inactive lines
+        decorations.push(
+          Decoration.replace({ widget: new HiddenWidget() }).range(line.from, hashesEnd),
+        )
+      } else {
+        // Dim the "# " part on the active line
+        decorations.push(Decoration.mark({ class: "cm-live-dim" }).range(line.from, hashesEnd))
+      }
 
-      // Apply header styling to the content
+      // Apply header styling to the content (always)
       if (content.length > 0) {
         decorations.push(
           Decoration.mark({
@@ -95,7 +107,7 @@ function createDecorations(state: EditorState): DecorationSet {
           }).range(hashesEnd, line.to),
         )
       }
-      continue // Headers are processed, skip inline formatting for this line
+      continue
     }
 
     // Process task checkboxes (- [ ] or - [x])
@@ -105,32 +117,31 @@ function createDecorations(state: EditorState): DecorationSet {
       const isChecked = checkChar.toLowerCase() === "x"
       const taskSyntaxEnd = line.from + fullMatch.length
 
-      // Add line decoration for extra padding on task lines
-      decorations.push(
-        Decoration.line({
-          class: "cm-live-task-line",
-        }).range(line.from),
-      )
+      if (!isActiveLine) {
+        // Inactive line: full WYSIWYG — replace with checkbox widget
+        decorations.push(Decoration.line({ class: "cm-live-task-line" }).range(line.from))
+        decorations.push(
+          Decoration.replace({
+            widget: new CheckboxWidget(isChecked),
+          }).range(line.from, taskSyntaxEnd),
+        )
+      } else {
+        // Active line: dim the "- [ ] " part, no widget replacement
+        decorations.push(Decoration.mark({ class: "cm-live-dim" }).range(line.from, taskSyntaxEnd))
+      }
 
-      // Replace "- [ ] " or "- [x] " with checkbox widget
-      decorations.push(
-        Decoration.replace({
-          widget: new CheckboxWidget(isChecked),
-        }).range(line.from, taskSyntaxEnd),
-      )
-
-      // Wrap the task content in a span
+      // Apply done styling to content (always)
       if (taskSyntaxEnd < line.to) {
         decorations.push(
           Decoration.mark({
-            class: isChecked ? "cm-live-task-content cm-live-task-done" : "cm-live-task-content",
+            class: isChecked ? "cm-live-task-content cm-live-task-done" : "",
           }).range(taskSyntaxEnd, line.to),
         )
       }
 
       // Process inline formatting for the rest of the task text
       const remainingText = line.text.slice(fullMatch.length)
-      processInlineFormatting(remainingText, taskSyntaxEnd, decorations)
+      processInlineFormatting(remainingText, taskSyntaxEnd, decorations, isActiveLine)
       continue
     }
 
@@ -139,26 +150,26 @@ function createDecorations(state: EditorState): DecorationSet {
     if (blockquoteMatch) {
       const prefixEnd = line.from + blockquoteMatch[0].length
 
-      // Add line decoration for blockquote styling (left border)
-      decorations.push(
-        Decoration.line({
-          class: "cm-live-blockquote-line",
-        }).range(line.from),
-      )
+      // Add line decoration for blockquote styling (left border) — always
+      decorations.push(Decoration.line({ class: "cm-live-blockquote-line" }).range(line.from))
 
-      // Hide the "> " prefix
-      decorations.push(
-        Decoration.replace({ widget: new HiddenWidget() }).range(line.from, prefixEnd),
-      )
+      if (!isActiveLine) {
+        // Hide the "> " prefix on inactive lines
+        decorations.push(
+          Decoration.replace({ widget: new HiddenWidget() }).range(line.from, prefixEnd),
+        )
+      } else {
+        // Dim the "> " on active line
+        decorations.push(Decoration.mark({ class: "cm-live-dim" }).range(line.from, prefixEnd))
+      }
 
-      // Process inline formatting for blockquote content
       const remainingText = line.text.slice(blockquoteMatch[0].length)
-      processInlineFormatting(remainingText, prefixEnd, decorations)
+      processInlineFormatting(remainingText, prefixEnd, decorations, isActiveLine)
       continue
     }
 
     // Process inline formatting (bold, italic, strikethrough, inline code)
-    processInlineFormatting(line.text, line.from, decorations)
+    processInlineFormatting(line.text, line.from, decorations, isActiveLine)
   }
 
   // Sort by position to ensure proper ordering
@@ -171,14 +182,23 @@ function processInlineFormatting(
   text: string,
   lineStart: number,
   decorations: Range<Decoration>[],
+  isActiveLine = false,
 ) {
-  // Track ranges already processed to avoid overlapping decorations
   const processedRanges: Array<{ from: number; to: number }> = []
 
   const isOverlapping = (from: number, to: number) => {
     return processedRanges.some(
       (range) => (from >= range.from && from < range.to) || (to > range.from && to <= range.to),
     )
+  }
+
+  // Helper: hide markers on inactive lines, dim them on active line
+  const hideOrDim = (from: number, to: number) => {
+    if (isActiveLine) {
+      decorations.push(Decoration.mark({ class: "cm-live-dim" }).range(from, to))
+    } else {
+      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(from, to))
+    }
   }
 
   // Process bold (**text**)
@@ -191,17 +211,9 @@ function processInlineFormatting(
     const contentEnd = endPos - 2
 
     if (!isOverlapping(startPos, endPos)) {
-      // Hide opening **
-      decorations.push(
-        Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
-      )
-
-      // Apply bold styling to content
+      hideOrDim(startPos, contentStart)
       decorations.push(Decoration.mark({ class: "cm-live-bold" }).range(contentStart, contentEnd))
-
-      // Hide closing **
-      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
-
+      hideOrDim(contentEnd, endPos)
       processedRanges.push({ from: startPos, to: endPos })
     }
   }
@@ -215,17 +227,9 @@ function processInlineFormatting(
     const contentEnd = endPos - 1
 
     if (!isOverlapping(startPos, endPos)) {
-      // Hide opening *
-      decorations.push(
-        Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
-      )
-
-      // Apply italic styling to content
+      hideOrDim(startPos, contentStart)
       decorations.push(Decoration.mark({ class: "cm-live-italic" }).range(contentStart, contentEnd))
-
-      // Hide closing *
-      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
-
+      hideOrDim(contentEnd, endPos)
       processedRanges.push({ from: startPos, to: endPos })
     }
   }
@@ -239,11 +243,9 @@ function processInlineFormatting(
     const contentEnd = endPos - 1
 
     if (!isOverlapping(startPos, endPos)) {
-      decorations.push(
-        Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
-      )
+      hideOrDim(startPos, contentStart)
       decorations.push(Decoration.mark({ class: "cm-live-italic" }).range(contentStart, contentEnd))
-      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
+      hideOrDim(contentEnd, endPos)
       processedRanges.push({ from: startPos, to: endPos })
     }
   }
@@ -257,13 +259,11 @@ function processInlineFormatting(
     const contentEnd = endPos - 2
 
     if (!isOverlapping(startPos, endPos)) {
-      decorations.push(
-        Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
-      )
+      hideOrDim(startPos, contentStart)
       decorations.push(
         Decoration.mark({ class: "cm-live-strikethrough" }).range(contentStart, contentEnd),
       )
-      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
+      hideOrDim(contentEnd, endPos)
       processedRanges.push({ from: startPos, to: endPos })
     }
   }
@@ -277,13 +277,11 @@ function processInlineFormatting(
     const contentEnd = endPos - 1
 
     if (!isOverlapping(startPos, endPos)) {
-      decorations.push(
-        Decoration.replace({ widget: new HiddenWidget() }).range(startPos, contentStart),
-      )
+      hideOrDim(startPos, contentStart)
       decorations.push(
         Decoration.mark({ class: "cm-live-inline-code" }).range(contentStart, contentEnd),
       )
-      decorations.push(Decoration.replace({ widget: new HiddenWidget() }).range(contentEnd, endPos))
+      hideOrDim(contentEnd, endPos)
       processedRanges.push({ from: startPos, to: endPos })
     }
   }
@@ -311,6 +309,10 @@ const livePreviewTheme = EditorView.baseTheme({
   },
   ".cm-live-italic": {
     fontStyle: "italic",
+  },
+  // Dim: syntax markers on the active line — visible but subtle
+  ".cm-live-dim": {
+    opacity: "0.3",
   },
   ".cm-live-strikethrough": {
     textDecoration: "line-through",
@@ -373,10 +375,6 @@ const livePreviewTheme = EditorView.baseTheme({
     color: "var(--color-text-secondary)",
   },
   ".cm-live-task-line": {
-    display: "flex !important",
-    alignItems: "center",
-    paddingTop: "4px",
-    paddingBottom: "4px",
     marginLeft: "0 !important",
     textIndent: "0 !important",
   },
