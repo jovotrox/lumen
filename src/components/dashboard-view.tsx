@@ -232,9 +232,13 @@ export function DashboardView() {
           <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
             {aiSummary}
             {nudges.length > 0 ? (
-              <span className="text-text-pending">
+              <span className="text-text-secondary">
                 {" "}
-                {nudges.length} item{nudges.length > 1 ? "s" : ""} need your attention.
+                <AlertTriangle size={16} className="mb-0.5 mr-1 inline text-text-pending" />
+                <strong className="text-text-pending">
+                  {nudges.length} item{nudges.length > 1 ? "s" : ""}
+                </strong>{" "}
+                need your attention.
               </span>
             ) : null}
           </p>
@@ -242,9 +246,13 @@ export function DashboardView() {
           <p className="text-text-secondary" style={{ fontSize: "1.5rem", lineHeight: 1.3 }}>
             You have {joinNodes(summaryParts)}.
             {nudges.length > 0 ? (
-              <span className="text-text-pending">
+              <span className="text-text-secondary">
                 {" "}
-                {nudges.length} item{nudges.length > 1 ? "s" : ""} need your attention.
+                <AlertTriangle size={16} className="mb-0.5 mr-1 inline text-text-pending" />
+                <strong className="text-text-pending">
+                  {nudges.length} item{nudges.length > 1 ? "s" : ""}
+                </strong>{" "}
+                need your attention.
               </span>
             ) : null}
           </p>
@@ -607,17 +615,18 @@ function joinNodes(nodes: React.ReactNode[]): React.ReactNode {
 }
 
 function NudgeIcon({ type }: { type: string }) {
+  const cls = "mt-0.5 shrink-0 text-text-pending"
   switch (type) {
     case "overdue_followup":
-      return <AlertTriangle size={14} className="mt-0.5 shrink-0 text-text-danger" />
+      return <AlertTriangle size={14} className={cls} />
     case "stale_task":
-      return <Clock size={14} className="mt-0.5 shrink-0 text-text-pending" />
+      return <Clock size={14} className={cls} />
     case "inactive_project":
-      return <FolderOpen size={14} className="mt-0.5 shrink-0 text-text-pending" />
+      return <FolderOpen size={14} className={cls} />
     case "inbox_pileup":
-      return <Inbox size={14} className="mt-0.5 shrink-0 text-text-secondary" />
+      return <Inbox size={14} className={cls} />
     default:
-      return <AlertTriangle size={14} className="mt-0.5 shrink-0 text-text-tertiary" />
+      return <AlertTriangle size={14} className={cls} />
   }
 }
 

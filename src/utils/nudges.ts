@@ -39,7 +39,7 @@ export function detectNudges(
           nudges.push({
             id: `overdue:${note.id}:${simpleHash(task.text)}`,
             type: "overdue_followup",
-            message: `"${truncate(stripWikilinks(task.text), 50)}" is ${daysOverdue}d overdue`,
+            message: `"${truncate(cleanTaskText(task.text), 50)}" is ${daysOverdue}d overdue`,
             noteId: note.id,
             priority: 1,
           })
@@ -53,7 +53,7 @@ export function detectNudges(
           nudges.push({
             id: `stale:${note.id}:${simpleHash(task.text)}`,
             type: "stale_task",
-            message: `"${truncate(stripWikilinks(task.text), 50)}" pending for ${daysSinceUpdate}d`,
+            message: `"${truncate(cleanTaskText(task.text), 50)}" pending for ${daysSinceUpdate}d`,
             noteId: note.id,
             priority: 2,
           })
@@ -134,8 +134,13 @@ function truncate(text: string, max: number): string {
   return text.length > max ? text.slice(0, max) + "…" : text
 }
 
-function stripWikilinks(text: string): string {
-  return text.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1")
+function cleanTaskText(text: string): string {
+  return text
+    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+    .replace(/\[\[\d+\]\]/g, "")
+    .replace(/\[\[([^\]]+)\]\]/g, "$1")
+    .replace(/\s+\d{4}-\d{2}-\d{2}\s*$/, "")
+    .trim()
 }
 
 function simpleHash(str: string): string {
