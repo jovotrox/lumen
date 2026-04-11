@@ -681,9 +681,13 @@ const weatherIconMap: Record<string, React.ReactNode> = {
 async function fetchWeather(
   unit: "C" | "F",
 ): Promise<{ temp: number; description: string; icon: React.ReactNode }> {
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 5000)
   const response = await fetch("https://wttr.in/?format=j1", {
     headers: { Accept: "application/json" },
+    signal: controller.signal,
   })
+  clearTimeout(timeout)
   if (!response.ok) throw new Error("Weather fetch failed")
   const data = (await response.json()) as {
     current_condition: { temp_C: string; temp_F: string; weatherDesc: { value: string }[] }[]
