@@ -16,7 +16,7 @@ import {
 export function formatKeymapExtension() {
   return Prec.low(
     keymap.of([
-      { key: "Mod-b", run: toggleBold },
+      { key: "Mod-Shift-x", run: toggleBold },
       { key: "Mod-i", run: toggleItalic },
       { key: "Mod-Shift-s", run: toggleStrikethrough },
       { key: "Mod-Shift-m", run: toggleInlineCode },
@@ -36,8 +36,8 @@ export function formatKeymapExtension() {
         },
       },
       { key: "Mod-Shift-b", run: toggleBlockquote },
-      { key: "Mod-Shift-l", run: toggleBulletList },
-      { key: "Mod-Shift-o", run: toggleNumberedList },
+      { key: "Mod-Shift-8", run: toggleBulletList },
+      { key: "Mod-Shift-7", run: toggleNumberedList },
       { key: "Mod-Shift-t", run: toggleTaskList },
       { key: "Mod-k", run: insertLink },
     ]),

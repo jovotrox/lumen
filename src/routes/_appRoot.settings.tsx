@@ -599,17 +599,19 @@ function EditorSection() {
 
   return (
     <SettingsSection title="Editor">
-      <div className="flex items-center gap-2.5 leading-4">
-        <Switch id="vim-mode" checked={vimMode} onCheckedChange={setVimMode} />
-        <label htmlFor="vim-mode" className="select-none">
-          Vim mode
-        </label>
-      </div>
-      <div className="flex items-center gap-2.5 leading-4">
-        <Switch id="live-preview" checked={livePreview} onCheckedChange={setLivePreview} />
-        <label htmlFor="live-preview" className="select-none">
-          Live preview
-        </label>
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2.5 leading-4">
+          <Switch id="vim-mode" checked={vimMode} onCheckedChange={setVimMode} />
+          <label htmlFor="vim-mode" className="select-none">
+            Vim mode
+          </label>
+        </div>
+        <div className="flex items-center gap-2.5 leading-4">
+          <Switch id="live-preview" checked={livePreview} onCheckedChange={setLivePreview} />
+          <label htmlFor="live-preview" className="select-none">
+            Live preview
+          </label>
+        </div>
       </div>
     </SettingsSection>
   )

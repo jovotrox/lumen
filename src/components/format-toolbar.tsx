@@ -122,7 +122,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         {/* Group 1 — Inline */}
         <button
           className={cx(btnClass, isBoldActive(state) && activeBtnClass)}
-          title="Bold (⌘B)"
+          title="Bold (⌘⇧X)"
           onMouseDown={preventFocus}
           onClick={() => {
             toggleBold(editorView)
@@ -220,7 +220,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         {/* Group 3 — Lists */}
         <button
           className={cx(btnClass, isBulletListActive(state) && activeBtnClass)}
-          title="Bullet List"
+          title="Bullet List (⌘⇧8)"
           onMouseDown={preventFocus}
           onClick={() => {
             toggleBulletList(editorView)
@@ -230,7 +230,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         </button>
         <button
           className={cx(btnClass, isNumberedListActive(state) && activeBtnClass)}
-          title="Numbered List"
+          title="Numbered List (⌘⇧7)"
           onMouseDown={preventFocus}
           onClick={() => {
             toggleNumberedList(editorView)
