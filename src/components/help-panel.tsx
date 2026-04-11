@@ -103,7 +103,7 @@ function HelpContent({
             </HelpItem>
             <HelpItem>
               <span>Toggle sidebar</span>
-              <Keys keys={["⌘", "B"]} />
+              <Keys keys={["⌘", "⇧", "S"]} />
             </HelpItem>
             <HelpItem>
               <span>Toggle help panel</span>

@@ -122,7 +122,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         {/* Group 1 — Inline */}
         <button
           className={cx(btnClass, isBoldActive(state) && activeBtnClass)}
-          title="Bold (⌘⇧X)"
+          title="Bold (⌘B)"
           onMouseDown={preventFocus}
           onClick={() => {
             toggleBold(editorView)
@@ -142,7 +142,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         </button>
         <button
           className={cx(btnClass, isStrikethroughActive(state) && activeBtnClass)}
-          title="Strikethrough"
+          title="Strikethrough (⌘⇧X)"
           onMouseDown={preventFocus}
           onClick={() => {
             toggleStrikethrough(editorView)

@@ -20,9 +20,9 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
   const [sidebar, setSidebar] = useAtom(sidebarAtom)
   const createNewNote = useCreateNewNote()
 
-  // Toggle sidebar with Cmd/Ctrl + B
+  // Toggle sidebar with Cmd/Ctrl + Shift + S
   useHotkeys(
-    "mod+b",
+    "mod+shift+s",
     () => {
       setSidebar((prev) => (prev === "expanded" ? "collapsed" : "expanded"))
     },
@@ -46,7 +46,7 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
           <div className="hidden items-center sm:flex">
             <IconButton
               aria-label="Show sidebar"
-              shortcut={["⌘", "B"]}
+              shortcut={["⌘", "⇧", "S"]}
               tooltipAlign="start"
               size="small"
               onClick={() => setSidebar("expanded")}

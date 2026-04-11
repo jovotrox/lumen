@@ -16,9 +16,9 @@ import {
 export function formatKeymapExtension() {
   return Prec.low(
     keymap.of([
-      { key: "Mod-Shift-x", run: toggleBold },
+      { key: "Mod-b", run: toggleBold },
       { key: "Mod-i", run: toggleItalic },
-      { key: "Mod-Shift-s", run: toggleStrikethrough },
+      { key: "Mod-Shift-x", run: toggleStrikethrough },
       { key: "Mod-Shift-m", run: toggleInlineCode },
       {
         key: "Mod-Shift-h",

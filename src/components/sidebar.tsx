@@ -24,7 +24,7 @@ export function Sidebar() {
         <div>
           <IconButton
             aria-label="Hide sidebar"
-            shortcut={["⌘", "B"]}
+            shortcut={["⌘", "⇧", "S"]}
             tooltipAlign="start"
             size="small"
             onClick={() => setSidebar("collapsed")}
