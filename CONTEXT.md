@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `feature/flowos-integration` (desde `personal`)
-- **Estado:** FlowOS integration completa (4 fases) — pendiente merge a personal
-- **Último commit:** Phase 4 Nudges + dismiss
+- **Estado:** FlowOS integration completa (4 fases + polish) — pendiente merge a personal
+- **Último commit:** Polish + Settings hierarchy fix
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -272,6 +272,20 @@ git push origin personal
   - Web Notification API: fires once per day on app focus with top 3 nudges
   - Configurable thresholds in Settings > Nudges (days/items + notification toggle)
   - Atoms: `nudgesAtom`, `nudgeDismissVersionAtom`, 4 threshold atoms
+- **Visual Polish**
+  - Project cards: richer display with content preview, progress bar, owner/deadline/pending count, overdue detection (red)
+  - People cards: card-1 style with proper padding and spacing
+  - Autocomplete dropdown: matches DropdownMenu style (font-content, h-8, bg-bg-hover)
+  - Lucide SVG icons in property autocomplete via CSS data URIs (status dots, priority shapes, type icons)
+  - Date autocomplete for deadline/due/date keys (Today, Tomorrow, Next Monday, chrono-node natural language)
+  - Wikilinks show note displayName instead of numeric ID
+  - Task text in dashboard cleaned of bare note IDs and trailing dates
+  - Task conversion from inbox no longer appends wikilink (was showing duplicate title)
+  - Daily notes created without # heading (matches normal creation flow)
+  - Settings: Home and Nudges sections wrapped in SettingsSection cards (consistent hierarchy)
+  - Sidebar reordered: Home, Inbox, Calendar, Notes, Projects, Tasks, Links, People, Tags
+  - Dates displayed as DD-MM-YYYY in project cards
+  - Filtered out "undefined"/"null"/"converted" from frontmatter autocomplete suggestions
 - **Theme updates**: Updated GitHub (Primer v2), Notion, VS Code (2025), Obsidian colors. Added live preview for custom theme creation.
 - **Sync workflow fix**: Moved sync-upstream.yml to run from `personal` branch. Reset `main` to mirror upstream.
 
