@@ -175,7 +175,7 @@ function ProjectListItem({ project }: { project: Note }) {
           {deadline ? (
             <span className={`flex items-center gap-1 ${isOverdue ? "text-text-danger" : ""}`}>
               <Calendar size={12} />
-              {deadline}
+              {formatDisplayDate(deadline)}
               {isOverdue ? " (overdue)" : ""}
             </span>
           ) : null}
@@ -199,4 +199,11 @@ function StatusBadge({ status }: { status: string }) {
     cancelled: "text-text-danger",
   }
   return <span className={colors[status] ?? "text-text-secondary"}>● {status}</span>
+}
+
+/** Convert YYYY-MM-DD to DD-MM-YYYY for display */
+function formatDisplayDate(date: string): string {
+  const parts = date.split("-")
+  if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`
+  return date
 }
