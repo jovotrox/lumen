@@ -185,7 +185,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
                 tagPropertyCompletion,
                 templateCompletion,
               ],
-          icons: !!frontmatterKey,
+          icons: true,
           // For property fields, activate immediately on any input
           ...(frontmatterKey ? { activateOnTypingDelay: 0 } : {}),
         }),
@@ -595,58 +595,68 @@ function insertWikilink({ view, from, to, noteId, label }: InsertWikilinkParams)
 }
 
 // Slash command format options (Notion-style)
+// The `type` maps to CSS class `cm-completionIcon-cm-s-{type}` for icons
 const SLASH_FORMAT_COMMANDS: Array<{
   label: string
   detail: string
   section: string
+  type: string
   insert: string | ((view: EditorView, from: number, to: number) => void)
 }> = [
   {
     label: "Heading 1",
     detail: "Large heading",
     section: "Format",
+    type: "cm-s-h1",
     insert: "# ",
   },
   {
     label: "Heading 2",
     detail: "Medium heading",
     section: "Format",
+    type: "cm-s-h2",
     insert: "## ",
   },
   {
     label: "Heading 3",
     detail: "Small heading",
     section: "Format",
+    type: "cm-s-h3",
     insert: "### ",
   },
   {
     label: "Bullet list",
     detail: "Unordered list item",
     section: "Lists",
+    type: "cm-s-bullet",
     insert: "- ",
   },
   {
     label: "Numbered list",
     detail: "Ordered list item",
     section: "Lists",
+    type: "cm-s-numbered",
     insert: "1. ",
   },
   {
     label: "To-do",
     detail: "Task checkbox",
     section: "Lists",
+    type: "cm-s-todo",
     insert: "- [ ] ",
   },
   {
     label: "Blockquote",
     detail: "Quote block",
     section: "Format",
+    type: "cm-s-quote",
     insert: "> ",
   },
   {
     label: "Code block",
     detail: "Fenced code block",
     section: "Format",
+    type: "cm-s-codeblock",
     insert: (view, from, to) => {
       view.dispatch({
         changes: { from: from - 1, to, insert: "```\n\n```" },
@@ -658,6 +668,7 @@ const SLASH_FORMAT_COMMANDS: Array<{
     label: "Divider",
     detail: "Horizontal rule",
     section: "Format",
+    type: "cm-s-divider",
     insert: "---\n",
   },
 ]
@@ -681,6 +692,7 @@ function useTemplateCompletion() {
         label: cmd.label,
         detail: cmd.detail,
         section: cmd.section,
+        type: cmd.type,
         apply: (view: EditorView, _completion: Completion, from: number, to: number) => {
           if (typeof cmd.insert === "function") {
             cmd.insert(view, from, to)
