@@ -9,8 +9,16 @@ import { EditorView } from "@codemirror/view"
  * Generic inline toggle: wraps/unwraps the current selection with `marker`.
  * If there is no selection, inserts the marker pair and places the cursor
  * between them.
+ *
+ * @param extraGuard - Optional function that, given the doc string and the
+ *   selection range, returns true when the selection should be treated as
+ *   already wrapped. Used by toggleItalic to avoid false-positives with bold.
  */
-function toggleInlineMarker(view: EditorView, marker: string): boolean {
+function toggleInlineMarker(
+  view: EditorView,
+  marker: string,
+  extraGuard?: (doc: string, from: number, to: number) => boolean,
+): boolean {
   const { state } = view
   const { from, to } = state.selection.main
   const markerLen = marker.length
@@ -20,6 +28,7 @@ function toggleInlineMarker(view: EditorView, marker: string): boolean {
     view.dispatch({
       changes: { from, to, insert: marker + marker },
       selection: { anchor: from + markerLen },
+      scrollIntoView: true,
     })
     return true
   }
@@ -31,7 +40,8 @@ function toggleInlineMarker(view: EditorView, marker: string): boolean {
   const before = beforeStart >= 0 ? state.doc.sliceString(beforeStart, from) : ""
   const after = afterEnd <= state.doc.length ? state.doc.sliceString(to, afterEnd) : ""
 
-  const alreadyWrapped = before === marker && after === marker
+  const basicWrapped = before === marker && after === marker
+  const alreadyWrapped = basicWrapped && (!extraGuard || extraGuard(state.doc.toString(), from, to))
 
   if (alreadyWrapped) {
     // Remove markers, keep same text selected
@@ -44,6 +54,7 @@ function toggleInlineMarker(view: EditorView, marker: string): boolean {
         anchor: beforeStart,
         head: to - markerLen,
       },
+      scrollIntoView: true,
     })
   } else {
     // Add markers around selection, keep same text selected
@@ -56,6 +67,7 @@ function toggleInlineMarker(view: EditorView, marker: string): boolean {
         anchor: from + markerLen,
         head: to + markerLen,
       },
+      scrollIntoView: true,
     })
   }
 
@@ -64,9 +76,14 @@ function toggleInlineMarker(view: EditorView, marker: string): boolean {
 
 /**
  * Check whether the current selection is wrapped with the given marker.
- * Special-cases italic (`*`) to avoid false positives with bold (`**`).
+ * Accepts an optional guard function (same signature as toggleInlineMarker)
+ * to refine the detection – used by isItalicActive to avoid bold false-positives.
  */
-function isInlineMarkerActive(state: EditorState, marker: string): boolean {
+function isInlineMarkerActive(
+  state: EditorState,
+  marker: string,
+  extraGuard?: (doc: string, from: number, to: number) => boolean,
+): boolean {
   const { from, to } = state.selection.main
   if (from === to) return false
 
@@ -81,16 +98,24 @@ function isInlineMarkerActive(state: EditorState, marker: string): boolean {
 
   if (before !== marker || after !== marker) return false
 
-  // Extra guard for italic (`*`): the adjacent character must NOT also be `*`
-  if (marker === "*") {
-    const charBeforeMarker =
-      beforeStart > 0 ? state.doc.sliceString(beforeStart - 1, beforeStart) : ""
-    const charAfterMarker =
-      afterEnd < state.doc.length ? state.doc.sliceString(afterEnd, afterEnd + 1) : ""
-    if (charBeforeMarker === "*" || charAfterMarker === "*") return false
-  }
+  if (extraGuard && !extraGuard(state.doc.toString(), from, to)) return false
 
   return true
+}
+
+// ---------------------------------------------------------------------------
+// Italic guard: adjacent character must NOT also be `*` (would be bold)
+// ---------------------------------------------------------------------------
+
+function italicGuard(doc: string, from: number, to: number): boolean {
+  const markerLen = 1
+  const beforeStart = from - markerLen
+  const afterEnd = to + markerLen
+
+  const charBeforeMarker = beforeStart > 0 ? doc[beforeStart - 1] : ""
+  const charAfterMarker = afterEnd < doc.length ? doc[afterEnd] : ""
+
+  return charBeforeMarker !== "*" && charAfterMarker !== "*"
 }
 
 // ---------------------------------------------------------------------------
@@ -102,52 +127,7 @@ export function toggleBold(view: EditorView): boolean {
 }
 
 export function toggleItalic(view: EditorView): boolean {
-  const { state } = view
-  const { from, to } = state.selection.main
-  const marker = "*"
-  const markerLen = 1
-
-  if (from === to) {
-    view.dispatch({
-      changes: { from, to, insert: marker + marker },
-      selection: { anchor: from + markerLen },
-    })
-    return true
-  }
-
-  const beforeStart = from - markerLen
-  const afterEnd = to + markerLen
-
-  const before = beforeStart >= 0 ? state.doc.sliceString(beforeStart, from) : ""
-  const after = afterEnd <= state.doc.length ? state.doc.sliceString(to, afterEnd) : ""
-
-  // Verify we have `*` but not `**`
-  const charBefore2 = beforeStart > 0 ? state.doc.sliceString(beforeStart - 1, beforeStart) : ""
-  const charAfter2 =
-    afterEnd < state.doc.length ? state.doc.sliceString(afterEnd, afterEnd + 1) : ""
-
-  const alreadyWrapped =
-    before === marker && after === marker && charBefore2 !== "*" && charAfter2 !== "*"
-
-  if (alreadyWrapped) {
-    view.dispatch({
-      changes: [
-        { from: beforeStart, to: from, insert: "" },
-        { from: to, to: afterEnd, insert: "" },
-      ],
-      selection: { anchor: beforeStart, head: to - markerLen },
-    })
-  } else {
-    view.dispatch({
-      changes: [
-        { from, insert: marker },
-        { from: to, insert: marker },
-      ],
-      selection: { anchor: from + markerLen, head: to + markerLen },
-    })
-  }
-
-  return true
+  return toggleInlineMarker(view, "*", italicGuard)
 }
 
 export function toggleStrikethrough(view: EditorView): boolean {
@@ -167,26 +147,7 @@ export function isBoldActive(state: EditorState): boolean {
 }
 
 export function isItalicActive(state: EditorState): boolean {
-  const { from, to } = state.selection.main
-  if (from === to) return false
-
-  const markerLen = 1
-  const beforeStart = from - markerLen
-  const afterEnd = to + markerLen
-
-  if (beforeStart < 0 || afterEnd > state.doc.length) return false
-
-  const before = state.doc.sliceString(beforeStart, from)
-  const after = state.doc.sliceString(to, afterEnd)
-
-  if (before !== "*" || after !== "*") return false
-
-  // Must not be bold (`**`)
-  const charBefore2 = beforeStart > 0 ? state.doc.sliceString(beforeStart - 1, beforeStart) : ""
-  const charAfter2 =
-    afterEnd < state.doc.length ? state.doc.sliceString(afterEnd, afterEnd + 1) : ""
-
-  return charBefore2 !== "*" && charAfter2 !== "*"
+  return isInlineMarkerActive(state, "*", italicGuard)
 }
 
 export function isStrikethroughActive(state: EditorState): boolean {
@@ -258,13 +219,16 @@ function toggleLinePrefix(view: EditorView, prefix: string): boolean {
   if (changes.length === 0) return true
 
   // Adjust selection anchors
+  // Fix: use changes.length instead of (lastLine - firstLine + 1) so that
+  // lines that already had the prefix are not double-counted.
   const newAnchor = Math.max(0, from + firstChangeDelta)
-  const newHead =
-    from === to ? newAnchor : Math.max(0, to + selectionDelta * (lastLine - firstLine + 1))
+  const changeCount = changes.length
+  const newHead = from === to ? newAnchor : Math.max(0, to + selectionDelta * changeCount)
 
   view.dispatch({
     changes,
     selection: { anchor: newAnchor, head: newHead },
+    scrollIntoView: true,
   })
 
   return true
@@ -290,6 +254,7 @@ export function setHeading(view: EditorView, level: 1 | 2 | 3): boolean {
       view.dispatch({
         changes: { from: line.from, to: line.from + existingPrefix.length, insert: "" },
         selection: { anchor: Math.max(line.from, from + delta) },
+        scrollIntoView: true,
       })
     } else {
       // Different heading level – replace
@@ -297,6 +262,7 @@ export function setHeading(view: EditorView, level: 1 | 2 | 3): boolean {
       view.dispatch({
         changes: { from: line.from, to: line.from + existingPrefix.length, insert: newPrefix },
         selection: { anchor: Math.max(line.from, from + delta) },
+        scrollIntoView: true,
       })
     }
   } else {
@@ -304,6 +270,7 @@ export function setHeading(view: EditorView, level: 1 | 2 | 3): boolean {
     view.dispatch({
       changes: { from: line.from, insert: newPrefix },
       selection: { anchor: from + newPrefix.length },
+      scrollIntoView: true,
     })
   }
 
@@ -338,16 +305,22 @@ export function toggleCodeBlock(view: EditorView): boolean {
     view.dispatch({
       changes: { from: outerFrom, to: outerTo, insert: selectedText },
       selection: { anchor: outerFrom, head: outerFrom + selectedText.length },
+      scrollIntoView: true,
     })
   } else {
-    // Add fences
-    const insert = fence + "\n" + selectedText + "\n" + fence
+    // Check if cursor is mid-line; if so, prepend a newline before the fence
+    const needsLeadingNewline = from > 0 && state.doc.lineAt(from).from !== from
+    const leadingNewline = needsLeadingNewline ? "\n" : ""
+
+    const insert = leadingNewline + fence + "\n" + selectedText + "\n" + fence
+    const fenceStart = from + leadingNewline.length
     view.dispatch({
       changes: { from, to, insert },
       selection: {
-        anchor: from + fence.length + 1,
-        head: from + fence.length + 1 + selectedText.length,
+        anchor: fenceStart + fence.length + 1,
+        head: fenceStart + fence.length + 1 + selectedText.length,
       },
+      scrollIntoView: true,
     })
   }
 
@@ -403,9 +376,26 @@ export function toggleNumberedList(view: EditorView): boolean {
 
   const newAnchor = Math.max(0, from + firstDelta)
 
+  // Fix: on remove path, subtract total removed characters from `to` so the
+  // selection head is correctly positioned after the prefixes are stripped.
+  let newHead: number
+  if (from === to) {
+    newHead = newAnchor
+  } else if (allHavePrefix) {
+    const totalRemoved = changes.reduce((sum, c) => {
+      const removeLen = c.to !== undefined ? c.to - c.from : 0
+      return sum + removeLen
+    }, 0)
+    newHead = Math.max(0, to - totalRemoved)
+  } else {
+    const totalAdded = changes.reduce((sum, c) => sum + (c.insert?.length ?? 0), 0)
+    newHead = Math.max(0, to + totalAdded)
+  }
+
   view.dispatch({
     changes,
-    selection: { anchor: newAnchor, head: from === to ? newAnchor : Math.max(0, to) },
+    selection: { anchor: newAnchor, head: newHead },
+    scrollIntoView: true,
   })
 
   return true
@@ -435,7 +425,12 @@ export function isBlockquoteActive(state: EditorState): boolean {
 export function isBulletListActive(state: EditorState): boolean {
   const { from } = state.selection.main
   const text = state.doc.lineAt(from).text
-  return text.startsWith("- ") && !text.startsWith("- [ ] ") && !text.startsWith("- [x] ")
+  return (
+    text.startsWith("- ") &&
+    !text.startsWith("- [ ] ") &&
+    !text.startsWith("- [x] ") &&
+    !text.startsWith("- [X] ")
+  )
 }
 
 export function isNumberedListActive(state: EditorState): boolean {
@@ -446,7 +441,7 @@ export function isNumberedListActive(state: EditorState): boolean {
 export function isTaskListActive(state: EditorState): boolean {
   const { from } = state.selection.main
   const text = state.doc.lineAt(from).text
-  return text.startsWith("- [ ] ") || text.startsWith("- [x] ")
+  return text.startsWith("- [ ] ") || text.startsWith("- [x] ") || text.startsWith("- [X] ")
 }
 
 // ---------------------------------------------------------------------------
@@ -469,6 +464,7 @@ export function insertLink(view: EditorView): boolean {
         anchor: urlStart,
         head: urlStart + urlPlaceholder.length,
       },
+      scrollIntoView: true,
     })
   } else {
     const insert = `[](${urlPlaceholder})`
@@ -479,6 +475,7 @@ export function insertLink(view: EditorView): boolean {
         anchor: urlStart,
         head: urlStart + urlPlaceholder.length,
       },
+      scrollIntoView: true,
     })
   }
 
@@ -497,12 +494,14 @@ export function insertWikilink(view: EditorView): boolean {
     view.dispatch({
       changes: { from, to, insert },
       selection: { anchor: cursorPos },
+      scrollIntoView: true,
     })
   } else {
     const insert = `[[]]`
     view.dispatch({
       changes: { from, insert },
       selection: { anchor: from + 2 },
+      scrollIntoView: true,
     })
   }
 
