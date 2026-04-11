@@ -29,6 +29,7 @@ import { pasteExtension } from "../codemirror-extensions/paste"
 import { spellcheckExtension } from "../codemirror-extensions/spellcheck"
 import { wikilinkExtension } from "../codemirror-extensions/wikilink"
 import { livePreviewExtension } from "../codemirror-extensions/live-preview"
+import { formatKeymapExtension } from "../codemirror-extensions/format-keymap"
 import {
   frontmatterValuesAtom,
   isSignedOutAtom,
@@ -207,6 +208,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
           }),
         ),
         syntaxHighlighting(syntaxHighlighter),
+        formatKeymapExtension(),
       ]
 
       if (vimMode) {
