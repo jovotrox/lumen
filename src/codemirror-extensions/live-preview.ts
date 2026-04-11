@@ -334,9 +334,9 @@ function processInlineFormatting(
 
 // CSS styles for live preview
 const livePreviewTheme = EditorView.baseTheme({
-  // Base styling for live preview mode (similar to read mode)
+  // Base styling — match view mode: font-size base, line-height 28px
   "&.cm-live-preview .cm-content": {
-    lineHeight: "1.75",
+    lineHeight: "28px",
   },
   ".cm-live-header": {
     fontWeight: "var(--font-weight-bold)",
@@ -393,6 +393,7 @@ const livePreviewTheme = EditorView.baseTheme({
     backgroundColor: "var(--color-border)",
   },
   // Bullet list — matches view mode: size-7 container with 6px SVG circle
+  // Match view mode: size-7 (28px) container + gap-1.5 (6px margin-right)
   ".cm-live-bullet-container": {
     display: "inline-grid",
     placeItems: "center",
@@ -400,15 +401,18 @@ const livePreviewTheme = EditorView.baseTheme({
     height: "28px",
     flexShrink: "0",
     verticalAlign: "middle",
+    marginRight: "6px",
     color: "var(--color-text-secondary)",
   },
+  // Match view mode: flex p-1.5 gap-1.5 (6px padding, 6px gap)
   ".cm-live-list-line": {
     marginLeft: "0 !important",
     textIndent: "0 !important",
     paddingTop: "6px",
     paddingBottom: "6px",
+    paddingLeft: "6px",
   },
-  // Checkbox — matches view mode: size-4 checkbox inside size-7 container
+  // Match view mode: size-7 (28px) container + gap-1.5 (6px margin-right)
   ".cm-live-checkbox-container": {
     display: "inline-grid",
     placeItems: "center",
@@ -416,6 +420,7 @@ const livePreviewTheme = EditorView.baseTheme({
     height: "28px",
     flexShrink: "0",
     verticalAlign: "middle",
+    marginRight: "6px",
   },
   ".cm-live-checkbox": {
     display: "inline-flex",
@@ -441,11 +446,13 @@ const livePreviewTheme = EditorView.baseTheme({
     textDecoration: "line-through",
     color: "var(--color-text-secondary)",
   },
+  // Match view mode: flex p-1.5 gap-1.5 (6px padding, 6px gap)
   ".cm-live-task-line": {
     marginLeft: "0 !important",
     textIndent: "0 !important",
     paddingTop: "6px",
     paddingBottom: "6px",
+    paddingLeft: "6px",
   },
 })
 
