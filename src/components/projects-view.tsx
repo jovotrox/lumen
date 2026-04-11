@@ -102,7 +102,13 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
 function ProjectListItem({ project }: { project: Note }) {
   const status = (project.frontmatter.status as string) ?? "active"
   const owner = project.frontmatter.owner as string | undefined
-  const deadline = project.frontmatter.deadline as string | undefined
+  const rawDeadline = project.frontmatter.deadline
+  const deadline =
+    rawDeadline instanceof Date
+      ? rawDeadline.toISOString().slice(0, 10)
+      : typeof rawDeadline === "string"
+        ? rawDeadline
+        : undefined
   const totalTasks = project.tasks.length
   const completedTasks = project.tasks.filter((t) => t.completed).length
   const incompleteTasks = project.tasks.filter((t) => !t.completed)
