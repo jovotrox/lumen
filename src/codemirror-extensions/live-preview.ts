@@ -21,12 +21,24 @@ const ITALIC_UNDERSCORE_REGEX = /(?<!_)_([^_]+)_(?!_)/g
 const STRIKETHROUGH_REGEX = /~~([^~]+)~~/g
 const INLINE_CODE_REGEX = /(?<!`)(`[^`]+`)(?!`)/g
 const BLOCKQUOTE_REGEX = /^>\s?/
+// Matches bullet list: "- text" or "* text" (but NOT "- [ ]" tasks)
+const BULLET_LIST_REGEX = /^(\s*)[-*]\s(?!\[[ xX]\])/
 
 // Widget to render nothing (hides syntax markers)
 class HiddenWidget extends WidgetType {
   toDOM() {
     const span = document.createElement("span")
     span.style.display = "none"
+    return span
+  }
+}
+
+// Widget for bullet point
+class BulletWidget extends WidgetType {
+  toDOM() {
+    const span = document.createElement("span")
+    span.className = "cm-live-bullet"
+    span.textContent = "•"
     return span
   }
 }
@@ -107,6 +119,31 @@ function createDecorations(state: EditorState): DecorationSet {
           }).range(hashesEnd, line.to),
         )
       }
+      continue
+    }
+
+    // Process bullet list items (- text or * text, but NOT tasks)
+    const bulletMatch = line.text.match(BULLET_LIST_REGEX)
+    if (bulletMatch) {
+      const indent = bulletMatch[1].length
+      const prefixEnd = line.from + indent + 2 // "- " or "* "
+
+      decorations.push(Decoration.line({ class: "cm-live-list-line" }).range(line.from))
+
+      if (!isActiveLine) {
+        // Replace "- " with bullet widget
+        decorations.push(
+          Decoration.replace({ widget: new BulletWidget() }).range(line.from + indent, prefixEnd),
+        )
+      } else {
+        decorations.push(
+          Decoration.mark({ class: "cm-live-dim" }).range(line.from + indent, prefixEnd),
+        )
+      }
+
+      // Process inline formatting for the rest
+      const remainingText = line.text.slice(indent + 2)
+      processInlineFormatting(remainingText, prefixEnd, decorations, isActiveLine)
       continue
     }
 
@@ -342,6 +379,15 @@ const livePreviewTheme = EditorView.baseTheme({
     width: "3px",
     borderRadius: "var(--border-radius-sm)",
     backgroundColor: "var(--color-border)",
+  },
+  // Bullet list
+  ".cm-live-bullet": {
+    marginRight: "6px",
+    color: "var(--color-text-secondary)",
+  },
+  ".cm-live-list-line": {
+    marginLeft: "0 !important",
+    textIndent: "0 !important",
   },
   // Checkbox container with margin for spacing
   ".cm-live-checkbox-container": {
