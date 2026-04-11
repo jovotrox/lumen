@@ -1,9 +1,9 @@
 import { useAtomValue, useSetAtom } from "jotai"
 import React, { useDeferredValue, useMemo } from "react"
 import { Link, useNavigate } from "@tanstack/react-router"
+import { Calendar, CheckSquare, Plus, User } from "lucide-react"
 import { globalStateMachineAtom, projectsAtom } from "../global-state"
 import { generateNoteId } from "../utils/note-id"
-import { Plus } from "lucide-react"
 import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
 import { IconButton } from "./icon-button"
@@ -105,6 +105,24 @@ function ProjectListItem({ project }: { project: Note }) {
   const deadline = project.frontmatter.deadline as string | undefined
   const totalTasks = project.tasks.length
   const completedTasks = project.tasks.filter((t) => t.completed).length
+  const incompleteTasks = project.tasks.filter((t) => !t.completed)
+  const pct = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+
+  // Content preview (strip frontmatter, take first meaningful line)
+  const preview = project.content
+    .replace(/^---[\s\S]*?---\n*/, "")
+    .trim()
+    .split("\n")
+    .filter((l) => !l.startsWith("#") && !l.startsWith("- [") && l.trim())
+    .slice(0, 2)
+    .join(" ")
+    .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+    .replace(/\[\[([^\]]+)\]\]/g, "$1")
+    .slice(0, 120)
+
+  // Deadline status
+  const isOverdue =
+    deadline && new Date(deadline + "T23:59:59").getTime() < Date.now() && status === "active"
 
   return (
     <li>
@@ -112,22 +130,26 @@ function ProjectListItem({ project }: { project: Note }) {
         to="/notes/$"
         params={{ _splat: project.id }}
         search={{ mode: "read", query: undefined, view: "grid" }}
-        className="card-1 flex items-center justify-between gap-3 rounded-lg px-4 py-3"
+        className="card-1 flex flex-col gap-2.5 rounded-lg px-4 py-3"
       >
-        <div className="flex flex-col gap-1 overflow-hidden">
+        {/* Header: name + status */}
+        <div className="flex items-center justify-between gap-3">
           <span className="truncate font-medium">{project.displayName}</span>
-          <div className="flex items-center gap-2 text-xs text-text-secondary">
-            <StatusBadge status={status} />
-            {owner ? <span>{owner.replace(/\[\[|\]\]/g, "")}</span> : null}
-            {deadline ? <span>Due {deadline}</span> : null}
-          </div>
+          <StatusBadge status={status} />
         </div>
+
+        {/* Preview */}
+        {preview ? (
+          <p className="line-clamp-2 text-xs leading-relaxed text-text-tertiary">{preview}</p>
+        ) : null}
+
+        {/* Progress bar */}
         {totalTasks > 0 ? (
           <div className="flex items-center gap-2">
-            <div className="h-1.5 w-12 rounded-full bg-bg-tertiary">
+            <div className="h-1.5 flex-1 rounded-full bg-bg-tertiary">
               <div
-                className="h-full rounded-full bg-text-success"
-                style={{ width: `${Math.round((completedTasks / totalTasks) * 100)}%` }}
+                className="h-full rounded-full bg-text-success transition-all"
+                style={{ width: `${pct}%` }}
               />
             </div>
             <span className="shrink-0 text-xs text-text-secondary">
@@ -135,6 +157,29 @@ function ProjectListItem({ project }: { project: Note }) {
             </span>
           </div>
         ) : null}
+
+        {/* Meta row: owner, deadline, top incomplete tasks */}
+        <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
+          {owner ? (
+            <span className="flex items-center gap-1">
+              <User size={12} />
+              {owner.replace(/\[\[|\]\]/g, "")}
+            </span>
+          ) : null}
+          {deadline ? (
+            <span className={`flex items-center gap-1 ${isOverdue ? "text-text-danger" : ""}`}>
+              <Calendar size={12} />
+              {deadline}
+              {isOverdue ? " (overdue)" : ""}
+            </span>
+          ) : null}
+          {incompleteTasks.length > 0 ? (
+            <span className="flex items-center gap-1">
+              <CheckSquare size={12} />
+              {incompleteTasks.length} pending
+            </span>
+          ) : null}
+        </div>
       </Link>
     </li>
   )

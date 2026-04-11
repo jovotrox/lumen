@@ -672,6 +672,62 @@ function useFrontmatterValueCompletion() {
   return completion
 }
 
+/** Date suggestions for date-type frontmatter keys (deadline, due, etc.) */
+function getDateSuggestions(context: CompletionContext): CompletionResult {
+  const typed = context.state.doc.toString()
+  const today = new Date()
+  const fmt = (d: Date) => {
+    const y = d.getFullYear()
+    const m = String(d.getMonth() + 1).padStart(2, "0")
+    const day = String(d.getDate()).padStart(2, "0")
+    return `${y}-${m}-${day}`
+  }
+  const addDays = (d: Date, n: number) => {
+    const r = new Date(d)
+    r.setDate(r.getDate() + n)
+    return r
+  }
+  const nextWeekday = (d: Date, dow: number) => {
+    const r = new Date(d)
+    const diff = (dow - r.getDay() + 7) % 7 || 7
+    r.setDate(r.getDate() + diff)
+    return r
+  }
+
+  const suggestions: { label: string; detail: string }[] = [
+    { label: fmt(today), detail: "Today" },
+    { label: fmt(addDays(today, 1)), detail: "Tomorrow" },
+    { label: fmt(nextWeekday(today, 1)), detail: "Next Monday" },
+    { label: fmt(nextWeekday(today, 5)), detail: "Next Friday" },
+    { label: fmt(addDays(today, 7)), detail: "In 1 week" },
+    { label: fmt(addDays(today, 14)), detail: "In 2 weeks" },
+    { label: fmt(addDays(today, 30)), detail: "In 1 month" },
+  ]
+
+  // If user typed something, also try chrono parse
+  if (typed.trim()) {
+    const parsed = parseDate(typed)
+    if (parsed) {
+      const parsedStr = fmt(parsed)
+      if (!suggestions.some((s) => s.label === parsedStr)) {
+        suggestions.unshift({ label: parsedStr, detail: `"${typed}"` })
+      }
+    }
+  }
+
+  return {
+    from: 0,
+    options: suggestions
+      .filter(
+        (s) =>
+          !typed || s.label.includes(typed) || s.detail.toLowerCase().includes(typed.toLowerCase()),
+      )
+      .slice(0, 8)
+      .map((s) => ({ label: s.label, detail: s.detail })),
+    filter: false,
+  }
+}
+
 /** Predefined values for known frontmatter keys, with optional color indicator */
 const knownPropertyValues: Record<string, { value: string; detail?: string }[]> = {
   status: [
@@ -702,6 +758,12 @@ function usePropertyValueCompletion(frontmatterKey?: string) {
 
       // Allow activation on explicit trigger (startCompletion) or any typing
       if (!context.explicit && !context.matchBefore(/.*/)) return null
+
+      // Date keys get date suggestions
+      const dateKeys = ["deadline", "due", "date", "due_date", "start_date", "end_date"]
+      if (dateKeys.includes(frontmatterKey)) {
+        return getDateSuggestions(context)
+      }
 
       const values = getValues()
       const existing = values[frontmatterKey] ?? []
