@@ -1,8 +1,10 @@
 import { useEffect } from "react"
+import { gitAdd, gitCommit } from "../utils/git"
 import {
   applySettingsToLocalStorage,
   collectSettingsFromLocalStorage,
   readSettingsFromRepo,
+  SETTINGS_FILE_REL_PATH,
   writeSettingsToRepo,
 } from "../utils/settings-sync"
 
@@ -38,6 +40,8 @@ export function useSettingsSync() {
           const current = collectSettingsFromLocalStorage()
           if (Object.keys(current).length > 0) {
             await writeSettingsToRepo(current)
+            await gitAdd([SETTINGS_FILE_REL_PATH])
+            await gitCommit("Initialize settings from localStorage")
           }
         }
       } catch (error) {
@@ -59,7 +63,13 @@ export function useSettingsSync() {
 export async function saveSettingsToRepo(): Promise<void> {
   try {
     const settings = collectSettingsFromLocalStorage()
+    const existing = await readSettingsFromRepo()
+    if (existing && JSON.stringify(existing) === JSON.stringify(settings)) {
+      return // Nothing changed
+    }
     await writeSettingsToRepo(settings)
+    await gitAdd([SETTINGS_FILE_REL_PATH])
+    await gitCommit("Update settings")
   } catch (error) {
     console.error("Failed to save settings to repo:", error)
   }

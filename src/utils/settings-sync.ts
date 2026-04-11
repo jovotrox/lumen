@@ -2,6 +2,8 @@ import { fs } from "./fs"
 import { REPO_DIR } from "./git"
 
 const SETTINGS_FILE_PATH = `${REPO_DIR}/.lumen/settings.json`
+/** Relative path (from repo root) for git add */
+export const SETTINGS_FILE_REL_PATH = ".lumen/settings.json"
 
 /** Settings that sync across devices via the user's GitHub repo */
 export type SyncedSettings = {
