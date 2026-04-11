@@ -296,6 +296,7 @@ function NotePage() {
   }, [navigate])
 
   const switchToReading = React.useCallback(() => {
+    setSelection(null)
     navigate({ search: (prev) => ({ ...prev, mode: "read" }), replace: true })
   }, [navigate])
 
@@ -944,6 +945,7 @@ function NotePage() {
                 minHeight={160}
                 livePreview={livePreview}
                 onStateChange={(update) => {
+                  if (!update.selectionSet && !update.docChanged) return
                   const { from, to } = update.state.selection.main
                   setSelection(from !== to ? { from, to } : null)
                 }}

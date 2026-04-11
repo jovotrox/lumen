@@ -52,6 +52,8 @@ function isInsideFrontmatter(view: EditorView, from: number): boolean {
   return from <= closingIdx + 4
 }
 
+const preventFocus = (e: React.MouseEvent) => e.preventDefault()
+
 export function FormatToolbar({ editorView, selectionFrom, selectionTo }: FormatToolbarProps) {
   const toolbarRef = React.useRef<HTMLDivElement>(null)
   const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null)
@@ -82,11 +84,11 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
       return
     }
 
-    const toolbarWidth = toolbarRef.current?.offsetWidth ?? 300
-    const toolbarHeight = toolbarRef.current?.offsetHeight ?? 36
+    const toolbarWidth = toolbarRef.current?.offsetWidth || 300
+    const toolbarHeight = toolbarRef.current?.offsetHeight || 36
 
     const centeredLeft = (fromCoords.left + toCoords.left) / 2 - toolbarWidth / 2
-    const left = Math.max(8, centeredLeft)
+    const left = Math.min(window.innerWidth - toolbarWidth - 8, Math.max(8, centeredLeft))
 
     const topAbove = fromCoords.top - toolbarHeight - 8
     const finalTop = topAbove < 40 ? toCoords.bottom + 8 : topAbove
@@ -112,6 +114,8 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
     <Portal.Root>
       <div
         ref={toolbarRef}
+        role="toolbar"
+        aria-label="Text formatting"
         style={style}
         className="card-2 flex items-center gap-0.5 rounded-lg p-1"
       >
@@ -119,7 +123,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isBoldActive(state) && activeBtnClass)}
           title="Bold (⌘B)"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleBold(editorView)
           }}
@@ -129,7 +133,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isItalicActive(state) && activeBtnClass)}
           title="Italic (⌘I)"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleItalic(editorView)
           }}
@@ -139,7 +143,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isStrikethroughActive(state) && activeBtnClass)}
           title="Strikethrough"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleStrikethrough(editorView)
           }}
@@ -149,7 +153,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isInlineCodeActive(state) && activeBtnClass)}
           title="Inline Code"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleInlineCode(editorView)
           }}
@@ -163,7 +167,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, headingLevel === 1 && activeBtnClass)}
           title="Heading 1"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             setHeading(editorView, 1)
           }}
@@ -173,7 +177,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, headingLevel === 2 && activeBtnClass)}
           title="Heading 2"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             setHeading(editorView, 2)
           }}
@@ -183,7 +187,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, headingLevel === 3 && activeBtnClass)}
           title="Heading 3"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             setHeading(editorView, 3)
           }}
@@ -193,7 +197,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isBlockquoteActive(state) && activeBtnClass)}
           title="Blockquote"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleBlockquote(editorView)
           }}
@@ -203,7 +207,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass)}
           title="Code Block"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleCodeBlock(editorView)
           }}
@@ -217,7 +221,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isBulletListActive(state) && activeBtnClass)}
           title="Bullet List"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleBulletList(editorView)
           }}
@@ -227,7 +231,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isNumberedListActive(state) && activeBtnClass)}
           title="Numbered List"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleNumberedList(editorView)
           }}
@@ -237,7 +241,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass, isTaskListActive(state) && activeBtnClass)}
           title="Task List"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             toggleTaskList(editorView)
           }}
@@ -251,7 +255,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass)}
           title="Link"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             insertLink(editorView)
           }}
@@ -261,7 +265,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
         <button
           className={cx(btnClass)}
           title="Wikilink"
-          onMouseDown={(e) => e.preventDefault()}
+          onMouseDown={preventFocus}
           onClick={() => {
             insertWikilink(editorView)
           }}
