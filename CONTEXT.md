@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `feature/flowos-integration` (desde `personal`)
-- **Estado:** FlowOS integration completa (4 fases + polish) — pendiente merge a personal
-- **Último commit:** Polish + Settings hierarchy fix
+- **Estado:** FlowOS integration completa (4 fases + polish + settings sync) — pendiente merge a personal
+- **Último commit:** Settings sync via .lumen/settings.json
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -149,6 +149,9 @@ upstream/main ──────┐
 | `src/utils/dashboard-ai.ts`                 | Nuevo          | AI summary generation (OpenAI/Claude)                                      |
 | `src/utils/nudges.ts`                       | Nuevo          | Nudge detection: stale tasks, inactive projects, inbox pileup, overdue     |
 | `src/components/property-value.tsx`         | Modificado     | Pass frontmatterKey to NoteEditor for property autocomplete                |
+| `src/utils/settings-sync.ts`                | Nuevo          | Read/write .lumen/settings.json for cross-device settings sync             |
+| `src/hooks/use-settings-sync.ts`            | Nuevo          | Hook: sync settings on mount, save on leaving Settings page                |
+| `src/components/note-link.tsx`              | Modificado     | Show note displayName instead of numeric ID in wikilinks                   |
 | `src/components/app-layout.tsx`             | Modificado     | Titlebar padding (collapsed sidebar)                                       |
 | `src/components/sidebar.tsx`                | Modificado     | Titlebar padding + drag + border extend                                    |
 | `src/styles/variables.css`                  | Modificado     | color-scheme: dark + titlebar height                                       |
@@ -286,6 +289,12 @@ git push origin personal
   - Sidebar reordered: Home, Inbox, Calendar, Notes, Projects, Tasks, Links, People, Tags
   - Dates displayed as DD-MM-YYYY in project cards
   - Filtered out "undefined"/"null"/"converted" from frontmatter autocomplete suggestions
+- **Settings Sync**
+  - All user preferences sync to `.lumen/settings.json` in GitHub repo
+  - On app mount: repo settings.json wins (applied to localStorage)
+  - On leaving Settings page: auto-saves current settings to repo
+  - Syncs: nickname, font, theme, tempUnit, epaper, vimMode, hideCompletedTasks, calendarLayout, aiProvider, API keys, voiceAssistant, quickNoteMode, nudge thresholds
+  - Same pattern as `.lumen/themes.json` (custom theme sync)
 - **Theme updates**: Updated GitHub (Primer v2), Notion, VS Code (2025), Obsidian colors. Added live preview for custom theme creation.
 - **Sync workflow fix**: Moved sync-upstream.yml to run from `personal` branch. Reset `main` to mirror upstream.
 

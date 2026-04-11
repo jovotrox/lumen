@@ -179,6 +179,7 @@ feature/* ← Branches temporales para desarrollo
 | Dashboard AI      | AI summary via OpenAI/Claude + template fallback   | `src/utils/dashboard-ai.ts`, `src/utils/dashboard-templates.ts`         |
 | Nudges            | Stale tasks, inactive projects, overdue, inbox     | `src/utils/nudges.ts`, `src/global-state.ts`                            |
 | Weather           | wttr.in integration, C/F toggle in settings        | `src/components/dashboard-view.tsx`, `src/routes/_appRoot.settings.tsx` |
+| Settings Sync     | .lumen/settings.json syncs prefs across devices    | `src/utils/settings-sync.ts`, `src/hooks/use-settings-sync.ts`          |
 
 ### Flujo de Trabajo para Nuevas Features
 
