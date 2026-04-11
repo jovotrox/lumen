@@ -13,6 +13,7 @@ export type SyncedSettings = {
   tempUnit?: "C" | "F"
   epaper?: boolean
   vimMode?: boolean
+  livePreview?: boolean
   hideCompletedTasks?: boolean
   calendarLayout?: "week" | "month"
   aiProvider?: "openai" | "claude"
@@ -32,6 +33,7 @@ export const settingsKeyMap: { localStorageKey: string; settingsKey: keyof Synce
   { localStorageKey: "temp_unit", settingsKey: "tempUnit" },
   { localStorageKey: "epaper", settingsKey: "epaper" },
   { localStorageKey: "vim-mode", settingsKey: "vimMode" },
+  { localStorageKey: "live-preview", settingsKey: "livePreview" },
   { localStorageKey: "hide-completed-tasks", settingsKey: "hideCompletedTasks" },
   { localStorageKey: "calendar-layout", settingsKey: "calendarLayout" },
   { localStorageKey: "ai_provider", settingsKey: "aiProvider" },

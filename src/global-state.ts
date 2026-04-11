@@ -1033,6 +1033,8 @@ export const epaperAtom = atomWithStorage<boolean>("epaper", false)
 
 export const vimModeAtom = atomWithStorage<boolean>("vim-mode", false)
 
+export const livePreviewAtom = atomWithStorage<boolean>("live-preview", false)
+
 export const defaultFontAtom = atomWithStorage<Font>("font", "sans")
 
 export const themeAtom = atomWithStorage<string>("theme", "default")

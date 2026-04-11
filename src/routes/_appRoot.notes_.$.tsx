@@ -54,6 +54,7 @@ import {
   githubRepoAtom,
   globalStateMachineAtom,
   isSignedOutAtom,
+  livePreviewAtom,
   vimModeAtom,
   weeklyTemplateAtom,
 } from "../global-state"
@@ -160,6 +161,7 @@ function NotePage() {
           : "",
   })
   const vimMode = useAtomValue(vimModeAtom)
+  const livePreview = useAtomValue(livePreviewAtom)
   const parsedNote = React.useMemo(
     () => parseNote(noteId ?? "", editorValue),
     [noteId, editorValue],
@@ -938,6 +940,7 @@ function NotePage() {
                 autoFocus
                 onChange={setEditorValue}
                 minHeight={160}
+                livePreview={livePreview}
               />
             </div>
             {isWeeklyNote ? (

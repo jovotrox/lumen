@@ -38,6 +38,7 @@ import {
   isRepoNotClonedAtom,
   themeAtom,
   vimModeAtom,
+  livePreviewAtom,
   voiceAssistantEnabledAtom,
 } from "../global-state"
 import { cx } from "../utils/cx"
@@ -594,6 +595,7 @@ function ColorInputGrid({
 
 function EditorSection() {
   const [vimMode, setVimMode] = useAtom(vimModeAtom)
+  const [livePreview, setLivePreview] = useAtom(livePreviewAtom)
 
   return (
     <SettingsSection title="Editor">
@@ -601,6 +603,12 @@ function EditorSection() {
         <Switch id="vim-mode" checked={vimMode} onCheckedChange={setVimMode} />
         <label htmlFor="vim-mode" className="select-none">
           Vim mode
+        </label>
+      </div>
+      <div className="flex items-center gap-2.5 leading-4">
+        <Switch id="live-preview" checked={livePreview} onCheckedChange={setLivePreview} />
+        <label htmlFor="live-preview" className="select-none">
+          Live preview
         </label>
       </div>
     </SettingsSection>
