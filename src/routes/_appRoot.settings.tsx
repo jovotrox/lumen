@@ -189,28 +189,29 @@ function HomeSection() {
   const [tempUnit, setTempUnit] = useAtom(tempUnitAtom)
 
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="leading-4 text-text-secondary">Home</h2>
-      <FormControl htmlFor="nickname" label="Nickname" description="Used in the Home greeting">
-        <TextInput
-          id="nickname"
-          placeholder="Your name"
-          value={nickname}
-          onChange={(event) => setNickname(event.target.value)}
-        />
-      </FormControl>
-      <div className="flex items-center justify-between">
-        <span className="leading-4">Temperature</span>
-        <SegmentedControl aria-label="Temperature unit" size="small">
-          <SegmentedControl.Segment selected={tempUnit === "C"} onClick={() => setTempUnit("C")}>
-            °C
-          </SegmentedControl.Segment>
-          <SegmentedControl.Segment selected={tempUnit === "F"} onClick={() => setTempUnit("F")}>
-            °F
-          </SegmentedControl.Segment>
-        </SegmentedControl>
+    <SettingsSection title="Home">
+      <div className="flex flex-col gap-4">
+        <FormControl htmlFor="nickname" label="Nickname" description="Used in the Home greeting">
+          <TextInput
+            id="nickname"
+            placeholder="Your name"
+            value={nickname}
+            onChange={(event) => setNickname(event.target.value)}
+          />
+        </FormControl>
+        <div className="flex items-center justify-between">
+          <span className="leading-4">Temperature</span>
+          <SegmentedControl aria-label="Temperature unit" size="small">
+            <SegmentedControl.Segment selected={tempUnit === "C"} onClick={() => setTempUnit("C")}>
+              °C
+            </SegmentedControl.Segment>
+            <SegmentedControl.Segment selected={tempUnit === "F"} onClick={() => setTempUnit("F")}>
+              °F
+            </SegmentedControl.Segment>
+          </SegmentedControl>
+        </div>
       </div>
-    </section>
+    </SettingsSection>
   )
 }
 
@@ -221,58 +222,59 @@ function NudgesSection() {
   const [notifications, setNotifications] = useAtom(nudgeNotificationsAtom)
 
   return (
-    <section className="flex flex-col gap-4">
-      <h2 className="leading-4 text-text-secondary">Nudges</h2>
-      <div className="flex items-center justify-between">
-        <span className="leading-4">Stale task after</span>
-        <div className="flex items-center gap-1">
-          <TextInput
-            className="w-16 text-center"
-            type="number"
-            min={1}
-            value={String(staleDays)}
-            onChange={(e) => setStaleDays(Math.max(1, parseInt(e.target.value) || 7))}
+    <SettingsSection title="Nudges">
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <span className="leading-4">Stale task after</span>
+          <div className="flex items-center gap-1">
+            <TextInput
+              className="w-16 text-center"
+              type="number"
+              min={1}
+              value={String(staleDays)}
+              onChange={(e) => setStaleDays(Math.max(1, parseInt(e.target.value) || 7))}
+            />
+            <span className="text-sm text-text-secondary">days</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="leading-4">Inactive project after</span>
+          <div className="flex items-center gap-1">
+            <TextInput
+              className="w-16 text-center"
+              type="number"
+              min={1}
+              value={String(inactiveDays)}
+              onChange={(e) => setInactiveDays(Math.max(1, parseInt(e.target.value) || 14))}
+            />
+            <span className="text-sm text-text-secondary">days</span>
+          </div>
+        </div>
+        <div className="flex items-center justify-between">
+          <span className="leading-4">Inbox pileup at</span>
+          <div className="flex items-center gap-1">
+            <TextInput
+              className="w-16 text-center"
+              type="number"
+              min={1}
+              value={String(inboxThreshold)}
+              onChange={(e) => setInboxThreshold(Math.max(1, parseInt(e.target.value) || 5))}
+            />
+            <span className="text-sm text-text-secondary">items</span>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Switch
+            id="nudge-notifications"
+            checked={notifications}
+            onCheckedChange={setNotifications}
           />
-          <span className="text-sm text-text-secondary">days</span>
+          <label htmlFor="nudge-notifications" className="select-none">
+            Desktop notifications
+          </label>
         </div>
       </div>
-      <div className="flex items-center justify-between">
-        <span className="leading-4">Inactive project after</span>
-        <div className="flex items-center gap-1">
-          <TextInput
-            className="w-16 text-center"
-            type="number"
-            min={1}
-            value={String(inactiveDays)}
-            onChange={(e) => setInactiveDays(Math.max(1, parseInt(e.target.value) || 14))}
-          />
-          <span className="text-sm text-text-secondary">days</span>
-        </div>
-      </div>
-      <div className="flex items-center justify-between">
-        <span className="leading-4">Inbox pileup at</span>
-        <div className="flex items-center gap-1">
-          <TextInput
-            className="w-16 text-center"
-            type="number"
-            min={1}
-            value={String(inboxThreshold)}
-            onChange={(e) => setInboxThreshold(Math.max(1, parseInt(e.target.value) || 5))}
-          />
-          <span className="text-sm text-text-secondary">items</span>
-        </div>
-      </div>
-      <div className="flex items-center gap-2">
-        <Switch
-          id="nudge-notifications"
-          checked={notifications}
-          onCheckedChange={setNotifications}
-        />
-        <label htmlFor="nudge-notifications" className="select-none">
-          Desktop notifications
-        </label>
-      </div>
-    </section>
+    </SettingsSection>
   )
 }
 
