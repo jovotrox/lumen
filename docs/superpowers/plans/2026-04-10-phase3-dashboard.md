@@ -12,19 +12,20 @@
 
 ## File Map
 
-| File | Purpose |
-|------|---------|
-| `src/utils/dashboard-templates.ts` | **Create** — Template pool, greeting logic, date-seeded random |
-| `src/utils/dashboard-ai.ts` | **Create** — AI summary generation (OpenAI/Claude fetch) |
-| `src/components/dashboard-view.tsx` | **Create** — Main dashboard with all 6 sections |
-| `src/global-state.ts` | **Modify** — Add `shouldShowDashboardAtom` + `urgentTasksAtom` + `todayIncompleteTasks` |
-| `src/routes/_appRoot.index.tsx` | **Modify** — Conditional render: dashboard or notes list |
+| File                                | Purpose                                                                                 |
+| ----------------------------------- | --------------------------------------------------------------------------------------- |
+| `src/utils/dashboard-templates.ts`  | **Create** — Template pool, greeting logic, date-seeded random                          |
+| `src/utils/dashboard-ai.ts`         | **Create** — AI summary generation (OpenAI/Claude fetch)                                |
+| `src/components/dashboard-view.tsx` | **Create** — Main dashboard with all 6 sections                                         |
+| `src/global-state.ts`               | **Modify** — Add `shouldShowDashboardAtom` + `urgentTasksAtom` + `todayIncompleteTasks` |
+| `src/routes/_appRoot.index.tsx`     | **Modify** — Conditional render: dashboard or notes list                                |
 
 ---
 
 ### Task 1: Dashboard templates utility
 
 **Files:**
+
 - Create: `src/utils/dashboard-templates.ts`
 
 - [ ] **Step 1: Create the template utility**
@@ -50,8 +51,7 @@ const greetings = {
 
 function getGreeting(): string {
   const hour = new Date().getHours()
-  const pool =
-    hour < 12 ? greetings.morning : hour < 18 ? greetings.afternoon : greetings.evening
+  const pool = hour < 12 ? greetings.morning : hour < 18 ? greetings.afternoon : greetings.evening
   return pool[Math.floor(Math.random() * pool.length)]
 }
 
@@ -111,6 +111,7 @@ git commit -m "feat: dashboard template utility with date-seeded rotation"
 ### Task 2: Dashboard AI summary utility
 
 **Files:**
+
 - Create: `src/utils/dashboard-ai.ts`
 
 - [ ] **Step 1: Create the AI summary utility**
@@ -122,7 +123,11 @@ import type { DashboardData } from "./dashboard-templates"
 
 const SYSTEM_PROMPT = `You are generating a brief morning briefing for a personal note-taking app dashboard. Given the user's data, write a single paragraph (2-3 sentences max) summarizing what they need to focus on today. Use emoji icons inline: 📥 for inbox, ☑️ for tasks, 📁 for projects, 🔴 for urgent. Be warm but concise. The user may speak Spanish or English — match the language of project/task names if provided, otherwise default to Spanish.`
 
-function buildUserMessage(data: DashboardData, projectNames: string[], urgentTaskTexts: string[]): string {
+function buildUserMessage(
+  data: DashboardData,
+  projectNames: string[],
+  urgentTaskTexts: string[],
+): string {
   return JSON.stringify({
     inbox_unprocessed: data.inbox,
     tasks_today: data.tasks,
@@ -204,6 +209,7 @@ git commit -m "feat: dashboard AI summary generation (OpenAI/Claude)"
 ### Task 3: Global state atoms for dashboard
 
 **Files:**
+
 - Modify: `src/global-state.ts` (after `unprocessedInboxCountAtom`, around line 924)
 
 - [ ] **Step 1: Add dashboard atoms**
@@ -269,6 +275,7 @@ git commit -m "feat: add dashboard atoms (urgentTasks, todayTasks, shouldShowDas
 ### Task 4: Dashboard view component
 
 **Files:**
+
 - Create: `src/components/dashboard-view.tsx`
 
 - [ ] **Step 1: Create the dashboard component**
@@ -301,7 +308,11 @@ import type { Note, Task } from "../schema"
 
 export function DashboardView() {
   const inboxItems = useAtomValue(inboxAtom)
-  const { tasks: todayTasks, noteId: todayNoteId, content: todayContent } = useAtomValue(todayTasksAtom)
+  const {
+    tasks: todayTasks,
+    noteId: todayNoteId,
+    content: todayContent,
+  } = useAtomValue(todayTasksAtom)
   const urgentTasks = useAtomValue(urgentTasksAtom)
   const projects = useAtomValue(projectsAtom)
   const recentNotes = useAtomValue(sortedNotesAtom)
@@ -324,19 +335,16 @@ export function DashboardView() {
     [projects],
   )
 
-  const incompleteTodayTasks = useMemo(
-    () => todayTasks.filter((t) => !t.completed),
-    [todayTasks],
-  )
+  const incompleteTodayTasks = useMemo(() => todayTasks.filter((t) => !t.completed), [todayTasks])
 
-  const completedTodayTasks = useMemo(
-    () => todayTasks.filter((t) => t.completed),
-    [todayTasks],
-  )
+  const completedTodayTasks = useMemo(() => todayTasks.filter((t) => t.completed), [todayTasks])
 
   const topProject = useMemo(() => {
     if (activeProjects.length === 0) return null
-    return activeProjects.reduce((best, p) => (p.tasks.length > best.tasks.length ? p : best), activeProjects[0])
+    return activeProjects.reduce(
+      (best, p) => (p.tasks.length > best.tasks.length ? p : best),
+      activeProjects[0],
+    )
   }, [activeProjects])
 
   const dashboardData: DashboardData = useMemo(
@@ -351,7 +359,14 @@ export function DashboardView() {
         ? `${topProject.tasks.filter((t) => t.completed).length}/${topProject.tasks.length}`
         : null,
     }),
-    [unprocessed, incompleteTodayTasks, completedTodayTasks, urgentTasks, activeProjects, topProject],
+    [
+      unprocessed,
+      incompleteTodayTasks,
+      completedTodayTasks,
+      urgentTasks,
+      activeProjects,
+      topProject,
+    ],
   )
 
   // AI summary
@@ -362,7 +377,13 @@ export function DashboardView() {
     if (!hasKey) return
     const projectNames = activeProjects.map((p) => p.displayName)
     const urgentTexts = urgentTasks.map((u) => u.task.text)
-    generateAISummary(dashboardData, aiProvider as "openai" | "claude", apiKey, projectNames, urgentTexts)
+    generateAISummary(
+      dashboardData,
+      aiProvider as "openai" | "claude",
+      apiKey,
+      projectNames,
+      urgentTexts,
+    )
       .then(setAiSummary)
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -574,7 +595,10 @@ function DashboardSection({
 
 function friendlyTitle(item: Note): string {
   const body = item.content.replace(/^---[\s\S]*?---\n*/, "").trim()
-  const firstLine = body.split("\n")[0].replace(/^#+\s*/, "").trim()
+  const firstLine = body
+    .split("\n")[0]
+    .replace(/^#+\s*/, "")
+    .trim()
   return firstLine || item.displayName
 }
 
@@ -614,6 +638,7 @@ git commit -m "feat: dashboard view component with all 6 sections"
 ### Task 5: Conditional Home route
 
 **Files:**
+
 - Modify: `src/routes/_appRoot.index.tsx`
 
 - [ ] **Step 1: Modify the Home route to conditionally render dashboard**
@@ -705,8 +730,10 @@ export function DashboardView({ onShowNotes }: DashboardViewProps) {
 Replace the footer link at the bottom of DashboardView:
 
 ```tsx
-{/* Footer link to notes */}
-<div className="pb-4 text-center">
+{
+  /* Footer link to notes */
+}
+;<div className="pb-4 text-center">
   <button onClick={onShowNotes} className="link text-sm">
     Ver todas las notas →
   </button>
@@ -752,10 +779,10 @@ npm run lint
 
 ## Parallelization Map
 
-| Subagent | Tasks | Files touched |
-|----------|-------|---------------|
-| A | Task 1 + 2 (utilities) | `dashboard-templates.ts`, `dashboard-ai.ts` |
-| B | Task 3 (atoms) | `global-state.ts` |
-| C | Task 4 + 5 (component + route) | `dashboard-view.tsx`, `_appRoot.index.tsx` |
+| Subagent | Tasks                          | Files touched                               |
+| -------- | ------------------------------ | ------------------------------------------- |
+| A        | Task 1 + 2 (utilities)         | `dashboard-templates.ts`, `dashboard-ai.ts` |
+| B        | Task 3 (atoms)                 | `global-state.ts`                           |
+| C        | Task 4 + 5 (component + route) | `dashboard-view.tsx`, `_appRoot.index.tsx`  |
 
 **Dependencies:** C depends on A and B (component imports utilities and atoms). A and B are independent.

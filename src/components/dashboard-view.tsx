@@ -37,18 +37,12 @@ import {
   urgentTasksAtom,
 } from "../global-state"
 import { generateAISummary } from "../utils/dashboard-ai"
+import { getGreeting } from "../utils/dashboard-templates"
 import { generateNoteId } from "../utils/note-id"
 import { dismissNudge } from "../utils/nudges"
 import { updateTaskCompletion } from "../utils/task"
 import { Checkbox } from "./checkbox"
 import type { Note, Task } from "../schema"
-
-function getGreeting(): string {
-  const hour = new Date().getHours()
-  if (hour < 12) return "Good morning"
-  if (hour < 18) return "Good afternoon"
-  return "Good evening"
-}
 
 export function DashboardView() {
   const inboxItems = useAtomValue(inboxAtom)

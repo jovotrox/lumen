@@ -1,4 +1,4 @@
-import type { Note, Task } from "../schema"
+import type { Note } from "../schema"
 
 export type Nudge = {
   id: string
@@ -87,7 +87,7 @@ export function detectNudges(
   }
   if (unprocessedCount >= settings.inboxThreshold) {
     nudges.push({
-      id: `inbox_pileup:${unprocessedCount}`,
+      id: "inbox_pileup",
       type: "inbox_pileup",
       message: `${unprocessedCount} items piling up in inbox`,
       priority: 2,

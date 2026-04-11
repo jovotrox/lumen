@@ -15,6 +15,7 @@ The `/` route renders either `DashboardView` or the existing notes list:
 - **Show Notes list** (current behavior) when none of the above are true
 
 Navigation between views:
+
 - Dashboard shows a "Ver notas →" link at the bottom
 - Notes list shows a subtle banner "Tienes X pendientes →" at the top when dashboard conditions are met (user navigated away manually)
 
@@ -94,11 +95,11 @@ Templates are selected randomly on each render but seeded by the date so the sam
 
 ### Files
 
-| File | Purpose |
-|------|---------|
-| `src/components/dashboard-view.tsx` | Main dashboard component with all sections |
-| `src/utils/dashboard-templates.ts` | Template pool and greeting logic |
-| `src/routes/_appRoot.index.tsx` | Modified to conditionally render dashboard or notes list |
+| File                                | Purpose                                                  |
+| ----------------------------------- | -------------------------------------------------------- |
+| `src/components/dashboard-view.tsx` | Main dashboard component with all sections               |
+| `src/utils/dashboard-templates.ts`  | Template pool and greeting logic                         |
+| `src/routes/_appRoot.index.tsx`     | Modified to conditionally render dashboard or notes list |
 
 ### State
 
@@ -114,6 +115,7 @@ export const shouldShowDashboardAtom = atom((get) => {
 ```
 
 The dashboard component reads existing atoms directly:
+
 - `inboxAtom` for unprocessed items
 - `notesAtom` for today's daily note and its tasks
 - `tasksAtom` for urgent tasks (filter by priority)
@@ -123,7 +125,8 @@ The dashboard component reads existing atoms directly:
 ### AI Summary
 
 Reuses the pattern from `ai-classify.ts`:
-- Direct fetch to OpenAI (`gpt-4o-mini`) or Claude (`claude-haiku-4-5`) 
+
+- Direct fetch to OpenAI (`gpt-4o-mini`) or Claude (`claude-haiku-4-5`)
 - System prompt includes structured data (counts, project names, task titles)
 - Response is a single paragraph, ~2 sentences
 - Cached in component state — generated once on mount, not on every render
@@ -133,6 +136,7 @@ Reuses the pattern from `ai-classify.ts`:
 ### Task Interaction
 
 Today's tasks checkboxes work by:
+
 1. Reading today's daily note content
 2. On toggle, updating the markdown checkbox (`- [ ]` ↔ `- [x]`)
 3. Writing back via `WRITE_FILES` event (same as existing task-list behavior)

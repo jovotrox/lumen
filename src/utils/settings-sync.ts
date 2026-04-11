@@ -14,8 +14,6 @@ export type SyncedSettings = {
   hideCompletedTasks?: boolean
   calendarLayout?: "week" | "month"
   aiProvider?: "openai" | "claude"
-  openaiKey?: string
-  claudeApiKey?: string
   voiceAssistantEnabled?: boolean
   quickNoteMode?: "note" | "inbox"
   nudgeStaleTaskDays?: number
@@ -35,8 +33,7 @@ export const settingsKeyMap: { localStorageKey: string; settingsKey: keyof Synce
   { localStorageKey: "hide-completed-tasks", settingsKey: "hideCompletedTasks" },
   { localStorageKey: "calendar-layout", settingsKey: "calendarLayout" },
   { localStorageKey: "ai_provider", settingsKey: "aiProvider" },
-  { localStorageKey: "openai_key", settingsKey: "openaiKey" },
-  { localStorageKey: "claude_api_key", settingsKey: "claudeApiKey" },
+  // API keys intentionally NOT synced — they are secrets that stay in localStorage only
   { localStorageKey: "voice_assistant_enabled", settingsKey: "voiceAssistantEnabled" },
   { localStorageKey: "quick_note_mode", settingsKey: "quickNoteMode" },
   { localStorageKey: "nudge_stale_task_days", settingsKey: "nudgeStaleTaskDays" },
@@ -73,9 +70,9 @@ export function collectSettingsFromLocalStorage(): SyncedSettings {
     const raw = localStorage.getItem(localStorageKey)
     if (raw !== null) {
       try {
-        ;(settings as Record<string, unknown>)[settingsKey] = JSON.parse(raw)
+        (settings as Record<string, unknown>)[settingsKey] = JSON.parse(raw)
       } catch {
-        ;(settings as Record<string, unknown>)[settingsKey] = raw
+        (settings as Record<string, unknown>)[settingsKey] = raw
       }
     }
   }
