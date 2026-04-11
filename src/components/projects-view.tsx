@@ -89,7 +89,7 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
             : "No projects match your search."}
         </div>
       ) : (
-        <ul className="flex flex-col gap-0.5">
+        <ul className="flex flex-col gap-2">
           {filteredProjects.map((project) => (
             <ProjectListItem key={project.id} project={project} />
           ))}
@@ -112,9 +112,9 @@ function ProjectListItem({ project }: { project: Note }) {
         to="/notes/$"
         params={{ _splat: project.id }}
         search={{ mode: "read", query: undefined, view: "grid" }}
-        className="nav-item flex items-center justify-between gap-3 rounded px-2 py-1.5"
+        className="card-1 flex items-center justify-between gap-3 rounded-lg px-4 py-3"
       >
-        <div className="flex flex-col gap-0.5 overflow-hidden">
+        <div className="flex flex-col gap-1 overflow-hidden">
           <span className="truncate font-medium">{project.displayName}</span>
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             <StatusBadge status={status} />
@@ -123,9 +123,17 @@ function ProjectListItem({ project }: { project: Note }) {
           </div>
         </div>
         {totalTasks > 0 ? (
-          <span className="shrink-0 text-xs text-text-secondary">
-            {completedTasks}/{totalTasks}
-          </span>
+          <div className="flex items-center gap-2">
+            <div className="h-1.5 w-12 rounded-full bg-bg-tertiary">
+              <div
+                className="h-full rounded-full bg-text-success"
+                style={{ width: `${Math.round((completedTasks / totalTasks) * 100)}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-xs text-text-secondary">
+              {completedTasks}/{totalTasks}
+            </span>
+          </div>
         ) : null}
       </Link>
     </li>

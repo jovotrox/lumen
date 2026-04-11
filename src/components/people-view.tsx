@@ -101,7 +101,7 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
             : "No people match your search."}
         </div>
       ) : (
-        <ul className="flex flex-col gap-0.5">
+        <ul className="flex flex-col gap-2">
           {filteredPeople.map((person) => (
             <PersonListItem
               key={person.id}
@@ -125,9 +125,9 @@ function PersonListItem({ person, taskCount }: { person: Note; taskCount: number
         to="/notes/$"
         params={{ _splat: person.id }}
         search={{ mode: "read", query: undefined, view: "grid" }}
-        className="nav-item flex items-center justify-between gap-3 rounded px-2 py-1.5"
+        className="card-1 flex items-center justify-between gap-3 rounded-lg px-4 py-3"
       >
-        <div className="flex flex-col gap-0.5 overflow-hidden">
+        <div className="flex flex-col gap-1 overflow-hidden">
           <span className="truncate font-medium">{person.displayName}</span>
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             {role ? <span>{role}</span> : null}
