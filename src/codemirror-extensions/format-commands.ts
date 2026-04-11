@@ -434,7 +434,8 @@ export function isBlockquoteActive(state: EditorState): boolean {
 
 export function isBulletListActive(state: EditorState): boolean {
   const { from } = state.selection.main
-  return state.doc.lineAt(from).text.startsWith("- ")
+  const text = state.doc.lineAt(from).text
+  return text.startsWith("- ") && !text.startsWith("- [ ] ") && !text.startsWith("- [x] ")
 }
 
 export function isNumberedListActive(state: EditorState): boolean {
