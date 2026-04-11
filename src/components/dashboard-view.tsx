@@ -637,7 +637,18 @@ function friendlyTitle(item: Note): string {
 }
 
 function renderPreview(text: string): string {
-  return text.replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2").replace(/\[\[([^\]]+)\]\]/g, "$1")
+  return (
+    text
+      // [[id|Name]] → Name
+      .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, "$2")
+      // [[numeric-id]] → remove entirely (bare note ID links)
+      .replace(/\[\[\d+\]\]/g, "")
+      // [[readable-id]] → readable-id
+      .replace(/\[\[([^\]]+)\]\]/g, "$1")
+      // Trailing date (2026-04-10) — strip from end of task text
+      .replace(/\s+\d{4}-\d{2}-\d{2}\s*$/, "")
+      .trim()
+  )
 }
 
 function formatRelativeTime(timestamp: number): string {
