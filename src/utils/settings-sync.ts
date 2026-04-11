@@ -70,9 +70,9 @@ export function collectSettingsFromLocalStorage(): SyncedSettings {
     const raw = localStorage.getItem(localStorageKey)
     if (raw !== null) {
       try {
-        (settings as Record<string, unknown>)[settingsKey] = JSON.parse(raw)
+        ;(settings as Record<string, unknown>)[settingsKey] = JSON.parse(raw)
       } catch {
-        (settings as Record<string, unknown>)[settingsKey] = raw
+        ;(settings as Record<string, unknown>)[settingsKey] = raw
       }
     }
   }
