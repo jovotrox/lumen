@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `feature/flowos-integration` (desde `personal`)
-- **Estado:** En desarrollo activo — FlowOS integration
-- **Último commit:** Phase 2 Smart Inbox complete
+- **Estado:** FlowOS integration completa (4 fases) — pendiente merge a personal
+- **Último commit:** Phase 4 Nudges + dismiss
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -143,6 +143,12 @@ upstream/main ──────┐
 | `src/utils/parse-note.ts`                   | Modificado     | Detecta type desde frontmatter                                             |
 | `src/components/note-editor.tsx`            | Modificado     | @ mention trigger + entity type labels en [[                               |
 | `src/routes/_appRoot.notes_.$.tsx`          | Modificado     | isReadMode prop for hide completed tasks                                   |
+| `src/routes/_appRoot.notes.index.tsx`       | Modificado     | Notes list route (was redirect to /)                                       |
+| `src/components/dashboard-view.tsx`         | Nuevo          | Home dashboard: greeting, weather, nudges, sections, quick actions         |
+| `src/utils/dashboard-templates.ts`          | Nuevo          | Greeting template pool with date-seeded rotation                           |
+| `src/utils/dashboard-ai.ts`                 | Nuevo          | AI summary generation (OpenAI/Claude)                                      |
+| `src/utils/nudges.ts`                       | Nuevo          | Nudge detection: stale tasks, inactive projects, inbox pileup, overdue     |
+| `src/components/property-value.tsx`         | Modificado     | Pass frontmatterKey to NoteEditor for property autocomplete                |
 | `src/components/app-layout.tsx`             | Modificado     | Titlebar padding (collapsed sidebar)                                       |
 | `src/components/sidebar.tsx`                | Modificado     | Titlebar padding + drag + border extend                                    |
 | `src/styles/variables.css`                  | Modificado     | color-scheme: dark + titlebar height                                       |
@@ -237,6 +243,35 @@ git push origin personal
   - AI classification: OpenAI (gpt-4o-mini) or Claude (haiku) with heuristic fallback
   - Settings: Claude API key input + AI provider selector (OpenAI/Claude)
   - Archivos: `quick-note.tsx`, `_appRoot.tsx`, `global-state.ts`, `ai-classify.ts`, `inbox-view.tsx`, `ai-key-input.tsx`, `_appRoot.settings.tsx`, + route files
+- **FlowOS — Phase 2 Feedback (7 items + extras)**
+  - Cmd+Enter save+close in Quick Note
+  - Inbox: friendly titles, status badges, wikilink rendering, sidebar badge count
+  - Classification badges with icons+colors, heuristic pre-classification on load
+  - Task conversion appends `- [ ] title [[id]]` to today's daily note
+  - "+ New" IconButton on /projects and /people views
+  - Frontmatter autocomplete in editor (inside ---) AND Properties panel (read mode)
+  - Predefined values with color indicators for status/priority/type
+  - Convert button as dropdown with all type options
+  - Related notes exclude self-references + tooltip preview on hover
+- **FlowOS — Phase 3: Home Dashboard**
+  - `/` is always Home (dashboard), `/notes` is the notes list
+  - Date header + weather via wttr.in (free, no API key, C/F configurable)
+  - Personalized greeting: "Good evening, Javo." with nickname from Settings
+  - AI summary (OpenAI/Claude) with template fallback (8 variants, date-seeded)
+  - Summary shows linked counts: tasks, inbox, projects, urgent — each clickable
+  - Quick action buttons: Daily note, New task, New note
+  - Sections: Inbox, Today's tasks (interactive checkboxes), Urgent (P1/P2), Projects (progress bar), Recent notes
+  - Empty state when nothing pending with invite to create daily note
+  - Sidebar reordered: Home, Inbox, Calendar, Notes, Projects, Tasks, Links, People, Tags
+  - Settings: Nickname + Temperature unit (°C/°F)
+- **FlowOS — Phase 4: Nudges**
+  - 4 nudge types: stale tasks (7d), inactive projects (14d), inbox pileup (5+), overdue follow-ups
+  - "Needs attention" section in dashboard with typed icons and action links
+  - Dismiss button (×) per nudge — persisted in localStorage, reappears if note changes
+  - Greeting includes nudge count in yellow: "3 items need your attention."
+  - Web Notification API: fires once per day on app focus with top 3 nudges
+  - Configurable thresholds in Settings > Nudges (days/items + notification toggle)
+  - Atoms: `nudgesAtom`, `nudgeDismissVersionAtom`, 4 threshold atoms
 - **Theme updates**: Updated GitHub (Primer v2), Notion, VS Code (2025), Obsidian colors. Added live preview for custom theme creation.
 - **Sync workflow fix**: Moved sync-upstream.yml to run from `personal` branch. Reset `main` to mirror upstream.
 
