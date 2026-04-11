@@ -54,24 +54,27 @@
   @apply font-mono!;
 }
 
-/* Autocomplete dropdown — matches DropdownMenu component styling */
+/* Autocomplete dropdown — identical to DropdownMenu.Content (card-2, no overrides) */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete {
-  @apply card-2 border-0 bg-bg-overlay! p-1 backdrop-blur-none!;
+  @apply card-2 overflow-hidden border-0 p-0;
   width: 260px;
 }
 
+/* Scrollable inner — matches DropdownMenu: max-h-[45svh] scroll-py-1 overflow-auto p-1 */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul {
   @apply font-content text-[inherit];
   max-height: 45svh;
   overflow: auto;
+  scroll-padding: 4px;
+  padding: 4px;
 }
 
 .cm-editor .cm-tooltip.cm-completionInfo {
-  @apply card-2 aspect-[5/3] w-96 max-w-none overflow-hidden whitespace-pre-wrap p-1 px-3 py-2 font-content text-sm text-[inherit];
+  @apply card-2 aspect-[5/3] w-96 max-w-none overflow-hidden whitespace-pre-wrap px-3 py-2 font-content text-sm text-[inherit];
   word-break: break-word;
 }
 
-/* Items — matches DropdownMenu.Item: h-8 gap-3 px-3 rounded */
+/* Items — identical to DropdownMenu.Item */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li {
   @apply flex h-8 cursor-pointer select-none items-center gap-3 rounded px-3 coarse:h-10;
 }
@@ -85,7 +88,7 @@
   @apply ml-auto pl-3 text-sm text-text-tertiary;
 }
 
-/* Section headers — matches DropdownMenu.GroupLabel */
+/* Section headers — identical to DropdownMenu.GroupLabel (no separator) */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete .cm-completionSection {
   @apply flex h-8 select-none items-center px-3 font-semibold uppercase text-text-tertiary coarse:h-9;
   font-size: 11px;
