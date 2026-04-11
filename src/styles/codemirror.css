@@ -54,13 +54,19 @@
   @apply font-mono!;
 }
 
-/* Autocomplete dropdown — identical to DropdownMenu.Content (card-2, no overrides) */
+/*
+ * Autocomplete dropdown — v2.0
+ * Matches DropdownMenu component exactly.
+ * CM uses <completion-section> custom HTML elements for headers (not CSS classes).
+ */
+
+/* Container — identical to DropdownMenu.Content */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete {
   @apply card-2 overflow-hidden border-0 p-0;
   width: 260px;
 }
 
-/* Scrollable inner — matches DropdownMenu: max-h-[45svh] scroll-py-1 overflow-auto p-1 */
+/* Scrollable list — identical to DropdownMenu inner scroll container */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul {
   @apply font-content text-[inherit];
   max-height: 45svh;
@@ -69,12 +75,13 @@
   padding: 4px;
 }
 
+/* Completion info panel */
 .cm-editor .cm-tooltip.cm-completionInfo {
   @apply card-2 aspect-[5/3] w-96 max-w-none overflow-hidden whitespace-pre-wrap px-3 py-2 font-content text-sm text-[inherit];
   word-break: break-word;
 }
 
-/* Items — identical to DropdownMenu.Item */
+/* Items — identical to DropdownMenu.Item: h-8 gap-3 px-3 rounded */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li {
   @apply flex h-8 cursor-pointer select-none items-center gap-3 rounded px-3 coarse:h-10;
 }
@@ -88,13 +95,24 @@
   @apply ml-auto pl-3 text-sm text-text-tertiary;
 }
 
-/* Section headers — identical to DropdownMenu.GroupLabel (no separator) */
-.cm-editor .cm-tooltip.cm-tooltip-autocomplete .cm-completionSection {
-  @apply flex h-8 select-none items-center px-3 font-semibold uppercase text-text-tertiary coarse:h-9;
+/*
+ * Section headers — CM uses <completion-section> custom HTML element.
+ * Styled identical to DropdownMenu.GroupLabel: no border, uppercase, tertiary.
+ */
+.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > completion-section {
+  display: flex !important;
+  align-items: center;
+  height: 32px;
+  padding: 0 12px;
   font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
   letter-spacing: 0.05em;
-  border-bottom: none !important;
+  color: var(--color-text-tertiary);
   border: none !important;
+  border-bottom: none !important;
+  opacity: 1 !important;
+  list-style: none !important;
 }
 
 .cm-editor .cm-completionMatchedText {
