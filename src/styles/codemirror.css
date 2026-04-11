@@ -55,88 +55,14 @@
 }
 
 /*
- * Autocomplete dropdown — v2.0
- * Matches DropdownMenu component exactly.
- * CM uses <completion-section> custom HTML elements for headers (not CSS classes).
+ * Autocomplete styles are defined via EditorView.theme() in
+ * src/codemirror-extensions/autocomplete-theme.ts to guarantee
+ * correct specificity over CM's built-in baseTheme.
+ *
+ * Only icon data URIs remain here (CSS-only, no specificity issues).
  */
 
-/* Container — identical to DropdownMenu.Content */
-.cm-editor .cm-tooltip.cm-tooltip-autocomplete {
-  @apply card-2 overflow-hidden border-0 p-0;
-  /* Force card-2 backdrop over CM's default backgroundColor: #333338 */
-  background-color: var(--color-bg-overlay-backdrop) !important;
-  backdrop-filter: blur(16px) !important;
-  -webkit-backdrop-filter: blur(16px) !important;
-  width: 260px;
-}
-
-/* Scrollable list — identical to DropdownMenu inner scroll container */
-.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul {
-  @apply font-content text-[inherit];
-  max-height: 45svh;
-  overflow: auto;
-  scroll-padding: 4px;
-  padding: 4px;
-}
-
-/* Completion info panel */
-.cm-editor .cm-tooltip.cm-completionInfo {
-  @apply card-2 aspect-[5/3] w-96 max-w-none overflow-hidden whitespace-pre-wrap px-3 py-2 font-content text-sm text-[inherit];
-  word-break: break-word;
-}
-
-/* Items — identical to DropdownMenu.Item: h-8 gap-3 px-3 rounded */
-.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li {
-  @apply flex h-8 cursor-pointer select-none items-center gap-3 rounded px-3 coarse:h-10;
-}
-
-.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
-  @apply bg-bg-hover text-text;
-  @apply epaper:bg-text epaper:text-bg;
-}
-
-.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > li .cm-completionDetail {
-  @apply ml-auto pl-3 text-sm text-text-tertiary;
-}
-
-/*
- * Section headers — CM uses <completion-section> custom HTML element.
- * Styled identical to DropdownMenu.GroupLabel: no border, uppercase, tertiary.
- */
-.cm-editor .cm-tooltip.cm-tooltip-autocomplete > ul > completion-section {
-  display: flex !important;
-  align-items: center;
-  height: 32px;
-  padding: 0 12px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--color-text-tertiary);
-  border: none !important;
-  border-bottom: none !important;
-  opacity: 1 !important;
-  list-style: none !important;
-}
-
-.cm-editor .cm-completionMatchedText {
-  @apply no-underline;
-}
-
-/* Icons — 16px matching DropdownMenu icon size, gap-3 handled by parent flex */
-.cm-editor .cm-completionIcon {
-  padding: 0;
-  margin-right: 0;
-  width: 16px;
-  height: 16px;
-  opacity: 1;
-}
-
-.cm-editor .cm-completionIcon::after {
-  display: inline-block;
-  width: 16px;
-  height: 16px;
-}
+/* Icon content (data URIs) — these use ::after which CM theme() can't set */
 
 /* Status: colored circles */
 .cm-editor .cm-completionIcon-cm-s-active::after {

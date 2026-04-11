@@ -30,6 +30,7 @@ import { spellcheckExtension } from "../codemirror-extensions/spellcheck"
 import { wikilinkExtension } from "../codemirror-extensions/wikilink"
 import { livePreviewExtension } from "../codemirror-extensions/live-preview"
 import { formatKeymapExtension } from "../codemirror-extensions/format-keymap"
+import { autocompleteThemeExtension } from "../codemirror-extensions/autocomplete-theme"
 import {
   frontmatterValuesAtom,
   isSignedOutAtom,
@@ -209,6 +210,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
         ),
         syntaxHighlighting(syntaxHighlighter),
         formatKeymapExtension(),
+        autocompleteThemeExtension(),
       ]
 
       if (vimMode) {
