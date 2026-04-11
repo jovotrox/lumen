@@ -39,6 +39,7 @@ import {
 import { InsertTemplateDialog, removeFrontmatterComments } from "../components/insert-template"
 import { LinkHighlightProvider } from "../components/link-highlight-provider"
 import { Markdown } from "../components/markdown"
+import { FormatToolbar } from "../components/format-toolbar"
 import { NoteEditor } from "../components/note-editor"
 import { NoteFavicon } from "../components/note-favicon"
 import { NoteList } from "../components/note-list"
@@ -149,6 +150,7 @@ function NotePage() {
 
   // Editor state
   const editorRef = React.useRef<ReactCodeMirrorRef>(null)
+  const [selection, setSelection] = React.useState<{ from: number; to: number } | null>(null)
   const { editorValue, setEditorValue, isDraft, discardChanges } = useEditorValue({
     noteId: noteId ?? "",
     note,
@@ -941,8 +943,19 @@ function NotePage() {
                 onChange={setEditorValue}
                 minHeight={160}
                 livePreview={livePreview}
+                onStateChange={(update) => {
+                  const { from, to } = update.state.selection.main
+                  setSelection(from !== to ? { from, to } : null)
+                }}
               />
             </div>
+            {mode === "write" && selection && (
+              <FormatToolbar
+                editorView={editorRef.current?.view ?? null}
+                selectionFrom={selection.from}
+                selectionTo={selection.to}
+              />
+            )}
             {isWeeklyNote ? (
               <Details className="print:hidden">
                 <Details.Summary>Days</Details.Summary>
