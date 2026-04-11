@@ -93,7 +93,8 @@
   @apply flex h-8 select-none items-center px-3 font-semibold uppercase text-text-tertiary coarse:h-9;
   font-size: 11px;
   letter-spacing: 0.05em;
-  border-bottom: none;
+  border-bottom: none !important;
+  border: none !important;
 }
 
 .cm-editor .cm-completionMatchedText {
