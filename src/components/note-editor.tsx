@@ -594,11 +594,79 @@ function insertWikilink({ view, from, to, noteId, label }: InsertWikilinkParams)
   })
 }
 
+// Slash command format options (Notion-style)
+const SLASH_FORMAT_COMMANDS: Array<{
+  label: string
+  detail: string
+  section: string
+  insert: string | ((view: EditorView, from: number, to: number) => void)
+}> = [
+  {
+    label: "Heading 1",
+    detail: "Large heading",
+    section: "Format",
+    insert: "# ",
+  },
+  {
+    label: "Heading 2",
+    detail: "Medium heading",
+    section: "Format",
+    insert: "## ",
+  },
+  {
+    label: "Heading 3",
+    detail: "Small heading",
+    section: "Format",
+    insert: "### ",
+  },
+  {
+    label: "Bullet list",
+    detail: "Unordered list item",
+    section: "Lists",
+    insert: "- ",
+  },
+  {
+    label: "Numbered list",
+    detail: "Ordered list item",
+    section: "Lists",
+    insert: "1. ",
+  },
+  {
+    label: "To-do",
+    detail: "Task checkbox",
+    section: "Lists",
+    insert: "- [ ] ",
+  },
+  {
+    label: "Blockquote",
+    detail: "Quote block",
+    section: "Format",
+    insert: "> ",
+  },
+  {
+    label: "Code block",
+    detail: "Fenced code block",
+    section: "Format",
+    insert: (view, from, to) => {
+      view.dispatch({
+        changes: { from: from - 1, to, insert: "```\n\n```" },
+        selection: { anchor: from + 3 },
+      })
+    },
+  },
+  {
+    label: "Divider",
+    detail: "Horizontal rule",
+    section: "Format",
+    insert: "---\n",
+  },
+]
+
 function useTemplateCompletion() {
   const getTemplates = useAtomCallback(React.useCallback((get) => get(templatesAtom), []))
   const insertTemplate = useInsertTemplate()
 
-  const tagCompletion = React.useCallback(
+  const slashCompletion = React.useCallback(
     async (context: CompletionContext): Promise<CompletionResult | null> => {
       const query = context.matchBefore(/\/.*/)
 
@@ -608,25 +676,46 @@ function useTemplateCompletion() {
 
       const templates = Object.values(getTemplates())
 
+      // Format commands
+      const formatOptions: Completion[] = SLASH_FORMAT_COMMANDS.map((cmd) => ({
+        label: cmd.label,
+        detail: cmd.detail,
+        section: cmd.section,
+        apply: (view: EditorView, _completion: Completion, from: number, to: number) => {
+          if (typeof cmd.insert === "function") {
+            cmd.insert(view, from, to)
+          } else {
+            // Replace "/<query>" with the format prefix
+            view.dispatch({
+              changes: { from: from - 1, to, insert: cmd.insert },
+              selection: { anchor: from - 1 + cmd.insert.length },
+            })
+          }
+        },
+      }))
+
+      // Template options
+      const templateOptions: Completion[] = templates.map((template) => ({
+        label: template.name,
+        detail: "Template",
+        section: "Templates",
+        apply: (view: EditorView, _completion: Completion, from: number, to: number) => {
+          view.dispatch({
+            changes: { from: from - 1, to, insert: "" },
+          })
+          insertTemplate(template, view)
+        },
+      }))
+
       return {
         from: query.from + 1,
-        options: templates.map((template) => ({
-          label: template.name,
-          apply: (view, completion, from, to) => {
-            // Remove "/<query>" from editor
-            view.dispatch({
-              changes: { from: from - 1, to, insert: "" },
-            })
-
-            insertTemplate(template, view)
-          },
-        })),
+        options: [...formatOptions, ...templateOptions],
       }
     },
     [getTemplates, insertTemplate],
   )
 
-  return tagCompletion
+  return slashCompletion
 }
 
 function useFrontmatterValueCompletion() {
