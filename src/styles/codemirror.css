@@ -84,6 +84,42 @@
   @apply no-underline;
 }
 
+/* Colored dot icons for status/priority completions */
+.cm-editor .cm-completionIcon {
+  padding: 0;
+  margin-right: 0;
+  opacity: 1;
+}
+
+.cm-editor .cm-completionIcon-cm-s-active::after {
+  content: "●";
+  color: var(--color-text-success);
+}
+.cm-editor .cm-completionIcon-cm-s-paused::after {
+  content: "●";
+  color: var(--color-text-pending);
+}
+.cm-editor .cm-completionIcon-cm-s-completed::after {
+  content: "●";
+  color: var(--color-text-secondary);
+}
+.cm-editor .cm-completionIcon-cm-s-cancelled::after {
+  content: "●";
+  color: var(--color-text-danger);
+}
+.cm-editor .cm-completionIcon-cm-s-p1::after {
+  content: "▲";
+  color: var(--color-text-danger);
+}
+.cm-editor .cm-completionIcon-cm-s-p2::after {
+  content: "■";
+  color: var(--color-text-pending);
+}
+.cm-editor .cm-completionIcon-cm-s-p3::after {
+  content: "▼";
+  color: var(--color-border-focus);
+}
+
 .cm-editor .cm-placeholder {
   @apply text-text-tertiary;
 }

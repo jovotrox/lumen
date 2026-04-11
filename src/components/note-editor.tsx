@@ -184,7 +184,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
                 tagPropertyCompletion,
                 templateCompletion,
               ],
-          icons: false,
+          icons: !!frontmatterKey,
           // For property fields, activate immediately on any input
           ...(frontmatterKey ? { activateOnTypingDelay: 0 } : {}),
         }),
@@ -728,24 +728,37 @@ function getDateSuggestions(context: CompletionContext): CompletionResult {
   }
 }
 
-/** Predefined values for known frontmatter keys, with optional color indicator */
-const knownPropertyValues: Record<string, { value: string; detail?: string }[]> = {
+/** Predefined values for known frontmatter keys */
+type KnownValue = { value: string; detail?: string; color?: string }
+const knownPropertyValues: Record<string, KnownValue[]> = {
   status: [
-    { value: "active", detail: "🟢" },
-    { value: "paused", detail: "🟡" },
-    { value: "completed", detail: "⚪" },
-    { value: "cancelled", detail: "🔴" },
+    { value: "active", detail: "active", color: "var(--color-text-success)" },
+    { value: "paused", detail: "paused", color: "var(--color-text-pending)" },
+    { value: "completed", detail: "done", color: "var(--color-text-secondary)" },
+    { value: "cancelled", detail: "ended", color: "var(--color-text-danger)" },
   ],
   priority: [
-    { value: "1", detail: "🔴 highest" },
-    { value: "2", detail: "🟡 medium" },
-    { value: "3", detail: "🔵 low" },
+    { value: "1", detail: "highest", color: "var(--color-text-danger)" },
+    { value: "2", detail: "medium", color: "var(--color-text-pending)" },
+    { value: "3", detail: "low", color: "var(--color-border-focus)" },
   ],
   type: [
-    { value: "project", detail: "📁" },
-    { value: "person", detail: "👤" },
-    { value: "inbox", detail: "📥" },
+    { value: "project", detail: "project" },
+    { value: "person", detail: "person" },
+    { value: "inbox", detail: "inbox" },
+    { value: "note", detail: "note" },
   ],
+}
+
+/** Map known values to a CSS type class for colored dot rendering */
+const statusColorType: Record<string, string> = {
+  active: "cm-s-active",
+  paused: "cm-s-paused",
+  completed: "cm-s-completed",
+  cancelled: "cm-s-cancelled",
+  "1": "cm-s-p1",
+  "2": "cm-s-p2",
+  "3": "cm-s-p3",
 }
 
 /** Completion for property value fields in the Properties panel (read mode) */
@@ -775,15 +788,23 @@ function usePropertyValueCompletion(frontmatterKey?: string) {
 
       const allOptions: Completion[] = []
 
-      // Add known values first (with detail/color)
+      // Add known values first (with type class for color)
       for (const k of known) {
-        allOptions.push({ label: k.value, detail: k.detail })
+        allOptions.push({
+          label: k.value,
+          detail: k.detail,
+          type: statusColorType[k.value],
+        })
       }
 
       // Add dynamic values not already in known set
       for (const v of existing) {
         if (!knownValues.has(v)) {
-          allOptions.push({ label: v, detail: knownMap.get(v) })
+          allOptions.push({
+            label: v,
+            detail: knownMap.get(v),
+            type: statusColorType[v],
+          })
         }
       }
 
