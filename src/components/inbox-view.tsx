@@ -202,14 +202,14 @@ function InboxItemCard({ item }: { item: Note }) {
     if (type === "task") {
       const today = toDateString(new Date())
       const title = friendlyTitle(item)
-      const checkboxLine = `- [ ] ${title} [[${item.id}]]`
+      const checkboxLine = `- [ ] ${title}`
       const existingNote = notes.get(today)
 
       if (existingNote) {
         const content = existingNote.content.trimEnd() + "\n" + checkboxLine + "\n"
         filesToWrite[`${today}.md`] = content
       } else {
-        filesToWrite[`${today}.md`] = `# ${today}\n\n${checkboxLine}\n`
+        filesToWrite[`${today}.md`] = `${checkboxLine}\n`
       }
     }
 

@@ -275,7 +275,7 @@ export function DashboardView() {
               } else {
                 send({
                   type: "WRITE_FILES",
-                  markdownFiles: { [`${today}.md`]: `# ${today}\n\n` },
+                  markdownFiles: { [`${today}.md`]: "" },
                 })
                 navigate({
                   to: "/notes/$",
@@ -300,7 +300,7 @@ export function DashboardView() {
               } else {
                 send({
                   type: "WRITE_FILES",
-                  markdownFiles: { [`${today}.md`]: `# ${today}\n\n${taskLine}` },
+                  markdownFiles: { [`${today}.md`]: `${taskLine}` },
                 })
               }
               navigate({
