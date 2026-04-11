@@ -747,6 +747,7 @@ const knownPropertyValues: Record<string, KnownValue[]> = {
     { value: "person", detail: "person" },
     { value: "inbox", detail: "inbox" },
     { value: "note", detail: "note" },
+    { value: "task", detail: "task" },
   ],
 }
 
@@ -763,6 +764,10 @@ const statusColorType: Record<string, string> = {
   person: "cm-s-person",
   inbox: "cm-s-inbox",
   note: "cm-s-note",
+  task: "cm-s-task",
+  daily: "cm-s-note",
+  weekly: "cm-s-note",
+  template: "cm-s-note",
 }
 
 /** Completion for property value fields in the Properties panel (read mode) */
@@ -801,9 +806,9 @@ function usePropertyValueCompletion(frontmatterKey?: string) {
         })
       }
 
-      // Add dynamic values not already in known set
+      // Add dynamic values not already in known set (skip invalid values)
       for (const v of existing) {
-        if (!knownValues.has(v)) {
+        if (!knownValues.has(v) && v !== "undefined" && v !== "null" && v !== "converted") {
           allOptions.push({
             label: v,
             detail: knownMap.get(v),
