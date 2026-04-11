@@ -69,10 +69,11 @@ export function collectSettingsFromLocalStorage(): SyncedSettings {
   for (const { localStorageKey, settingsKey } of settingsKeyMap) {
     const raw = localStorage.getItem(localStorageKey)
     if (raw !== null) {
+      const record = settings as Record<string, unknown>
       try {
-        (settings as Record<string, unknown>)[settingsKey] = JSON.parse(raw)
+        record[settingsKey] = JSON.parse(raw)
       } catch {
-        (settings as Record<string, unknown>)[settingsKey] = raw
+        record[settingsKey] = raw
       }
     }
   }
