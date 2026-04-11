@@ -1,5 +1,5 @@
 import { Extension } from "@codemirror/state"
-import { EditorView } from "@codemirror/view"
+import { EditorView, tooltips } from "@codemirror/view"
 
 /**
  * Autocomplete dropdown theme — matches DropdownMenu component exactly.
@@ -10,7 +10,10 @@ import { EditorView } from "@codemirror/view"
  * CM uses <completion-section> custom HTML elements for section headers.
  */
 export function autocompleteThemeExtension(): Extension {
-  return EditorView.theme({
+  // Render tooltips in document.body (like Radix Portal) so backdrop-filter works
+  const tooltipParent = tooltips({ parent: document.body })
+
+  const theme = EditorView.theme({
     // Container
     ".cm-tooltip.cm-tooltip-autocomplete": {
       width: "260px",
@@ -108,4 +111,6 @@ export function autocompleteThemeExtension(): Extension {
       color: "inherit",
     },
   })
+
+  return [theme, tooltipParent]
 }
