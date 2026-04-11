@@ -63,6 +63,10 @@
 /* Container — identical to DropdownMenu.Content */
 .cm-editor .cm-tooltip.cm-tooltip-autocomplete {
   @apply card-2 overflow-hidden border-0 p-0;
+  /* Force card-2 backdrop over CM's default backgroundColor: #333338 */
+  background-color: var(--color-bg-overlay-backdrop) !important;
+  backdrop-filter: blur(16px) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
   width: 260px;
 }
 
