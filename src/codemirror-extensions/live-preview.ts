@@ -33,28 +33,36 @@ class HiddenWidget extends WidgetType {
   }
 }
 
-// Widget for bullet point
+// Widget for bullet point — matches view mode: 6px circle inside 28px container
 class BulletWidget extends WidgetType {
   toDOM() {
-    const span = document.createElement("span")
-    span.className = "cm-live-bullet"
-    span.textContent = "•"
-    return span
+    const container = document.createElement("span")
+    container.className = "cm-live-bullet-container"
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg")
+    svg.setAttribute("width", "6")
+    svg.setAttribute("height", "6")
+    svg.setAttribute("viewBox", "0 0 6 6")
+    svg.setAttribute("fill", "currentColor")
+    const circle = document.createElementNS("http://www.w3.org/2000/svg", "circle")
+    circle.setAttribute("cx", "3")
+    circle.setAttribute("cy", "3")
+    circle.setAttribute("r", "3")
+    svg.appendChild(circle)
+    container.appendChild(svg)
+    return container
   }
 }
 
-// Widget for checkbox (task list item) - replicates read mode structure
+// Widget for checkbox — matches view mode: 16px checkbox inside 28px container
 class CheckboxWidget extends WidgetType {
   constructor(private checked: boolean) {
     super()
   }
 
   toDOM() {
-    // Container: size-7 (28px) grid place-items-center
     const container = document.createElement("span")
     container.className = "cm-live-checkbox-container"
 
-    // Checkbox inside
     const checkbox = document.createElement("span")
     checkbox.className = `cm-live-checkbox ${this.checked ? "cm-live-checkbox-checked" : ""}`
     checkbox.textContent = this.checked ? "✓" : ""
@@ -384,25 +392,30 @@ const livePreviewTheme = EditorView.baseTheme({
     borderRadius: "var(--border-radius-sm)",
     backgroundColor: "var(--color-border)",
   },
-  // Bullet list
-  ".cm-live-bullet": {
-    marginRight: "6px",
+  // Bullet list — matches view mode: size-7 container with 6px SVG circle
+  ".cm-live-bullet-container": {
+    display: "inline-grid",
+    placeItems: "center",
+    width: "28px",
+    height: "28px",
+    flexShrink: "0",
+    verticalAlign: "middle",
     color: "var(--color-text-secondary)",
   },
   ".cm-live-list-line": {
     marginLeft: "0 !important",
     textIndent: "0 !important",
-    paddingTop: "2px",
-    paddingBottom: "2px",
-    paddingLeft: "calc(var(--font-size-base) * 0.5)",
+    paddingTop: "6px",
+    paddingBottom: "6px",
   },
-  // Checkbox container with margin for spacing
+  // Checkbox — matches view mode: size-4 checkbox inside size-7 container
   ".cm-live-checkbox-container": {
-    display: "inline-flex",
-    alignItems: "center",
-    justifyContent: "center",
+    display: "inline-grid",
+    placeItems: "center",
+    width: "28px",
+    height: "28px",
     flexShrink: "0",
-    marginRight: "8px",
+    verticalAlign: "middle",
   },
   ".cm-live-checkbox": {
     display: "inline-flex",
@@ -414,6 +427,7 @@ const livePreviewTheme = EditorView.baseTheme({
     border: "1px solid var(--color-text-secondary)",
     backgroundColor: "transparent",
     fontSize: "10px",
+    cursor: "pointer",
   },
   ".cm-live-checkbox-checked": {
     backgroundColor: "var(--color-border-focus)",
@@ -430,9 +444,8 @@ const livePreviewTheme = EditorView.baseTheme({
   ".cm-live-task-line": {
     marginLeft: "0 !important",
     textIndent: "0 !important",
-    paddingTop: "4px",
-    paddingBottom: "4px",
-    paddingLeft: "calc(var(--font-size-base) * 0.25)",
+    paddingTop: "6px",
+    paddingBottom: "6px",
   },
 })
 
