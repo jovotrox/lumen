@@ -55,12 +55,20 @@
 }
 
 /*
- * Autocomplete styles are defined via EditorView.theme() in
- * src/codemirror-extensions/autocomplete-theme.ts to guarantee
- * correct specificity over CM's built-in baseTheme.
- *
- * Only icon data URIs remain here (CSS-only, no specificity issues).
+ * Autocomplete backdrop — global selector without .cm-editor prefix.
+ * Must use !important to override CM's baseTheme backgroundColor: #333338.
+ * This is separate from autocomplete-theme.ts (which handles structural styles).
  */
+.cm-tooltip-autocomplete {
+  background-color: var(--color-bg-overlay-backdrop) !important;
+  -webkit-backdrop-filter: blur(16px) !important;
+  backdrop-filter: blur(16px) !important;
+}
+
+.cm-tooltip-autocomplete > ul > completion-section {
+  border: none !important;
+  border-bottom: none !important;
+}
 
 /* Icon content (data URIs) — these use ::after which CM theme() can't set */
 
