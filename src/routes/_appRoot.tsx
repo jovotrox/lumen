@@ -256,10 +256,14 @@ function RouteComponent() {
   React.useEffect(() => {
     if (!isElectron()) return
 
-    const unlisten = window.electronAPI!.onNavigateTo((path) => {
-      const normalized = path.replace(/^\/lumen/, "").replace(/\/$/, "") || "/"
-      // Create a new tab, then navigate
-      const noteMatch = normalized.match(/^\/notes\/(.+?)(?:\?|$)/)
+    const unlisten = window.electronAPI!.onNavigateTo((rawPath) => {
+      // Strip query params and base path for clean tab path
+      const normalized =
+        rawPath
+          .replace(/\?.*$/, "")
+          .replace(/^\/lumen/, "")
+          .replace(/\/$/, "") || "/"
+      const noteMatch = normalized.match(/^\/notes\/(.+)/)
       const title = noteMatch ? noteMatch[1] : normalized.replace(/^\//, "") || "Home"
       openTab(normalized, title)
       router.navigate({ to: normalized })

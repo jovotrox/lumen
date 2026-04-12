@@ -2,10 +2,14 @@ import { useAtom } from "jotai"
 import { useRouter } from "@tanstack/react-router"
 import { openTabsAtom, Tab } from "../global-state"
 
-/** Normalize a route path for comparison (strip trailing slashes, base path) */
+/** Normalize a route path for comparison (strip query params, trailing slashes, base path) */
 function normalizePath(path: string): string {
-  // Remove base path (/lumen/) if present
-  return path.replace(/^\/lumen/, "").replace(/\/$/, "") || "/"
+  return (
+    path
+      .replace(/\?.*$/, "")
+      .replace(/^\/lumen/, "")
+      .replace(/\/$/, "") || "/"
+  )
 }
 
 export function useTabs() {

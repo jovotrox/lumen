@@ -21,37 +21,37 @@ import {
 } from "./icons"
 import { generateNoteId } from "../utils/note-id"
 
+const iconClass = "size-3 shrink-0 opacity-70"
+
 function TabIcon({ tab }: { tab: Tab }) {
   switch (tab.icon) {
     case "daily": {
       const match = tab.path.match(/\/notes\/\d{4}-\d{2}-(\d{2})/)
       const day = match ? parseInt(match[1], 10) : undefined
-      return <CalendarDateIcon16 date={day} className="size-4 shrink-0" />
+      return <CalendarDateIcon16 date={day} className={iconClass} />
     }
     case "weekly":
-      return <CalendarIcon16 className="size-4 shrink-0" />
-    case "home":
-      return <Home className="size-3.5 shrink-0" />
-    case "inbox":
-      return <Inbox className="size-3.5 shrink-0" />
     case "calendar":
-      return <CalendarIcon16 className="size-4 shrink-0" />
+      return <CalendarIcon16 className={iconClass} />
+    case "home":
+      return <Home className={iconClass} />
+    case "inbox":
+      return <Inbox className={iconClass} />
     case "project":
-      return <FolderOpen className="size-3.5 shrink-0" />
+      return <FolderOpen className={iconClass} />
     case "tasks":
-      return <TaskListIcon16 className="size-4 shrink-0" />
+      return <TaskListIcon16 className={iconClass} />
     case "links":
-      return <LinkIcon className="size-3.5 shrink-0" />
+      return <LinkIcon className={iconClass} />
     case "people":
-      return <User className="size-3.5 shrink-0" />
-    case "tags":
-      return <TagIcon16 className="size-4 shrink-0" />
-    case "settings":
-      return <Settings className="size-3.5 shrink-0" />
     case "person":
-      return <User className="size-3.5 shrink-0" />
+      return <User className={iconClass} />
+    case "tags":
+      return <TagIcon16 className={iconClass} />
+    case "settings":
+      return <Settings className={iconClass} />
     default:
-      return <NoteIcon16 className="size-4 shrink-0" />
+      return <NoteIcon16 className={iconClass} />
   }
 }
 
