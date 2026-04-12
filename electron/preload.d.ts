@@ -6,6 +6,7 @@ interface ElectronAPI {
   onQuickNoteSaved: (
     callback: (payload: { noteId: string; content: string; mode: string }) => void,
   ) => () => void
+  onMenuAction: (callback: (action: string) => void) => () => void
   fetch: (request: {
     url: string
     method: string

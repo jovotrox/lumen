@@ -184,6 +184,61 @@ function RouteComponent() {
     return unlisten
   }, [send])
 
+  // Listen for menu actions from Electron main process
+  React.useEffect(() => {
+    if (!isElectron()) return
+
+    const unlisten = window.electronAPI!.onMenuAction((action) => {
+      if (action.startsWith("navigate:")) {
+        const path = action.replace("navigate:", "")
+        router.navigate({ to: path })
+      } else {
+        switch (action) {
+          case "new-note":
+            // Trigger new note creation — same as Cmd+Shift+O
+            router.navigate({
+              to: "/notes/$",
+              params: { _splat: generateNoteId() },
+              search: { mode: "write", query: undefined, view: "grid" },
+            })
+            break
+          case "save":
+            // Dispatch a keyboard event so CodeMirror/React handlers pick it up
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "s", metaKey: true }))
+            break
+          case "toggle-mode":
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "e", metaKey: true }))
+            break
+          case "toggle-sidebar":
+            document.dispatchEvent(
+              new KeyboardEvent("keydown", { key: "S", metaKey: true, shiftKey: true }),
+            )
+            break
+          case "toggle-help":
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "/", metaKey: true }))
+            break
+          case "find":
+            document.dispatchEvent(new KeyboardEvent("keydown", { key: "f", metaKey: true }))
+            break
+          case "go-back":
+            router.history.back()
+            break
+          case "go-forward":
+            router.history.forward()
+            break
+          // Format actions — dispatch keyboard events for CodeMirror
+          default:
+            if (action.startsWith("format:")) {
+              // These are handled by CodeMirror's keymap, let them pass through
+            }
+            break
+        }
+      }
+    })
+
+    return unlisten
+  }, [router])
+
   // Notify voice assistant when the route changes
   React.useEffect(() => {
     const unsubscribe = router.subscribe("onRendered", ({ pathChanged, toLocation }) => {

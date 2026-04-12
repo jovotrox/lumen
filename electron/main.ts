@@ -216,6 +216,235 @@ function registerIpcHandlers(): void {
 }
 
 // ---------------------------------------------------------------------------
+// Application menu
+// ---------------------------------------------------------------------------
+
+function createAppMenu(): void {
+  const isMac = process.platform === "darwin"
+
+  const template: Electron.MenuItemConstructorOptions[] = [
+    // macOS app menu
+    ...(isMac
+      ? [
+          {
+            label: app.name,
+            submenu: [
+              { role: "about" as const },
+              { type: "separator" as const },
+              {
+                label: "Settings...",
+                accelerator: "CmdOrCtrl+,",
+                click: () => sendMenuAction("navigate:/settings"),
+              },
+              { type: "separator" as const },
+              { role: "hide" as const },
+              { role: "hideOthers" as const },
+              { role: "unhide" as const },
+              { type: "separator" as const },
+              { role: "quit" as const },
+            ],
+          },
+        ]
+      : []),
+
+    // File
+    {
+      label: "File",
+      submenu: [
+        {
+          label: "New Note",
+          accelerator: "CmdOrCtrl+Shift+O",
+          click: () => sendMenuAction("new-note"),
+        },
+        { label: "Quick Note", accelerator: "Alt+Shift+N", click: () => createQuickNoteWindow() },
+        { type: "separator" },
+        { label: "Save", accelerator: "CmdOrCtrl+S", click: () => sendMenuAction("save") },
+        { type: "separator" },
+        isMac ? { role: "close" } : { role: "quit" },
+      ],
+    },
+
+    // Edit
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
+        { type: "separator" },
+        {
+          label: "Find...",
+          accelerator: "CmdOrCtrl+F",
+          click: () => sendMenuAction("find"),
+        },
+        { type: "separator" },
+        {
+          label: "Toggle Read/Write Mode",
+          accelerator: "CmdOrCtrl+E",
+          click: () => sendMenuAction("toggle-mode"),
+        },
+      ],
+    },
+
+    // Format — these shortcuts are handled by CodeMirror, menu just shows them
+    {
+      label: "Format",
+      submenu: [
+        {
+          label: "Bold",
+          accelerator: "CmdOrCtrl+B",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:bold"),
+        },
+        {
+          label: "Italic",
+          accelerator: "CmdOrCtrl+I",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:italic"),
+        },
+        {
+          label: "Strikethrough",
+          accelerator: "CmdOrCtrl+Shift+X",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:strikethrough"),
+        },
+        {
+          label: "Code",
+          accelerator: "CmdOrCtrl+Shift+M",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:code"),
+        },
+        { type: "separator" },
+        {
+          label: "Heading",
+          accelerator: "CmdOrCtrl+Shift+H",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:heading"),
+        },
+        {
+          label: "Blockquote",
+          accelerator: "CmdOrCtrl+Shift+B",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:blockquote"),
+        },
+        { type: "separator" },
+        {
+          label: "Bullet List",
+          accelerator: "CmdOrCtrl+Shift+8",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:bullet-list"),
+        },
+        {
+          label: "Numbered List",
+          accelerator: "CmdOrCtrl+Shift+7",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:numbered-list"),
+        },
+        {
+          label: "Task List",
+          accelerator: "CmdOrCtrl+Shift+T",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:task-list"),
+        },
+        { type: "separator" },
+        {
+          label: "Insert Link",
+          accelerator: "CmdOrCtrl+K",
+          registerAccelerator: false,
+          click: () => sendMenuAction("format:link"),
+        },
+      ],
+    },
+
+    // View
+    {
+      label: "View",
+      submenu: [
+        {
+          label: "Toggle Sidebar",
+          accelerator: "CmdOrCtrl+Shift+S",
+          click: () => sendMenuAction("toggle-sidebar"),
+        },
+        {
+          label: "Toggle Help",
+          accelerator: "CmdOrCtrl+/",
+          click: () => sendMenuAction("toggle-help"),
+        },
+        { type: "separator" },
+        { role: "resetZoom" },
+        { role: "zoomIn" },
+        { role: "zoomOut" },
+        { type: "separator" },
+        { role: "toggleDevTools" },
+      ],
+    },
+
+    // Go
+    {
+      label: "Go",
+      submenu: [
+        { label: "Home", click: () => sendMenuAction("navigate:/") },
+        { label: "Inbox", click: () => sendMenuAction("navigate:/inbox") },
+        { label: "Notes", click: () => sendMenuAction("navigate:/notes") },
+        { label: "Projects", click: () => sendMenuAction("navigate:/projects") },
+        { label: "Tasks", click: () => sendMenuAction("navigate:/tasks") },
+        { label: "People", click: () => sendMenuAction("navigate:/people") },
+        { label: "Tags", click: () => sendMenuAction("navigate:/tags") },
+        { type: "separator" },
+        { label: "Settings", click: () => sendMenuAction("navigate:/settings") },
+        { type: "separator" },
+        {
+          label: "Back",
+          accelerator: "CmdOrCtrl+[",
+          click: () => sendMenuAction("go-back"),
+        },
+        {
+          label: "Forward",
+          accelerator: "CmdOrCtrl+]",
+          click: () => sendMenuAction("go-forward"),
+        },
+      ],
+    },
+
+    // Window
+    {
+      label: "Window",
+      submenu: [
+        { role: "minimize" },
+        { role: "zoom" },
+        ...(isMac ? [{ type: "separator" as const }, { role: "front" as const }] : []),
+      ],
+    },
+
+    // Help
+    {
+      label: "Help",
+      submenu: [
+        {
+          label: "Lumen Help",
+          click: () => {
+            shell.openExternal("https://github.com/jovotrox/lumen")
+          },
+        },
+      ],
+    },
+  ]
+
+  const menu = Menu.buildFromTemplate(template)
+  Menu.setApplicationMenu(menu)
+}
+
+function sendMenuAction(action: string): void {
+  if (mainWindow && !mainWindow.isDestroyed()) {
+    mainWindow.webContents.send("menu-action", action)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------
 
@@ -231,6 +460,7 @@ if (!gotTheLock) {
   app.whenReady().then(() => {
     registerIpcHandlers()
     createMainWindow()
+    createAppMenu()
     createTray()
 
     // Global shortcut: Alt+Shift+N → Quick Note

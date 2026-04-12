@@ -18,6 +18,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }
   },
 
+  onMenuAction: (callback: (action: string) => void) => {
+    const handler = (_event: any, action: string) => callback(action)
+    ipcRenderer.on("menu-action", handler)
+    return () => {
+      ipcRenderer.removeListener("menu-action", handler)
+    }
+  },
+
   fetch: (request: {
     url: string
     method: string
