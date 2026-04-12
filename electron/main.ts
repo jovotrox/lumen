@@ -31,7 +31,7 @@ let quickNoteWindow: BrowserWindow | null = null
 let tray: Tray | null = null
 
 // ---------------------------------------------------------------------------
-// Preload path — tsup outputs CJS to electron/dist/, so __dirname works.
+// Preload path — tsup outputs CJS to electron/dist/
 // ---------------------------------------------------------------------------
 
 const preloadPath = path.join(__dirname, "preload.cjs")
