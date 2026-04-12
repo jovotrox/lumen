@@ -38,9 +38,9 @@ export function useTabs() {
         return prev.map((t) => (t.noteId === noteId ? { ...t, title, type } : t))
       }
 
-      // If no tabs exist, create the first one
+      // If no tabs exist, don't create one — tabs are only created explicitly
       if (prev.length === 0) {
-        return [{ noteId, title, type }]
+        return prev
       }
 
       // Replace the active tab with the new note
