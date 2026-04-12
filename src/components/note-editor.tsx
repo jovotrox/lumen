@@ -458,11 +458,18 @@ function useNoteCompletion() {
         weekly: "weekly",
         template: "template",
       }
+      const typeIcons: Record<string, string> = {
+        person: "cm-s-person",
+        project: "cm-s-project",
+        inbox: "cm-s-inbox",
+        task: "cm-s-task",
+      }
       const options = searchResults.slice(0, 10).map((note): Completion => {
         const linkText = note.alias || note.displayName
         return {
           label: note.displayName,
           detail: typeLabels[note.type] ?? undefined,
+          type: typeIcons[note.type] ?? "cm-s-note",
           apply: (view, completion, from, to) => {
             insertWikilink({ view, from, to, noteId: note.id, label: linkText })
           },
@@ -516,6 +523,7 @@ function useMentionCompletion() {
         options.push({
           label: person.displayName,
           detail: "person",
+          type: "cm-s-person",
           apply: (view, completion, from, to) => {
             insertWikilink({ view, from, to, noteId: person.id, label: linkText })
           },
@@ -537,6 +545,7 @@ function useMentionCompletion() {
         options.push({
           label: project.displayName,
           detail: "project",
+          type: "cm-s-project",
           apply: (view, completion, from, to) => {
             insertWikilink({ view, from, to, noteId: project.id, label: linkText })
           },
@@ -557,6 +566,7 @@ function useMentionCompletion() {
         options.push({
           label: note.displayName,
           detail: "note",
+          type: "cm-s-note",
           apply: (view, completion, from, to) => {
             insertWikilink({ view, from, to, noteId: note.id, label: linkText })
           },
