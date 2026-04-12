@@ -1,0 +1,25 @@
+interface ElectronAPI {
+  isElectron: true
+  openExternal: (url: string) => Promise<void>
+  closeWindow: () => Promise<void>
+  quickNoteSave: (payload: { noteId: string; content: string; mode: string }) => Promise<void>
+  onQuickNoteSaved: (
+    callback: (payload: { noteId: string; content: string; mode: string }) => void,
+  ) => () => void
+  fetch: (request: {
+    url: string
+    method: string
+    headers: Record<string, string>
+    body?: Uint8Array
+  }) => Promise<{
+    url: string
+    statusCode: number
+    statusMessage: string
+    headers: Record<string, string>
+    body: Uint8Array
+  }>
+}
+
+interface Window {
+  electronAPI?: ElectronAPI
+}
