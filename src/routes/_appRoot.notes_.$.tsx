@@ -62,6 +62,7 @@ import {
 import { useAttachFile } from "../hooks/attach-file"
 import { useDeleteNote, useNoteById, useRenameNote, useSaveNote } from "../hooks/note"
 import { useSearchNotes } from "../hooks/search-notes"
+import { useTabs } from "../hooks/use-tabs"
 import { useValueRef } from "../hooks/value-ref"
 import { Note, NoteId, Template, Width, fontSchema, widthSchema } from "../schema"
 import { cx } from "../utils/cx"
@@ -488,6 +489,14 @@ function NotePage() {
 
     return () => clearInterval(intervalId)
   }, [mode, isDraftRef, handleSaveRef, editorValueRef])
+
+  // Auto-open tab when navigating to a note
+  const { openTab } = useTabs()
+  React.useEffect(() => {
+    if (noteId) {
+      openTab(noteId, note?.title || noteId)
+    }
+  }, [noteId, note?.title, openTab])
 
   // Keyboard shortcuts
   useHotkeys(

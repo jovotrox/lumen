@@ -8,6 +8,7 @@ import { HelpDrawer, HelpSidebar } from "./help-panel"
 import { NavBar } from "./nav-bar"
 import { Sidebar } from "./sidebar"
 import { SignInBanner } from "./sign-in-banner"
+import { TabBar } from "./tab-bar"
 
 type AppLayoutProps = {
   className?: string
@@ -52,7 +53,8 @@ export function AppLayout({ className, children }: AppLayoutProps) {
           defaultLayout={defaultLayout}
           onLayoutChanged={onLayoutChanged}
         >
-          <Panel id="content" className="grid grid-rows-[1fr_auto] overflow-hidden">
+          <Panel id="content" className="grid grid-rows-[auto_1fr_auto] overflow-hidden">
+            <TabBar />
             {children}
             <div className="sm:hidden print:hidden">
               <NavBar />

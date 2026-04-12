@@ -1053,6 +1053,17 @@ export const calendarLayoutAtom = atomWithStorage<"week" | "month">("calendar-la
 export const hideCompletedTasksAtom = atomWithStorage<boolean>("hide-completed-tasks", false)
 
 // -----------------------------------------------------------------------------
+// Tabs
+// -----------------------------------------------------------------------------
+
+export interface Tab {
+  noteId: string
+  title: string
+}
+
+export const openTabsAtom = atomWithStorage<Tab[]>("open-tabs", [])
+
+// -----------------------------------------------------------------------------
 // AI
 // -----------------------------------------------------------------------------
 
