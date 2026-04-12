@@ -1,3 +1,5 @@
+import { isElectron } from "./electron"
+
 /**
  * Tauri platform detection and utilities
  */
@@ -10,10 +12,19 @@ export function isTauri(): boolean {
 }
 
 /**
- * Open URL in system browser (works in both browser and Tauri)
+ * Check if running inside any desktop app (Tauri or Electron)
+ */
+export function isDesktopApp(): boolean {
+  return isTauri() || isElectron()
+}
+
+/**
+ * Open URL in system browser (works in browser, Tauri, and Electron)
  */
 export async function openExternal(url: string): Promise<void> {
-  if (isTauri()) {
+  if (isElectron()) {
+    await window.electronAPI!.openExternal(url)
+  } else if (isTauri()) {
     const { open } = await import("@tauri-apps/plugin-shell")
     await open(url)
   } else {

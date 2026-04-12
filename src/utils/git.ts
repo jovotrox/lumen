@@ -1,6 +1,7 @@
 import git from "isomorphic-git"
 import http from "isomorphic-git/http/web"
 import { GitHubRepository, GitHubUser } from "../schema"
+import { createElectronHttpClient, isElectron } from "./electron"
 import { fs, fsWipe } from "./fs"
 import { createTauriHttpClient, isTauri } from "./tauri"
 import { startTimer } from "./timer"
@@ -9,7 +10,7 @@ export const REPO_DIR = "/repo"
 const DEFAULT_BRANCH = "main"
 
 // Get the API base URL for web (Vercel deployment)
-// In Tauri, we don't need this as we bypass CORS
+// In Tauri/Electron, we don't need this as we bypass CORS
 // In local dev with Vercel, relative paths work
 // In GitHub Pages, we need the full Vercel URL
 function getApiBaseUrl(): string {
@@ -22,6 +23,13 @@ function getHttpConfig() {
     // In Tauri, use direct HTTP without CORS proxy
     return {
       http: createTauriHttpClient(),
+      corsProxy: undefined,
+    }
+  }
+  if (isElectron()) {
+    // In Electron, use IPC-based HTTP without CORS proxy
+    return {
+      http: createElectronHttpClient(),
       corsProxy: undefined,
     }
   }

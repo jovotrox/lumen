@@ -33,6 +33,7 @@ import { useThemeSync } from "../hooks/use-theme-sync"
 import { useValueRef } from "../hooks/value-ref"
 import { generateNoteId } from "../utils/note-id"
 import { notificationSound, playSound } from "../utils/sounds"
+import { isElectron } from "../utils/electron"
 import { isTauri } from "../utils/tauri"
 import { updateFrontmatterValue } from "../utils/frontmatter"
 
@@ -152,6 +153,35 @@ function RouteComponent() {
     return () => {
       unlisten?.()
     }
+  }, [send])
+
+  // Listen for quick-note save events from the quick-note window (Electron only)
+  React.useEffect(() => {
+    if (!isElectron()) return
+
+    const unlisten = window.electronAPI!.onQuickNoteSaved(
+      (payload: { noteId: string; content: string; mode: string }) => {
+        const properties: Record<string, unknown> = { updated_at: new Date() }
+
+        if (payload.mode === "inbox") {
+          properties.type = "inbox"
+          properties.status = "unprocessed"
+          properties.source = "quick-note"
+        }
+
+        const enrichedContent = updateFrontmatterValue({
+          content: payload.content,
+          properties,
+        })
+
+        send({
+          type: "WRITE_FILES",
+          markdownFiles: { [`${payload.noteId}.md`]: enrichedContent },
+        })
+      },
+    )
+
+    return unlisten
   }, [send])
 
   // Notify voice assistant when the route changes

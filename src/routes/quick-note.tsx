@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router"
 import { ReactCodeMirrorRef } from "@uiw/react-codemirror"
 import React from "react"
 import { NoteEditor } from "../components/note-editor"
+import { isElectron } from "../utils/electron"
 import { generateNoteId } from "../utils/note-id"
 import { isTauri } from "../utils/tauri"
 import { Button } from "../components/button"
@@ -55,6 +56,8 @@ function QuickNoteComponent() {
       const { getCurrentWindow } = await import("@tauri-apps/api/window")
       const currentWindow = getCurrentWindow()
       await currentWindow.close()
+    } else if (isElectron()) {
+      await window.electronAPI!.closeWindow()
     }
   }, [])
 
@@ -107,6 +110,16 @@ function QuickNoteComponent() {
         setSaved(true)
         setEscPressedOnce(false)
         // Reset saved indicator after 2 seconds
+        setTimeout(() => setSaved(false), 2000)
+      } catch (error) {
+        console.error("Failed to save note:", error)
+      }
+    } else if (isElectron()) {
+      try {
+        await window.electronAPI!.quickNoteSave({ noteId, content, mode })
+        setHasUnsavedChanges(false)
+        setSaved(true)
+        setEscPressedOnce(false)
         setTimeout(() => setSaved(false), 2000)
       } catch (error) {
         console.error("Failed to save note:", error)

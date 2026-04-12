@@ -1,13 +1,14 @@
 import { useEffect } from "react"
+import { isElectron } from "../utils/electron"
 import { isTauri, openExternal } from "../utils/tauri"
 
 /**
  * Hook that intercepts clicks on external links and opens them in the system browser.
- * Only active when running inside Tauri.
+ * Only active when running inside Tauri or Electron.
  */
 export function useExternalLinks() {
   useEffect(() => {
-    if (!isTauri()) return
+    if (!isTauri() && !isElectron()) return
 
     const handleClick = (event: MouseEvent) => {
       const target = event.target as HTMLElement

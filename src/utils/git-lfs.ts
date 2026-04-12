@@ -1,8 +1,21 @@
 import micromatch from "micromatch"
 import { GitHubRepository, GitHubUser } from "../schema"
+import { electronFetch, isElectron } from "./electron"
 import { fs } from "./fs"
 import { REPO_DIR } from "./git"
 import { isTauri } from "./tauri"
+
+/** Platform-aware fetch that bypasses CORS in desktop apps */
+function platformFetch(
+  url: string,
+  init?: { method?: string; headers?: Record<string, string>; body?: string | ArrayBuffer },
+): Promise<Response> {
+  if (isElectron()) {
+    return electronFetch(url, init)
+  }
+  // Tauri and browser use native fetch (Tauri bypasses CORS at the native layer)
+  return fetch(url, init as RequestInit)
+}
 
 /** Get the API base URL for Vercel proxy endpoints */
 function getApiBaseUrl(): string {
@@ -73,8 +86,8 @@ export async function resolveGitLfsPointer({
 }) {
   const text = await file.text()
 
-  if (isTauri()) {
-    // In Tauri, call GitHub LFS API directly (no CORS restrictions)
+  if (isTauri() || isElectron()) {
+    // In Tauri/Electron, call GitHub LFS API directly (no CORS restrictions)
     return resolveGitLfsPointerDirect({ pointer: text, githubUser, githubRepo })
   }
 
@@ -101,7 +114,7 @@ export async function resolveGitLfsPointer({
   return url
 }
 
-/** Resolve a Git LFS pointer by calling GitHub's LFS API directly (for Tauri) */
+/** Resolve a Git LFS pointer by calling GitHub's LFS API directly (for Tauri/Electron) */
 async function resolveGitLfsPointerDirect({
   pointer,
   githubUser,
@@ -118,7 +131,7 @@ async function resolveGitLfsPointerDirect({
     throw new Error("Invalid LFS pointer")
   }
 
-  const response = await fetch(
+  const response = await platformFetch(
     `https://github.com/${githubRepo.owner}/${githubRepo.name}.git/info/lfs/objects/batch`,
     {
       method: "POST",
@@ -171,8 +184,8 @@ export async function uploadToGitLfsServer({
   githubUser: GitHubUser
   githubRepo: GitHubRepository
 }) {
-  if (isTauri()) {
-    // In Tauri, upload directly to GitHub LFS (no CORS restrictions)
+  if (isTauri() || isElectron()) {
+    // In Tauri/Electron, upload directly to GitHub LFS (no CORS restrictions)
     await uploadToGitLfsServerDirect({ content, githubUser, githubRepo })
     return
   }
@@ -200,7 +213,7 @@ export async function uploadToGitLfsServer({
   }
 }
 
-/** Upload file directly to GitHub's LFS server (for Tauri) */
+/** Upload file directly to GitHub's LFS server (for Tauri/Electron) */
 async function uploadToGitLfsServerDirect({
   content,
   githubUser,
@@ -213,7 +226,7 @@ async function uploadToGitLfsServerDirect({
   const oid = await getOid(content)
   const size = content.byteLength
 
-  const response = await fetch(
+  const response = await platformFetch(
     `https://github.com/${githubRepo.owner}/${githubRepo.name}.git/info/lfs/objects/batch`,
     {
       method: "POST",
@@ -238,7 +251,7 @@ async function uploadToGitLfsServerDirect({
   const json: any = await response.json()
   const { upload, verify } = json.objects[0].actions
 
-  const uploadResponse = await fetch(upload.href, {
+  const uploadResponse = await platformFetch(upload.href, {
     method: "PUT",
     headers: {
       ...upload.header,
@@ -251,7 +264,7 @@ async function uploadToGitLfsServerDirect({
     throw new Error("Unable to upload file")
   }
 
-  const verifyResponse = await fetch(verify.href, {
+  const verifyResponse = await platformFetch(verify.href, {
     method: "POST",
     headers: verify.header,
     body: JSON.stringify({ oid, size }),
