@@ -31,6 +31,10 @@ import { wikilinkExtension } from "../codemirror-extensions/wikilink"
 import { livePreviewExtension } from "../codemirror-extensions/live-preview"
 import { formatKeymapExtension } from "../codemirror-extensions/format-keymap"
 import { autocompleteThemeExtension } from "../codemirror-extensions/autocomplete-theme"
+
+// Hoisted to module scope — no dynamic values, avoids CM reconfiguration on settings change
+const autocompleteTheme = autocompleteThemeExtension()
+
 import {
   frontmatterValuesAtom,
   isSignedOutAtom,
@@ -210,7 +214,7 @@ export const NoteEditor = React.forwardRef<ReactCodeMirrorRef, NoteEditorProps>(
         ),
         syntaxHighlighting(syntaxHighlighter),
         formatKeymapExtension(),
-        autocompleteThemeExtension(),
+        autocompleteTheme,
       ]
 
       if (vimMode) {

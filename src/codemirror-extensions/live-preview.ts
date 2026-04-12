@@ -35,6 +35,10 @@ class HiddenWidget extends WidgetType {
 
 // Widget for bullet point — matches view mode: 6px circle inside 28px container
 class BulletWidget extends WidgetType {
+  eq() {
+    return true
+  }
+
   toDOM() {
     const container = document.createElement("span")
     container.className = "cm-live-bullet-container"
@@ -57,6 +61,10 @@ class BulletWidget extends WidgetType {
 class CheckboxWidget extends WidgetType {
   constructor(private checked: boolean) {
     super()
+  }
+
+  eq(other: CheckboxWidget) {
+    return this.checked === other.checked
   }
 
   toDOM() {

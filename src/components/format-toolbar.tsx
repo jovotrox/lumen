@@ -71,7 +71,7 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
     }
 
     // Don't show when autocomplete is active
-    if (editorView.dom.querySelector(".cm-tooltip-autocomplete")) {
+    if (document.querySelector(".cm-tooltip-autocomplete")) {
       setCoords(null)
       return
     }
