@@ -3,6 +3,8 @@ import { useSetAtom } from "jotai"
 import { sidebarAtom } from "../global-state"
 import { useIsScrolled } from "../hooks/is-scrolled"
 import { cx } from "../utils/cx"
+import { isElectron } from "../utils/electron"
+import { isTauri } from "../utils/tauri"
 import { IconButton } from "./icon-button"
 import { ArrowLeftIcon16, ArrowRightIcon16, SidebarIcon16 } from "./icons"
 import { NavItems } from "./nav-items"
@@ -12,47 +14,51 @@ export function Sidebar() {
   const router = useRouter()
   const setSidebar = useSetAtom(sidebarAtom)
   const { isScrolled, topSentinelProps } = useIsScrolled()
+  const isDesktop = isElectron() || isTauri()
 
   return (
     <div className="grid grid-rows-[auto_1fr] overflow-hidden h-full border-r border-border-secondary">
-      <div
-        className={cx(
-          "flex w-full justify-between border-b p-2",
-          isScrolled ? "border-border-secondary" : "border-transparent",
-        )}
-      >
-        <div>
-          <IconButton
-            aria-label="Hide sidebar"
-            shortcut={["⌘", "⇧", "S"]}
-            tooltipAlign="start"
-            size="small"
-            onClick={() => setSidebar("collapsed")}
-          >
-            <SidebarIcon16 />
-          </IconButton>
+      {/* On desktop, sidebar toggle + nav are in the Titlebar */}
+      {!isDesktop ? (
+        <div
+          className={cx(
+            "flex w-full justify-between border-b p-2",
+            isScrolled ? "border-border-secondary" : "border-transparent",
+          )}
+        >
+          <div>
+            <IconButton
+              aria-label="Hide sidebar"
+              shortcut={["⌘", "⇧", "S"]}
+              tooltipAlign="start"
+              size="small"
+              onClick={() => setSidebar("collapsed")}
+            >
+              <SidebarIcon16 />
+            </IconButton>
+          </div>
+          <div className="flex items-center">
+            <IconButton
+              aria-label="Go back"
+              size="small"
+              onClick={() => router.history.back()}
+              className="group"
+            >
+              <ArrowLeftIcon16 className="transition-transform group-active:-translate-x-0.5" />
+            </IconButton>
+            <IconButton
+              aria-label="Go forward"
+              size="small"
+              className="group"
+              onClick={() => router.history.forward()}
+            >
+              <ArrowRightIcon16 className="transition-transform group-active:translate-x-0.5" />
+            </IconButton>
+            <NewNoteButton />
+          </div>
         </div>
-        <div className="flex items-center">
-          <IconButton
-            aria-label="Go back"
-            size="small"
-            onClick={() => router.history.back()}
-            className="group"
-          >
-            <ArrowLeftIcon16 className="transition-transform group-active:-translate-x-0.5" />
-          </IconButton>
-          <IconButton
-            aria-label="Go forward"
-            size="small"
-            className="group"
-            onClick={() => router.history.forward()}
-          >
-            <ArrowRightIcon16 className="transition-transform group-active:translate-x-0.5" />
-          </IconButton>
-          <NewNoteButton />
-        </div>
-      </div>
-      <div className="relative flex scroll-py-2 flex-col gap-2 overflow-auto p-2 pt-0">
+      ) : null}
+      <div className="relative flex scroll-py-2 flex-col gap-2 overflow-auto p-2">
         <div {...topSentinelProps} />
         <NavItems />
       </div>

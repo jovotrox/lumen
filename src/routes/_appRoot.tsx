@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, useNavigate, useRouter } from "@tanstack/react
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { selectAtom, useAtomCallback } from "jotai/utils"
 import React from "react"
+import { useHotkeys } from "react-hotkeys-hook"
 import { useEvent, useNetworkState } from "react-use"
 import { z } from "zod/v3"
 import { AppLayout } from "../components/app-layout"
@@ -71,6 +72,25 @@ function RouteComponent() {
   const navigate = useNavigate()
   const { online } = useNetworkState()
   const rootRef = React.useRef<HTMLDivElement>(null)
+
+  // Cmd+T to open a new tab (desktop-style shortcut)
+  useHotkeys(
+    "mod+t",
+    (e) => {
+      e.preventDefault()
+      const newId = generateNoteId()
+      navigate({
+        to: "/notes/$",
+        params: { _splat: newId },
+        search: { mode: "write", query: undefined, view: "grid" },
+      })
+    },
+    {
+      preventDefault: true,
+      enableOnFormTags: true,
+      enableOnContentEditable: true,
+    },
+  )
 
   // Sync when the app becomes visible again
   useEvent("visibilitychange", () => {

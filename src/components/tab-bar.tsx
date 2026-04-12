@@ -5,11 +5,16 @@ import { useRouter } from "@tanstack/react-router"
 import { openTabsAtom } from "../global-state"
 import { useTabs } from "../hooks/use-tabs"
 import { cx } from "../utils/cx"
+import { isElectron } from "../utils/electron"
+import { isTauri } from "../utils/tauri"
 
 export function TabBar() {
   const tabs = useAtomValue(openTabsAtom)
   const { activeTabId, closeTab } = useTabs()
   const router = useRouter()
+
+  // On desktop, tabs are shown in the Titlebar instead
+  if (isElectron() || isTauri()) return null
 
   if (tabs.length <= 1) return null
 

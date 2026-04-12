@@ -4,6 +4,8 @@ import { useHotkeys } from "react-hotkeys-hook"
 import { sidebarAtom } from "../global-state"
 import { useCreateNewNote } from "../hooks/create-new-note"
 import { cx } from "../utils/cx"
+import { isElectron } from "../utils/electron"
+import { isTauri } from "../utils/tauri"
 import { IconButton } from "./icon-button"
 import { ArrowLeftIcon16, ArrowRightIcon16, SidebarCollapsedIcon16 } from "./icons"
 import { NewNoteButton } from "./new-note-button"
@@ -19,6 +21,7 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
   const router = useRouter()
   const [sidebar, setSidebar] = useAtom(sidebarAtom)
   const createNewNote = useCreateNewNote()
+  const isDesktop = isElectron() || isTauri()
 
   // Toggle sidebar with Cmd/Ctrl + Shift + S
   useHotkeys(
@@ -39,10 +42,13 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
     enableOnContentEditable: true,
   })
 
+  // On desktop, the Titlebar handles sidebar toggle + nav buttons
+  const showCollapsedControls = sidebar === "collapsed" && !isDesktop
+
   return (
     <div className={cx("@container/header", className)}>
       <header className="flex h-[var(--height-app-header)] items-center gap-2 px-2">
-        {sidebar === "collapsed" ? (
+        {showCollapsedControls ? (
           <div className="hidden items-center sm:flex">
             <IconButton
               aria-label="Show sidebar"
@@ -74,7 +80,7 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
             <NewNoteButton />
           </div>
         ) : null}
-        {sidebar === "collapsed" && icon ? (
+        {showCollapsedControls && icon ? (
           <div role="separator" className="h-5 w-px bg-border hidden sm:block" />
         ) : null}
         <div className="flex w-0 grow items-center gap-3 px-2">

@@ -67,6 +67,7 @@ import { useValueRef } from "../hooks/value-ref"
 import { Note, NoteId, Template, Width, fontSchema, widthSchema } from "../schema"
 import { cx } from "../utils/cx"
 import { formatDate, formatWeek, isValidDateString, isValidWeekString } from "../utils/date"
+import { isElectron } from "../utils/electron"
 import { updateFrontmatterValue } from "../utils/frontmatter"
 import { clearNoteDraft, getNoteDraft, setNoteDraft } from "../utils/note-draft"
 import { getInvalidNoteIdCharacters } from "../utils/note-id"
@@ -750,6 +751,21 @@ function NotePage() {
                 >
                   Open in GitHub
                 </DropdownMenu.Item>
+                {isElectron() ? (
+                  <DropdownMenu.Item
+                    icon={<ExternalLinkIcon16 />}
+                    onClick={() => {
+                      if (noteId) {
+                        const baseUrl = window.location.origin
+                        const basePath = window.location.pathname.split("/notes/")[0]
+                        const noteUrl = `${baseUrl}${basePath}/notes/${noteId}?mode=read`
+                        window.electronAPI!.openInNewWindow(noteUrl)
+                      }
+                    }}
+                  >
+                    Open in New Window
+                  </DropdownMenu.Item>
+                ) : null}
                 <DropdownMenu.Item icon={<PrinterIcon16 />} onClick={() => window.print()}>
                   Print
                 </DropdownMenu.Item>
