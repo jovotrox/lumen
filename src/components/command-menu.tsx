@@ -7,13 +7,20 @@ import { selectAtom, useAtomCallback } from "jotai/utils"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { useHotkeys } from "react-hotkeys-hook"
 import { useDebounce } from "use-debounce"
-import { githubRepoAtom, notesAtom, pinnedNotesAtom, tagSearcherAtom } from "../global-state"
+import {
+  githubRepoAtom,
+  notesAtom,
+  pinnedNotesAtom,
+  tagSearcherAtom,
+  unprocessedInboxCountAtom,
+} from "../global-state"
 import { useNoteById, useSaveNote } from "../hooks/note"
 import { useSearchNotes } from "../hooks/search-notes"
 import { Note } from "../schema"
 import { formatDate, formatDateDistance, toDateString } from "../utils/date"
 import { generateNoteId } from "../utils/note-id"
 import { pluralize } from "../utils/pluralize"
+import { FolderOpen, Home, Inbox, User } from "lucide-react"
 import {
   CalendarDateIcon16,
   CopyIcon16,
@@ -27,6 +34,7 @@ import {
   SearchIcon16,
   SettingsIcon16,
   TagIcon16,
+  TaskListIcon16,
 } from "./icons"
 import { NoteFavicon } from "./note-favicon"
 
@@ -41,6 +49,7 @@ export function CommandMenu() {
   const tagSearcher = useAtomValue(tagSearcherAtom)
   const saveNote = useSaveNote()
   const pinnedNotes = useAtomValue(pinnedNotesAtom)
+  const inboxCount = useAtomValue(unprocessedInboxCountAtom)
   const getHasDailyNote = useAtomCallback(useCallback((get) => get(hasDailyNoteAtom), []))
   const [isOpen, setIsOpen] = useAtom(isCommandMenuOpenAtom)
 
@@ -97,16 +106,23 @@ export function CommandMenu() {
   const navItems = useMemo(() => {
     return [
       {
-        label: "Notes",
-        icon: <NoteIcon16 />,
+        label: "Home",
+        icon: <Home size={16} />,
         onSelect: () => {
-          navigate({
-            to: "/",
-            search: {
-              query: undefined,
-              view: "grid",
-            },
-          })
+          navigate({ to: "/" })
+        },
+      },
+      {
+        label: "Inbox",
+        icon: <Inbox size={16} />,
+        badge:
+          inboxCount > 0 ? (
+            <span className="flex h-4 min-w-4 items-center justify-center rounded-full bg-border-focus px-1 text-[10px] font-medium text-bg">
+              {inboxCount}
+            </span>
+          ) : null,
+        onSelect: () => {
+          navigate({ to: "/inbox", search: { query: undefined } })
         },
       },
       {
@@ -115,9 +131,7 @@ export function CommandMenu() {
         onSelect: () => {
           navigate({
             to: "/notes/$",
-            params: {
-              _splat: toDateString(new Date()),
-            },
+            params: { _splat: toDateString(new Date()) },
             search: {
               mode: getHasDailyNote() ? "read" : "write",
               query: undefined,
@@ -127,43 +141,56 @@ export function CommandMenu() {
         },
       },
       {
+        label: "Notes",
+        icon: <NoteIcon16 />,
+        onSelect: () => {
+          navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
+        },
+      },
+      {
+        label: "Projects",
+        icon: <FolderOpen size={16} />,
+        onSelect: () => {
+          navigate({ to: "/projects", search: { query: undefined, view: "list" } })
+        },
+      },
+      {
+        label: "Tasks",
+        icon: <TaskListIcon16 />,
+        onSelect: () => {
+          navigate({ to: "/tasks", search: { query: undefined, view: "grid" } })
+        },
+      },
+      {
         label: "Links",
         icon: <LinkIcon16 />,
         onSelect: () => {
-          navigate({
-            to: "/links",
-            search: {
-              query: undefined,
-              view: "grid",
-            },
-          })
+          navigate({ to: "/links", search: { query: undefined, view: "grid" } })
+        },
+      },
+      {
+        label: "People",
+        icon: <User size={16} />,
+        onSelect: () => {
+          navigate({ to: "/people", search: { query: undefined, view: "list" } })
         },
       },
       {
         label: "Tags",
         icon: <TagIcon16 />,
         onSelect: () => {
-          navigate({
-            to: "/tags",
-            search: {
-              query: undefined,
-              sort: "name",
-              view: "list",
-            },
-          })
+          navigate({ to: "/tags", search: { query: undefined, sort: "name", view: "list" } })
         },
       },
       {
         label: "Settings",
         icon: <SettingsIcon16 />,
         onSelect: () => {
-          navigate({
-            to: "/settings",
-          })
+          navigate({ to: "/settings" })
         },
       },
     ]
-  }, [navigate, getHasDailyNote])
+  }, [navigate, getHasDailyNote, inboxCount])
 
   const filteredNavItems = useMemo(() => {
     return navItems.filter((item) => {
@@ -298,6 +325,7 @@ export function CommandMenu() {
                 <CommandItem
                   key={item.label}
                   icon={item.icon}
+                  badge={item.badge}
                   onSelect={handleSelect(item.onSelect)}
                 >
                   {item.label}
@@ -470,15 +498,17 @@ type CommandItemProps = {
   value?: string
   icon?: React.ReactNode
   description?: string
+  badge?: React.ReactNode
   onSelect?: () => void
 }
 
-function CommandItem({ children, value, icon, description, onSelect }: CommandItemProps) {
+function CommandItem({ children, value, icon, description, badge, onSelect }: CommandItemProps) {
   return (
     <Command.Item value={value} onSelect={onSelect}>
       <div className="flex items-center gap-3">
         <div className="grid h-4 w-4 place-items-center text-text-secondary">{icon}</div>
         <div className="grow truncate">{children}</div>
+        {badge}
         {description ? <span className="shrink-0 text-text-secondary">{description}</span> : null}
         <span className="hidden leading-none text-text-secondary in-aria-selected:inline epaper:in-aria-selected:text-bg">
           ⏎
