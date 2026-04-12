@@ -113,10 +113,8 @@ export function Titlebar() {
             <React.Fragment key={tab.path}>
               <button
                 className={cx(
-                  "group flex h-[37px] shrink-0 items-center gap-1.5 px-3 text-xs transition-colors",
-                  isActive
-                    ? "bg-bg text-text"
-                    : "text-text-secondary hover:text-text",
+                  "group relative flex h-[37px] w-[160px] shrink-0 items-center gap-1.5 pl-3 pr-2 text-xs transition-colors",
+                  isActive ? "bg-bg text-text" : "text-text-secondary hover:text-text",
                 )}
                 onClick={() => {
                   router.navigate({ to: tab.path })
@@ -129,13 +127,14 @@ export function Titlebar() {
                 }}
               >
                 <TabIcon tab={tab} />
-                <span className="max-w-[160px] truncate">{tab.title}</span>
+                <span className="min-w-0 flex-1 truncate">{tab.title}</span>
+                {/* Close button with gradient fade — hidden until hover */}
                 <span
                   className={cx(
-                    "flex items-center justify-center rounded p-0.5 hover:bg-bg-secondary",
+                    "absolute right-0 top-0 flex h-full items-center pr-2 pl-4 opacity-0 transition-opacity group-hover:opacity-100",
                     isActive
-                      ? "opacity-60 hover:opacity-100"
-                      : "opacity-0 group-hover:opacity-60 hover:!opacity-100",
+                      ? "bg-gradient-to-l from-[var(--color-bg)] from-60% to-transparent"
+                      : "bg-gradient-to-l from-[var(--color-bg-secondary)] from-60% to-transparent group-hover:from-[var(--color-bg)] group-hover:from-60%",
                   )}
                   onMouseDown={(e) => {
                     e.preventDefault()
@@ -155,7 +154,7 @@ export function Titlebar() {
                   tabIndex={0}
                   aria-label={`Close ${tab.title}`}
                 >
-                  <X className="size-3" />
+                  <X className="size-3.5 rounded p-0.5 hover:bg-border-secondary" />
                 </span>
               </button>
               {!isLast ? <div className="h-4 w-px shrink-0 bg-border-secondary" /> : null}
