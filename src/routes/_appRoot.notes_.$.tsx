@@ -50,6 +50,7 @@ import { ShareDialog } from "../components/share-dialog"
 import { Tooltip } from "../components/tooltip"
 import { Tool, voiceConversationMachineAtom } from "../components/voice-conversation"
 import {
+  Tab,
   dailyTemplateAtom,
   defaultFontAtom,
   githubRepoAtom,
@@ -494,10 +495,21 @@ function NotePage() {
   // Auto-open tab when navigating to a note
   const { openTab } = useTabs()
   React.useEffect(() => {
-    if (noteId) {
-      openTab(noteId, note?.title || noteId)
+    if (!noteId) return
+
+    let displayTitle = note?.title || noteId
+    let tabType: Tab["type"] = (note?.type as Tab["type"]) ?? "note"
+
+    if (isValidDateString(noteId)) {
+      displayTitle = formatDate(noteId)
+      tabType = "daily"
+    } else if (isValidWeekString(noteId)) {
+      displayTitle = formatWeek(noteId)
+      tabType = "weekly"
     }
-  }, [noteId, note?.title, openTab])
+
+    openTab(noteId, displayTitle, tabType)
+  }, [noteId, note?.title, note?.type, openTab])
 
   // Keyboard shortcuts
   useHotkeys(

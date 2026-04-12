@@ -1,15 +1,44 @@
 import { useRouter } from "@tanstack/react-router"
 import { useAtom, useAtomValue } from "jotai"
-import { Plus, X } from "lucide-react"
+import { FolderOpen, Inbox, Plus, User, X } from "lucide-react"
 import React from "react"
-import { openTabsAtom, sidebarAtom } from "../global-state"
+import { openTabsAtom, sidebarAtom, Tab } from "../global-state"
 import { useTabs } from "../hooks/use-tabs"
 import { isElectron } from "../utils/electron"
 import { isTauri } from "../utils/tauri"
 import { cx } from "../utils/cx"
 import { IconButton } from "./icon-button"
-import { ArrowLeftIcon16, ArrowRightIcon16, SidebarCollapsedIcon16, SidebarIcon16 } from "./icons"
+import {
+  ArrowLeftIcon16,
+  ArrowRightIcon16,
+  CalendarDateIcon16,
+  CalendarIcon16,
+  NoteIcon16,
+  SidebarCollapsedIcon16,
+  SidebarIcon16,
+} from "./icons"
 import { generateNoteId } from "../utils/note-id"
+
+function TabIcon({ tab }: { tab: Tab }) {
+  switch (tab.type) {
+    case "daily": {
+      // Extract day number from noteId (YYYY-MM-DD)
+      const match = tab.noteId.match(/^\d{4}-\d{2}-(\d{2})$/)
+      const day = match ? parseInt(match[1], 10) : undefined
+      return <CalendarDateIcon16 date={day} className="size-4 shrink-0" />
+    }
+    case "weekly":
+      return <CalendarIcon16 className="size-4 shrink-0" />
+    case "project":
+      return <FolderOpen className="size-3.5 shrink-0" />
+    case "person":
+      return <User className="size-3.5 shrink-0" />
+    case "inbox":
+      return <Inbox className="size-3.5 shrink-0" />
+    default:
+      return <NoteIcon16 className="size-4 shrink-0" />
+  }
+}
 
 export function Titlebar() {
   const router = useRouter()
@@ -61,61 +90,71 @@ export function Titlebar() {
         </IconButton>
       </div>
 
-      {/* Tabs area */}
+      {/* Tabs scroll area */}
       <div
-        className="flex min-w-0 flex-1 items-center overflow-x-auto scrollbar-hide"
+        className="flex min-w-0 items-center overflow-x-auto scrollbar-hide"
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       >
-        {tabs.map((tab) => {
+        {tabs.map((tab, i) => {
           const isActive = tab.noteId === activeTabId
+          const isLast = i === tabs.length - 1
           return (
-            <button
-              key={tab.noteId}
-              className={cx(
-                "group mx-0.5 flex shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1 text-xs transition-colors",
-                isActive ? "bg-bg text-text" : "text-text-secondary hover:bg-bg hover:text-text",
-              )}
-              onClick={() => {
-                router.navigate({
-                  to: "/notes/$",
-                  params: { _splat: tab.noteId },
-                  search: { mode: "read", query: undefined, view: "grid" },
-                })
-              }}
-              onAuxClick={(e) => {
-                if (e.button === 1) {
-                  e.preventDefault()
-                  closeTab(tab.noteId)
-                }
-              }}
-            >
-              <span className="max-w-[160px] truncate">{tab.title}</span>
-              <span
+            <React.Fragment key={tab.noteId}>
+              <button
                 className={cx(
-                  "flex items-center justify-center rounded p-0.5 hover:bg-bg-secondary",
+                  "group flex h-[37px] shrink-0 items-center gap-1.5 px-3 text-xs transition-colors",
                   isActive
-                    ? "opacity-60 hover:opacity-100"
-                    : "opacity-0 group-hover:opacity-60 hover:!opacity-100",
+                    ? "border-t-2 border-t-[var(--color-border-focus)] bg-bg text-text"
+                    : "border-t-2 border-t-transparent bg-bg-secondary text-text-secondary hover:text-text",
                 )}
-                onClick={(e) => {
-                  e.stopPropagation()
-                  closeTab(tab.noteId)
+                onClick={() => {
+                  router.navigate({
+                    to: "/notes/$",
+                    params: { _splat: tab.noteId },
+                    search: { mode: "read", query: undefined, view: "grid" },
+                  })
                 }}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" || e.key === " ") {
-                    e.stopPropagation()
+                onAuxClick={(e) => {
+                  if (e.button === 1) {
+                    e.preventDefault()
                     closeTab(tab.noteId)
                   }
                 }}
-                role="button"
-                tabIndex={0}
-                aria-label={`Close ${tab.title}`}
               >
-                <X className="size-3" />
-              </span>
-            </button>
+                <TabIcon tab={tab} />
+                <span className="max-w-[160px] truncate">{tab.title}</span>
+                <span
+                  className={cx(
+                    "flex items-center justify-center rounded p-0.5 hover:bg-bg-secondary",
+                    isActive
+                      ? "opacity-60 hover:opacity-100"
+                      : "opacity-0 group-hover:opacity-60 hover:!opacity-100",
+                  )}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    closeTab(tab.noteId)
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.stopPropagation()
+                      closeTab(tab.noteId)
+                    }
+                  }}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Close ${tab.title}`}
+                >
+                  <X className="size-3" />
+                </span>
+              </button>
+              {/* Separator between tabs (not after the last one) */}
+              {!isLast ? <div className="h-4 w-px shrink-0 bg-border-secondary" /> : null}
+            </React.Fragment>
           )
         })}
+
+        {/* Separator before + button if there are tabs */}
+        {tabs.length > 0 ? <div className="h-4 w-px shrink-0 bg-border-secondary" /> : null}
 
         {/* New tab button */}
         <button
@@ -133,6 +172,9 @@ export function Titlebar() {
           <Plus className="size-3.5" />
         </button>
       </div>
+
+      {/* Draggable space after tabs — fills remaining titlebar width */}
+      <div className="flex-1 self-stretch" />
     </div>
   )
 }

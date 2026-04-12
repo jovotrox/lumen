@@ -109,6 +109,19 @@ function createMainWindow(): void {
 
   mainWindow.loadURL(getBaseUrl())
 
+  // Prevent Cmd+click from opening a new Electron window.
+  // Internal links navigate in the same window (triggering tab auto-open).
+  // External links open in the system browser.
+  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
+    const baseUrl = getBaseUrl()
+    if (url.startsWith(baseUrl)) {
+      mainWindow?.webContents.loadURL(url)
+      return { action: "deny" }
+    }
+    shell.openExternal(url)
+    return { action: "deny" }
+  })
+
   // macOS: hide instead of close
   mainWindow.on("close", (e) => {
     if (process.platform === "darwin") {

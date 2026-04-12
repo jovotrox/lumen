@@ -1059,6 +1059,7 @@ export const hideCompletedTasksAtom = atomWithStorage<boolean>("hide-completed-t
 export interface Tab {
   noteId: string
   title: string
+  type?: "daily" | "weekly" | "note" | "project" | "person" | "inbox"
 }
 
 export const openTabsAtom = atomWithStorage<Tab[]>("open-tabs", [])

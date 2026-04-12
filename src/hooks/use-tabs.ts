@@ -1,6 +1,6 @@
 import { useAtom } from "jotai"
 import { useRouter } from "@tanstack/react-router"
-import { openTabsAtom } from "../global-state"
+import { openTabsAtom, Tab } from "../global-state"
 
 export function useTabs() {
   const [tabs, setTabs] = useAtom(openTabsAtom)
@@ -14,36 +14,37 @@ export function useTabs() {
     return match ? match[1] : null
   })()
 
-  const openTab = (noteId: string, title: string) => {
+  const openTab = (noteId: string, title: string, type?: Tab["type"]) => {
     setTabs((prev) => {
       if (prev.some((t) => t.noteId === noteId)) {
-        // Tab already exists, just update title if changed
-        return prev.map((t) => (t.noteId === noteId ? { ...t, title } : t))
+        // Tab already exists, just update title/type if changed
+        return prev.map((t) => (t.noteId === noteId ? { ...t, title, type } : t))
       }
-      return [...prev, { noteId, title }]
+      return [...prev, { noteId, title, type }]
     })
   }
 
   const closeTab = (noteId: string) => {
-    setTabs((prev) => {
-      const index = prev.findIndex((t) => t.noteId === noteId)
-      if (index === -1) return prev
-      const newTabs = prev.filter((t) => t.noteId !== noteId)
+    const currentTabs = tabs
+    const index = currentTabs.findIndex((t) => t.noteId === noteId)
+    if (index === -1) return
 
-      // If closing the active tab, navigate to adjacent
-      if (noteId === activeTabId && newTabs.length > 0) {
+    const newTabs = currentTabs.filter((t) => t.noteId !== noteId)
+    setTabs(newTabs)
+
+    // Only navigate if closing the active tab
+    if (noteId === activeTabId) {
+      if (newTabs.length > 0) {
         const nextIndex = Math.min(index, newTabs.length - 1)
         router.navigate({
           to: "/notes/$",
           params: { _splat: newTabs[nextIndex].noteId },
           search: { mode: "read", query: undefined, view: "grid" },
         })
-      } else if (newTabs.length === 0) {
+      } else {
         router.navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
       }
-
-      return newTabs
-    })
+    }
   }
 
   const closeOtherTabs = (noteId: string) => {
