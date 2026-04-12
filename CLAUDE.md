@@ -304,7 +304,7 @@ cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ### Reglas para Claude
 
 1. **Siempre trabajar desde `personal`** - Es la rama con todas las features
-2. **OBLIGATORIO: Crear feature branch ANTES de cualquier edición de código** - NUNCA editar archivos directamente en `personal`. El primer paso antes de escribir cualquier línea de código es `git checkout -b feature/nombre`. Si se aprueba un plan, lo primero es crear el branch. Sin excepciones.
+2. **NUNCA EDITAR ARCHIVOS DIRECTAMENTE EN `personal`** - Esto incluye TODO tipo de cambio: features, fixes, config, docs, vercel.json, CONTEXT.md updates, CUALQUIER archivo. No hay excepciones. No importa si es "solo un fix pequeño" o "solo un cambio de config". SIEMPRE crear feature branch primero: `git checkout -b feature/nombre`. Si se aprueba un plan, lo primero es crear el branch. Si hay que hacer un hotfix, crear branch. Si hay que actualizar docs, crear branch. SIEMPRE.
 3. **Validar approach** con el usuario antes de implementar cambios significativos
 4. **Probar con tauri:dev** antes de hacer build final
 5. **Merge a personal** después de completar cada feature
