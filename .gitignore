@@ -38,3 +38,7 @@ stats.html
 
 # Tauri / Rust
 src-tauri/target/
+
+# Electron
+electron/dist/
+release/
