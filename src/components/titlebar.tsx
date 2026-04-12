@@ -68,7 +68,7 @@ export function Titlebar() {
 
   return (
     <div
-      className="flex h-[38px] shrink-0 items-center border-b border-border-secondary bg-bg-secondary print:hidden"
+      className="flex h-[38px] shrink-0 items-center bg-bg-secondary print:hidden"
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
       {isMac ? <div className="w-[76px] shrink-0" /> : null}
@@ -115,8 +115,8 @@ export function Titlebar() {
                 className={cx(
                   "group flex h-[37px] shrink-0 items-center gap-1.5 px-3 text-xs transition-colors",
                   isActive
-                    ? "border-t-2 border-t-[var(--color-border-focus)] bg-bg text-text"
-                    : "border-t-2 border-t-transparent bg-bg-secondary text-text-secondary hover:text-text",
+                    ? "bg-bg text-text"
+                    : "text-text-secondary hover:text-text",
                 )}
                 onClick={() => {
                   router.navigate({ to: tab.path })
