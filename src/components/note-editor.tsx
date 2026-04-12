@@ -522,8 +522,8 @@ function useMentionCompletion() {
         const linkText = person.alias || person.displayName
         options.push({
           label: person.displayName,
-          detail: "person",
           type: "cm-s-person",
+          section: "People",
           apply: (view, completion, from, to) => {
             insertWikilink({ view, from, to, noteId: person.id, label: linkText })
           },
@@ -544,8 +544,8 @@ function useMentionCompletion() {
         const linkText = project.alias || project.displayName
         options.push({
           label: project.displayName,
-          detail: "project",
           type: "cm-s-project",
+          section: "Projects",
           apply: (view, completion, from, to) => {
             insertWikilink({ view, from, to, noteId: project.id, label: linkText })
           },
@@ -565,8 +565,8 @@ function useMentionCompletion() {
         const linkText = note.alias || note.displayName
         options.push({
           label: note.displayName,
-          detail: "note",
           type: "cm-s-note",
+          section: "Notes",
           apply: (view, completion, from, to) => {
             insertWikilink({ view, from, to, noteId: note.id, label: linkText })
           },
