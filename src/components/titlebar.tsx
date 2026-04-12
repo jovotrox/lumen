@@ -130,6 +130,11 @@ export function Titlebar() {
                       ? "opacity-60 hover:opacity-100"
                       : "opacity-0 group-hover:opacity-60 hover:!opacity-100",
                   )}
+                  onMouseDown={(e) => {
+                    // Prevent parent <button> from receiving focus
+                    e.preventDefault()
+                    e.stopPropagation()
+                  }}
                   onClick={(e) => {
                     e.stopPropagation()
                     closeTab(tab.noteId)

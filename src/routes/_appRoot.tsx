@@ -36,6 +36,7 @@ import { generateNoteId } from "../utils/note-id"
 import { notificationSound, playSound } from "../utils/sounds"
 import { isElectron } from "../utils/electron"
 import { isTauri } from "../utils/tauri"
+import { useTabs } from "../hooks/use-tabs"
 import { updateFrontmatterValue } from "../utils/frontmatter"
 
 export const Route = createFileRoute("/_appRoot")({
@@ -214,6 +215,25 @@ function RouteComponent() {
 
     return unlisten
   }, [router])
+
+  // Listen for Cmd+click internal navigation from Electron main process
+  // This opens the link in a NEW tab (explicit new tab action)
+  const { openTab } = useTabs()
+  React.useEffect(() => {
+    if (!isElectron()) return
+
+    const unlisten = window.electronAPI!.onNavigateTo((path) => {
+      // Extract noteId from path like /notes/some-id or /lumen/notes/some-id
+      const noteMatch = path.match(/\/notes\/(.+?)(?:\?|$)/)
+      if (noteMatch) {
+        // Create a new tab entry first, then navigate
+        openTab(noteMatch[1], noteMatch[1])
+      }
+      router.navigate({ to: path })
+    })
+
+    return unlisten
+  }, [router, openTab])
 
   // Listen for menu actions from Electron main process
   React.useEffect(() => {

@@ -492,8 +492,8 @@ function NotePage() {
     return () => clearInterval(intervalId)
   }, [mode, isDraftRef, handleSaveRef, editorValueRef])
 
-  // Auto-open tab when navigating to a note
-  const { openTab } = useTabs()
+  // Update the active tab when navigating to a note (Notion-style: replaces current tab)
+  const { updateActiveTab } = useTabs()
   React.useEffect(() => {
     if (!noteId) return
 
@@ -508,8 +508,8 @@ function NotePage() {
       tabType = "weekly"
     }
 
-    openTab(noteId, displayTitle, tabType)
-  }, [noteId, note?.title, note?.type, openTab])
+    updateActiveTab(noteId, displayTitle, tabType)
+  }, [noteId, note?.title, note?.type, updateActiveTab])
 
   // Keyboard shortcuts
   useHotkeys(

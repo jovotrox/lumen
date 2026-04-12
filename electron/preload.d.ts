@@ -9,6 +9,7 @@ interface ElectronAPI {
   ) => () => void
   onMenuAction: (callback: (action: string) => void) => () => void
   onDeepLink: (callback: (path: string) => void) => () => void
+  onNavigateTo: (callback: (path: string) => void) => () => void
   fetch: (request: {
     url: string
     method: string

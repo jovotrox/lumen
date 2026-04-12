@@ -36,6 +36,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }
   },
 
+  onNavigateTo: (callback: (path: string) => void) => {
+    const handler = (_event: any, path: string) => callback(path)
+    ipcRenderer.on("navigate-to", handler)
+    return () => {
+      ipcRenderer.removeListener("navigate-to", handler)
+    }
+  },
+
   fetch: (request: {
     url: string
     method: string

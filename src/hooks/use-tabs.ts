@@ -9,18 +9,48 @@ export function useTabs() {
   // Derive active tab from current route
   const activeTabId = (() => {
     const path = router.state.location.pathname
-    // Match /notes/{noteId} or /lumen/notes/{noteId}
     const match = path.match(/\/notes\/(.+)/)
     return match ? match[1] : null
   })()
 
+  /**
+   * Create a NEW tab (explicit action: Cmd+T, +button, Cmd+click).
+   * If a tab for this noteId already exists, just switch to it.
+   */
   const openTab = (noteId: string, title: string, type?: Tab["type"]) => {
     setTabs((prev) => {
       if (prev.some((t) => t.noteId === noteId)) {
-        // Tab already exists, just update title/type if changed
         return prev.map((t) => (t.noteId === noteId ? { ...t, title, type } : t))
       }
       return [...prev, { noteId, title, type }]
+    })
+  }
+
+  /**
+   * Update the current active tab to show a different note.
+   * This is for normal navigation (sidebar clicks, links) — NOT for creating new tabs.
+   * If no tabs exist yet, creates the first one.
+   */
+  const updateActiveTab = (noteId: string, title: string, type?: Tab["type"]) => {
+    setTabs((prev) => {
+      // If this noteId already has a tab, just update it
+      if (prev.some((t) => t.noteId === noteId)) {
+        return prev.map((t) => (t.noteId === noteId ? { ...t, title, type } : t))
+      }
+
+      // If no tabs exist, create the first one
+      if (prev.length === 0) {
+        return [{ noteId, title, type }]
+      }
+
+      // Replace the active tab with the new note
+      const activeIndex = prev.findIndex((t) => t.noteId === activeTabId)
+      if (activeIndex >= 0) {
+        return prev.map((t, i) => (i === activeIndex ? { noteId, title, type } : t))
+      }
+
+      // Fallback: replace the last tab
+      return prev.map((t, i) => (i === prev.length - 1 ? { noteId, title, type } : t))
     })
   }
 
@@ -56,5 +86,5 @@ export function useTabs() {
     router.navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
   }
 
-  return { tabs, activeTabId, openTab, closeTab, closeOtherTabs, closeAllTabs }
+  return { tabs, activeTabId, openTab, updateActiveTab, closeTab, closeOtherTabs, closeAllTabs }
 }

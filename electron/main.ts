@@ -110,12 +110,13 @@ function createMainWindow(): void {
   mainWindow.loadURL(getBaseUrl())
 
   // Prevent Cmd+click from opening a new Electron window.
-  // Internal links navigate in the same window (triggering tab auto-open).
-  // External links open in the system browser.
+  // Internal links: extract path and navigate within the SPA via IPC.
+  // External links: open in the system browser.
   mainWindow.webContents.setWindowOpenHandler(({ url }) => {
     const baseUrl = getBaseUrl()
     if (url.startsWith(baseUrl)) {
-      mainWindow?.webContents.loadURL(url)
+      const path = "/" + url.slice(baseUrl.length).replace(/^\/+/, "")
+      mainWindow?.webContents.send("navigate-to", path)
       return { action: "deny" }
     }
     shell.openExternal(url)
