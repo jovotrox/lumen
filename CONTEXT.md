@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Última actualización:** 2026-04-10
+**Última actualización:** 2026-04-11
 
 ---
 
@@ -10,9 +10,9 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 ### Branch Activo
 
-- **Branch:** `feature/flowos-integration` (desde `personal`)
-- **Estado:** FlowOS integration completa (4 fases + polish + settings sync) — pendiente merge a personal
-- **Último commit:** Settings sync via .lumen/settings.json
+- **Branch:** `personal`
+- **Estado:** Editor enhancement merged — live preview, toolbar, slash commands, shortcuts
+- **Último commit:** Editor enhancement con code review fixes
 
 ### Arquitectura de Actualizaciones Automáticas
 
@@ -100,63 +100,67 @@ upstream/main ──────┐
 
 ## Archivos Modificados (vs upstream)
 
-| Archivo                                     | Tipo de Cambio | Propósito                                                                  |
-| ------------------------------------------- | -------------- | -------------------------------------------------------------------------- |
-| `src-tauri/*`                               | Nuevo          | Wrapper Tauri completo                                                     |
-| `src/index.tsx`                             | Modificado     | Basepath para GitHub Pages                                                 |
-| `src/hooks/use-update-notifier.ts`          | Modificado     | Cache clearing + PWA update support                                        |
-| `src/routes/quick-note.tsx`                 | Nuevo          | Ventana de nota rápida con live preview                                    |
-| `src/codemirror-extensions/live-preview.ts` | Nuevo          | Live preview estilo Obsidian para Quick Note                               |
-| `src/components/note-editor.tsx`            | Modificado     | Añadido prop livePreview                                                   |
-| `src/routes/_appRoot.tasks.tsx`             | Nuevo          | Vista Tasks con tareas y notas                                             |
-| `src/components/tasks-view.tsx`             | Modificado     | Tasks page (usa TaskListItemWrapper)                                       |
-| `src/components/nav-items.tsx`              | Modificado     | Añadido link a Tasks en sidebar                                            |
-| `src/components/markdown.tsx`               | Modificado     | Priority menu + strikethrough + hide completed + ListItemExtensionsContext |
-| `src/components/task-list-item-wrapper.tsx` | Nuevo          | Wrapper que renderiza tasks via MarkdownContent/ListItem                   |
-| `src/components/github-auth-tauri.tsx`      | Nuevo          | OAuth Device Flow                                                          |
-| `src/hooks/use-external-links.ts`           | Nuevo          | Links en navegador sistema                                                 |
-| `src/utils/tauri.ts`                        | Nuevo          | Utilidades Tauri                                                           |
-| `src/utils/git-lfs.ts`                      | Modificado     | LFS resolution con API base URL + llamadas directas Tauri                  |
-| `src/utils/gist.ts`                         | Modificado     | getApiBaseUrl (Vercel) + inline embeds                                     |
-| `src/utils/inline-note-embeds.ts`           | Upstream       | Inline embeds al publicar gists                                            |
-| `src/utils/reorder-list-item.ts`            | Modificado     | Función moveListItemToEnd                                                  |
-| `.github/workflows/sync-upstream.yml`       | Nuevo          | Auto-sync con upstream                                                     |
-| `.github/workflows/deploy-pages.yml`        | Nuevo          | Deploy a GitHub Pages                                                      |
-| `.prettierignore`                           | Modificado     | Ignore .claude/settings.local.json                                         |
-| `index.html`                                | Modificado     | SPA redirect handler + favicon link                                        |
-| `404.html`                                  | Nuevo          | GitHub Pages SPA fallback                                                  |
-| `src/utils/themes.ts`                       | Nuevo          | Sistema de temas (6 built-in + custom)                                     |
-| `src/utils/theme-sync.ts`                   | Nuevo          | Sync themes a `.lumen/themes.json`                                         |
-| `src/utils/ai-classify.ts`                  | Nuevo          | AI classification (OpenAI, Claude, heuristic fallback)                     |
-| `src/hooks/use-theme-sync.ts`               | Nuevo          | Hook para sincronizar themes en repo                                       |
-| `src/components/projects-view.tsx`          | Nuevo          | Vista de proyectos con status badges y task counts                         |
-| `src/components/people-view.tsx`            | Nuevo          | Vista de personas con roles y task counts                                  |
-| `src/components/inbox-view.tsx`             | Nuevo          | Vista inbox con AI classification y acciones                               |
-| `src/components/ai-key-input.tsx`           | Nuevo          | Input reusable para API keys                                               |
-| `src/routes/_appRoot.projects.tsx`          | Nuevo          | Ruta /projects                                                             |
-| `src/routes/_appRoot.people.tsx`            | Nuevo          | Ruta /people                                                               |
-| `src/routes/_appRoot.inbox.tsx`             | Nuevo          | Ruta /inbox                                                                |
-| `src/routes/_appRoot.settings.tsx`          | Modificado     | Theme selector + AI provider + Claude key                                  |
-| `src/global-state.ts`                       | Modificado     | Atoms: theme, entities, inbox, AI config                                   |
-| `src/routes/_appRoot.tsx`                   | Modificado     | Apply theme + titlebar + inbox mode handler                                |
-| `src/schema.ts`                             | Modificado     | NoteType extended con project/person/inbox                                 |
-| `src/utils/parse-note.ts`                   | Modificado     | Detecta type desde frontmatter                                             |
-| `src/components/note-editor.tsx`            | Modificado     | @ mention trigger + entity type labels en [[                               |
-| `src/routes/_appRoot.notes_.$.tsx`          | Modificado     | isReadMode prop for hide completed tasks                                   |
-| `src/routes/_appRoot.notes.index.tsx`       | Modificado     | Notes list route (was redirect to /)                                       |
-| `src/components/dashboard-view.tsx`         | Nuevo          | Home dashboard: greeting, weather, nudges, sections, quick actions         |
-| `src/utils/dashboard-templates.ts`          | Nuevo          | Greeting template pool with date-seeded rotation                           |
-| `src/utils/dashboard-ai.ts`                 | Nuevo          | AI summary generation (OpenAI/Claude)                                      |
-| `src/utils/nudges.ts`                       | Nuevo          | Nudge detection: stale tasks, inactive projects, inbox pileup, overdue     |
-| `src/components/property-value.tsx`         | Modificado     | Pass frontmatterKey to NoteEditor for property autocomplete                |
-| `src/utils/settings-sync.ts`                | Nuevo          | Read/write .lumen/settings.json for cross-device settings sync             |
-| `src/hooks/use-settings-sync.ts`            | Nuevo          | Hook: sync settings on mount, save on leaving Settings page                |
-| `src/components/note-link.tsx`              | Modificado     | Show note displayName instead of numeric ID in wikilinks                   |
-| `src/components/app-layout.tsx`             | Modificado     | Titlebar padding (collapsed sidebar)                                       |
-| `src/components/sidebar.tsx`                | Modificado     | Titlebar padding + drag + border extend                                    |
-| `src/styles/variables.css`                  | Modificado     | color-scheme: dark + titlebar height                                       |
-| `vite.config.ts`                            | Modificado     | PWA manifest start_url y scope                                             |
-| `vercel.json`                               | Modificado     | installCommand para devDependencies                                        |
+| Archivo                                           | Tipo de Cambio | Propósito                                                                  |
+| ------------------------------------------------- | -------------- | -------------------------------------------------------------------------- |
+| `src-tauri/*`                                     | Nuevo          | Wrapper Tauri completo                                                     |
+| `src/index.tsx`                                   | Modificado     | Basepath para GitHub Pages                                                 |
+| `src/hooks/use-update-notifier.ts`                | Modificado     | Cache clearing + PWA update support                                        |
+| `src/routes/quick-note.tsx`                       | Nuevo          | Ventana de nota rápida con live preview                                    |
+| `src/codemirror-extensions/live-preview.ts`       | Nuevo          | Live preview estilo Obsidian para Quick Note                               |
+| `src/components/note-editor.tsx`                  | Modificado     | Añadido prop livePreview                                                   |
+| `src/routes/_appRoot.tasks.tsx`                   | Nuevo          | Vista Tasks con tareas y notas                                             |
+| `src/components/tasks-view.tsx`                   | Modificado     | Tasks page (usa TaskListItemWrapper)                                       |
+| `src/components/nav-items.tsx`                    | Modificado     | Añadido link a Tasks en sidebar                                            |
+| `src/components/markdown.tsx`                     | Modificado     | Priority menu + strikethrough + hide completed + ListItemExtensionsContext |
+| `src/components/task-list-item-wrapper.tsx`       | Nuevo          | Wrapper que renderiza tasks via MarkdownContent/ListItem                   |
+| `src/components/github-auth-tauri.tsx`            | Nuevo          | OAuth Device Flow                                                          |
+| `src/hooks/use-external-links.ts`                 | Nuevo          | Links en navegador sistema                                                 |
+| `src/utils/tauri.ts`                              | Nuevo          | Utilidades Tauri                                                           |
+| `src/utils/git-lfs.ts`                            | Modificado     | LFS resolution con API base URL + llamadas directas Tauri                  |
+| `src/utils/gist.ts`                               | Modificado     | getApiBaseUrl (Vercel) + inline embeds                                     |
+| `src/utils/inline-note-embeds.ts`                 | Upstream       | Inline embeds al publicar gists                                            |
+| `src/utils/reorder-list-item.ts`                  | Modificado     | Función moveListItemToEnd                                                  |
+| `.github/workflows/sync-upstream.yml`             | Nuevo          | Auto-sync con upstream                                                     |
+| `.github/workflows/deploy-pages.yml`              | Nuevo          | Deploy a GitHub Pages                                                      |
+| `.prettierignore`                                 | Modificado     | Ignore .claude/settings.local.json                                         |
+| `index.html`                                      | Modificado     | SPA redirect handler + favicon link                                        |
+| `404.html`                                        | Nuevo          | GitHub Pages SPA fallback                                                  |
+| `src/utils/themes.ts`                             | Nuevo          | Sistema de temas (6 built-in + custom)                                     |
+| `src/utils/theme-sync.ts`                         | Nuevo          | Sync themes a `.lumen/themes.json`                                         |
+| `src/utils/ai-classify.ts`                        | Nuevo          | AI classification (OpenAI, Claude, heuristic fallback)                     |
+| `src/hooks/use-theme-sync.ts`                     | Nuevo          | Hook para sincronizar themes en repo                                       |
+| `src/components/projects-view.tsx`                | Nuevo          | Vista de proyectos con status badges y task counts                         |
+| `src/components/people-view.tsx`                  | Nuevo          | Vista de personas con roles y task counts                                  |
+| `src/components/inbox-view.tsx`                   | Nuevo          | Vista inbox con AI classification y acciones                               |
+| `src/components/ai-key-input.tsx`                 | Nuevo          | Input reusable para API keys                                               |
+| `src/routes/_appRoot.projects.tsx`                | Nuevo          | Ruta /projects                                                             |
+| `src/routes/_appRoot.people.tsx`                  | Nuevo          | Ruta /people                                                               |
+| `src/routes/_appRoot.inbox.tsx`                   | Nuevo          | Ruta /inbox                                                                |
+| `src/routes/_appRoot.settings.tsx`                | Modificado     | Theme selector + AI provider + Claude key                                  |
+| `src/global-state.ts`                             | Modificado     | Atoms: theme, entities, inbox, AI config                                   |
+| `src/routes/_appRoot.tsx`                         | Modificado     | Apply theme + titlebar + inbox mode handler                                |
+| `src/schema.ts`                                   | Modificado     | NoteType extended con project/person/inbox                                 |
+| `src/utils/parse-note.ts`                         | Modificado     | Detecta type desde frontmatter                                             |
+| `src/components/note-editor.tsx`                  | Modificado     | @ mention trigger + entity type labels en [[                               |
+| `src/routes/_appRoot.notes_.$.tsx`                | Modificado     | isReadMode prop for hide completed tasks                                   |
+| `src/routes/_appRoot.notes.index.tsx`             | Modificado     | Notes list route (was redirect to /)                                       |
+| `src/components/dashboard-view.tsx`               | Nuevo          | Home dashboard: greeting, weather, nudges, sections, quick actions         |
+| `src/utils/dashboard-templates.ts`                | Nuevo          | Greeting template pool with date-seeded rotation                           |
+| `src/utils/dashboard-ai.ts`                       | Nuevo          | AI summary generation (OpenAI/Claude)                                      |
+| `src/utils/nudges.ts`                             | Nuevo          | Nudge detection: stale tasks, inactive projects, inbox pileup, overdue     |
+| `src/components/property-value.tsx`               | Modificado     | Pass frontmatterKey to NoteEditor for property autocomplete                |
+| `src/codemirror-extensions/format-commands.ts`    | Nuevo          | Pure formatting functions (bold/italic/strikethrough/code/heading/lists)   |
+| `src/codemirror-extensions/format-keymap.ts`      | Nuevo          | Keyboard shortcuts (Cmd+B, Cmd+I, etc.)                                    |
+| `src/codemirror-extensions/autocomplete-theme.ts` | Nuevo          | CM theme + global CSS for autocomplete (backdrop blur, DropdownMenu style) |
+| `src/components/format-toolbar.tsx`               | Nuevo          | Floating toolbar (React Portal, appears on text selection)                 |
+| `src/utils/settings-sync.ts`                      | Nuevo          | Read/write .lumen/settings.json for cross-device settings sync             |
+| `src/hooks/use-settings-sync.ts`                  | Nuevo          | Hook: sync settings on mount, save on leaving Settings page                |
+| `src/components/note-link.tsx`                    | Modificado     | Show note displayName instead of numeric ID in wikilinks                   |
+| `src/components/app-layout.tsx`                   | Modificado     | Titlebar padding (collapsed sidebar)                                       |
+| `src/components/sidebar.tsx`                      | Modificado     | Titlebar padding + drag + border extend                                    |
+| `src/styles/variables.css`                        | Modificado     | color-scheme: dark + titlebar height                                       |
+| `vite.config.ts`                                  | Modificado     | PWA manifest start_url y scope                                             |
+| `vercel.json`                                     | Modificado     | installCommand para devDependencies                                        |
 
 ---
 
@@ -227,6 +231,22 @@ git push origin personal
 ---
 
 ## Historial de Cambios Importantes
+
+### 2026-04-11
+
+- **Editor Enhancement: Live Preview + Toolbar + Slash Commands**
+  - **Live Preview setting**: Toggle in Settings > Editor, synced across devices via settings-sync
+  - **WYSIWYG mode**: Headers, bold, italic, strikethrough, inline code, blockquotes, bullet lists rendered visually. Active line shows dimmed markers for editing; inactive lines fully WYSIWYG.
+  - **Floating format toolbar**: Appears on text selection (React Portal), 14 buttons in 4 groups (Inline, Blocks, Lists, Links). Uses `coordsAtPos()` for positioning with viewport collision detection.
+  - **Keyboard shortcuts**: Cmd+B (bold), Cmd+I (italic), Cmd+Shift+X (strikethrough), Cmd+Shift+M (code), Cmd+Shift+H (heading cycle), Cmd+Shift+B (blockquote), Cmd+Shift+8 (bullet), Cmd+Shift+7 (numbered), Cmd+Shift+T (task), Cmd+K (link)
+  - **Sidebar shortcut changed**: Cmd+B → Cmd+Shift+S (frees Cmd+B for bold)
+  - **Slash commands** `/`: Notion-style block insertion menu with Lucide icons. Inserts Heading 1-3, Bullet list, Numbered list, To-do, Blockquote, Code block, Divider. Templates also appear.
+  - **Autocomplete theme**: All CM autocomplete dropdowns (/, @, [[) use DropdownMenu styles — backdrop blur, 260px width, section headers, 16px Lucide icons. Tooltips render in `document.body` for proper backdrop-filter support.
+  - **@ mentions grouped**: People, Projects, Notes sections with icons
+  - **[[ note links**: Icons by type (person/project/note/task/inbox)
+  - Archivos nuevos: `format-commands.ts`, `format-keymap.ts`, `autocomplete-theme.ts`, `format-toolbar.tsx`
+  - Archivos modificados: `live-preview.ts` (major), `note-editor.tsx`, `_appRoot.notes_.$.tsx`, `_appRoot.settings.tsx`, `page-header.tsx`, `sidebar.tsx`, `help-panel.tsx`, `global-state.ts`, `settings-sync.ts`, `codemirror.css`
+  - **Pendientes para futuro**: Listas numeradas y links en live preview, tests para format-commands.ts
 
 ### 2026-04-10
 

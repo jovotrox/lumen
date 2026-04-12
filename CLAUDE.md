@@ -152,34 +152,39 @@ feature/* ← Branches temporales para desarrollo
 
 ### Features Custom Implementadas
 
-| Feature           | Descripción                                        | Archivos Principales                                                    |
-| ----------------- | -------------------------------------------------- | ----------------------------------------------------------------------- |
-| Tauri Desktop     | Wrapper nativo macOS                               | `src-tauri/*`                                                           |
-| Font Style        | Setting para cambiar tipografía                    | `src/routes/_appRoot.settings.tsx`                                      |
-| OAuth Device Flow | Login GitHub sin servidor                          | `src/components/github-auth-tauri.tsx`                                  |
-| Links Externos    | Abrir links en navegador sistema                   | `src/hooks/use-external-links.ts`                                       |
-| HTTP sin CORS     | Git operations en Tauri                            | `src/utils/tauri.ts`, `src/utils/git.ts`                                |
-| Quick Note        | Global hotkey ⌥⇧N para notas rápidas               | `src/routes/quick-note.tsx`, `src-tauri/src/lib.rs`                     |
-| System Tray       | App se minimiza a tray en lugar de cerrar          | `src-tauri/src/lib.rs`                                                  |
-| Auto-sync         | GitHub Action sincroniza con upstream diariamente  | `.github/workflows/sync-upstream.yml`                                   |
-| Overlay Titlebar  | Barra transparente sin título, semáforo visible    | `src-tauri/tauri.conf.json`, `src/components/sidebar.tsx`               |
-| Theme System      | Temas Default/Notion/VS Code + custom themes       | `src/utils/themes.ts`, `src/routes/_appRoot.settings.tsx`               |
-| Version Polling   | Check cada 12h + al enfocar, auto-refresh          | `src/hooks/use-update-notifier.ts`                                      |
-| Double Escape     | Doble Esc en write mode → save + read mode         | `src/routes/_appRoot.notes_.$.tsx`                                      |
-| Auto-save         | Guardado automático cada 2 min en write mode       | `src/routes/_appRoot.notes_.$.tsx`                                      |
-| FlowOS Entities   | Project/Person note types via frontmatter          | `src/schema.ts`, `src/utils/parse-note.ts`, `src/global-state.ts`       |
-| Projects View     | /projects page con status, owner, task progress    | `src/components/projects-view.tsx`, `src/routes/_appRoot.projects.tsx`  |
-| People View       | /people page con roles y task counts               | `src/components/people-view.tsx`, `src/routes/_appRoot.people.tsx`      |
-| Mention Picker    | @ y [[ triggers con entity picker agrupado         | `src/components/note-editor.tsx`                                        |
-| Smart Inbox       | Quick Note dual mode + /inbox con AI classify      | `src/routes/quick-note.tsx`, `src/components/inbox-view.tsx`            |
-| AI Classification | OpenAI/Claude/heuristic para clasificar inbox      | `src/utils/ai-classify.ts`, `src/routes/_appRoot.settings.tsx`          |
-| Inbox UX          | Convert dropdown, badges, pre-classify, task→daily | `src/components/inbox-view.tsx`                                         |
-| FM Autocomplete   | Frontmatter value suggestions in editor + props    | `src/components/note-editor.tsx`, `src/components/property-value.tsx`   |
-| Home Dashboard    | Morning briefing: date, weather, greeting, actions | `src/components/dashboard-view.tsx`, `src/routes/_appRoot.index.tsx`    |
-| Dashboard AI      | AI summary via OpenAI/Claude + template fallback   | `src/utils/dashboard-ai.ts`, `src/utils/dashboard-templates.ts`         |
-| Nudges            | Stale tasks, inactive projects, overdue, inbox     | `src/utils/nudges.ts`, `src/global-state.ts`                            |
-| Weather           | wttr.in integration, C/F toggle in settings        | `src/components/dashboard-view.tsx`, `src/routes/_appRoot.settings.tsx` |
-| Settings Sync     | .lumen/settings.json syncs prefs across devices    | `src/utils/settings-sync.ts`, `src/hooks/use-settings-sync.ts`          |
+| Feature           | Descripción                                        | Archivos Principales                                                           |
+| ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Tauri Desktop     | Wrapper nativo macOS                               | `src-tauri/*`                                                                  |
+| Font Style        | Setting para cambiar tipografía                    | `src/routes/_appRoot.settings.tsx`                                             |
+| OAuth Device Flow | Login GitHub sin servidor                          | `src/components/github-auth-tauri.tsx`                                         |
+| Links Externos    | Abrir links en navegador sistema                   | `src/hooks/use-external-links.ts`                                              |
+| HTTP sin CORS     | Git operations en Tauri                            | `src/utils/tauri.ts`, `src/utils/git.ts`                                       |
+| Quick Note        | Global hotkey ⌥⇧N para notas rápidas               | `src/routes/quick-note.tsx`, `src-tauri/src/lib.rs`                            |
+| System Tray       | App se minimiza a tray en lugar de cerrar          | `src-tauri/src/lib.rs`                                                         |
+| Auto-sync         | GitHub Action sincroniza con upstream diariamente  | `.github/workflows/sync-upstream.yml`                                          |
+| Overlay Titlebar  | Barra transparente sin título, semáforo visible    | `src-tauri/tauri.conf.json`, `src/components/sidebar.tsx`                      |
+| Theme System      | Temas Default/Notion/VS Code + custom themes       | `src/utils/themes.ts`, `src/routes/_appRoot.settings.tsx`                      |
+| Version Polling   | Check cada 12h + al enfocar, auto-refresh          | `src/hooks/use-update-notifier.ts`                                             |
+| Double Escape     | Doble Esc en write mode → save + read mode         | `src/routes/_appRoot.notes_.$.tsx`                                             |
+| Auto-save         | Guardado automático cada 2 min en write mode       | `src/routes/_appRoot.notes_.$.tsx`                                             |
+| FlowOS Entities   | Project/Person note types via frontmatter          | `src/schema.ts`, `src/utils/parse-note.ts`, `src/global-state.ts`              |
+| Projects View     | /projects page con status, owner, task progress    | `src/components/projects-view.tsx`, `src/routes/_appRoot.projects.tsx`         |
+| People View       | /people page con roles y task counts               | `src/components/people-view.tsx`, `src/routes/_appRoot.people.tsx`             |
+| Mention Picker    | @ y [[ triggers con entity picker agrupado         | `src/components/note-editor.tsx`                                               |
+| Smart Inbox       | Quick Note dual mode + /inbox con AI classify      | `src/routes/quick-note.tsx`, `src/components/inbox-view.tsx`                   |
+| AI Classification | OpenAI/Claude/heuristic para clasificar inbox      | `src/utils/ai-classify.ts`, `src/routes/_appRoot.settings.tsx`                 |
+| Inbox UX          | Convert dropdown, badges, pre-classify, task→daily | `src/components/inbox-view.tsx`                                                |
+| FM Autocomplete   | Frontmatter value suggestions in editor + props    | `src/components/note-editor.tsx`, `src/components/property-value.tsx`          |
+| Home Dashboard    | Morning briefing: date, weather, greeting, actions | `src/components/dashboard-view.tsx`, `src/routes/_appRoot.index.tsx`           |
+| Dashboard AI      | AI summary via OpenAI/Claude + template fallback   | `src/utils/dashboard-ai.ts`, `src/utils/dashboard-templates.ts`                |
+| Nudges            | Stale tasks, inactive projects, overdue, inbox     | `src/utils/nudges.ts`, `src/global-state.ts`                                   |
+| Weather           | wttr.in integration, C/F toggle in settings        | `src/components/dashboard-view.tsx`, `src/routes/_appRoot.settings.tsx`        |
+| Settings Sync     | .lumen/settings.json syncs prefs across devices    | `src/utils/settings-sync.ts`, `src/hooks/use-settings-sync.ts`                 |
+| Live Preview      | WYSIWYG editing con dim markers en línea activa    | `src/codemirror-extensions/live-preview.ts`                                    |
+| Format Toolbar    | Floating toolbar al seleccionar texto              | `src/components/format-toolbar.tsx`                                            |
+| Format Shortcuts  | Cmd+B bold, Cmd+I italic, etc.                     | `src/codemirror-extensions/format-keymap.ts`                                   |
+| Slash Commands    | / menu Notion-style con íconos Lucide              | `src/components/note-editor.tsx`                                               |
+| Autocomplete UX   | Backdrop blur + íconos en /, @, [[ menus           | `src/codemirror-extensions/autocomplete-theme.ts`, `src/styles/codemirror.css` |
 
 ### Flujo de Trabajo para Nuevas Features
 
@@ -229,7 +234,16 @@ git merge feature/nombre-feature --no-edit
 git push origin personal
 ```
 
-#### 6. Compilar Tauri (si aplica)
+#### 6. Actualizar CONTEXT.md (OBLIGATORIO)
+
+**SIEMPRE** actualizar `CONTEXT.md` después del merge, ANTES del push:
+
+- Estado actual del branch y último commit
+- Archivos nuevos/modificados en la tabla
+- Entrada en el historial de cambios con fecha
+- Pendientes para futuras sesiones
+
+#### 7. Compilar Tauri (si aplica)
 
 Solo si los cambios requieren recompilación de la app nativa (cambios que no llegan via web refresh):
 
