@@ -17,6 +17,10 @@ extraMetadata:
 mac:
   category: public.app-category.productivity
   icon: electron/icons/icon.icns
+  protocols:
+    - name: Lumen Notes
+      schemes:
+        - lumen
   target:
     - target: dmg
       arch:

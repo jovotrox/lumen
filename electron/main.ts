@@ -9,6 +9,7 @@ import {
   shell,
   Tray,
 } from "electron"
+import { autoUpdater } from "electron-updater"
 import path from "path"
 
 // ---------------------------------------------------------------------------
@@ -445,16 +446,81 @@ function sendMenuAction(action: string): void {
 }
 
 // ---------------------------------------------------------------------------
+// Auto-updater (electron-updater)
+// ---------------------------------------------------------------------------
+
+function setupAutoUpdater(): void {
+  // Only check for updates in production
+  if (!app.isPackaged) return
+
+  autoUpdater.autoDownload = true
+  autoUpdater.autoInstallOnAppQuit = true
+
+  autoUpdater.on("error", (error) => {
+    console.error("Auto-updater error:", error)
+  })
+
+  autoUpdater.on("update-available", () => {
+    console.log("Update available, downloading...")
+  })
+
+  autoUpdater.on("update-downloaded", () => {
+    console.log("Update downloaded, will install on quit")
+  })
+
+  // Check on startup and every 4 hours
+  autoUpdater.checkForUpdatesAndNotify()
+  setInterval(
+    () => {
+      autoUpdater.checkForUpdatesAndNotify()
+    },
+    4 * 60 * 60 * 1000,
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Deep link handler (lumen:// protocol)
+// ---------------------------------------------------------------------------
+
+function handleDeepLink(url: string): void {
+  try {
+    const parsed = new URL(url)
+    // lumen://note/my-note-id → /notes/my-note-id
+    // lumen://inbox → /inbox
+    // lumen://settings → /settings
+    const path = parsed.pathname.replace(/^\/\//, "/")
+    if (mainWindow && !mainWindow.isDestroyed()) {
+      mainWindow.webContents.send("deep-link", path)
+      showMainWindow()
+    }
+  } catch (error) {
+    console.error("Invalid deep link URL:", error)
+  }
+}
+
+// ---------------------------------------------------------------------------
 // App lifecycle
 // ---------------------------------------------------------------------------
+
+// Register lumen:// protocol handler
+app.setAsDefaultProtocolClient("lumen")
+
+// macOS: handle lumen:// URLs when app is already running
+app.on("open-url", (event, url) => {
+  event.preventDefault()
+  handleDeepLink(url)
+})
 
 // Single-instance lock — if a second instance launches, focus the existing one
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
   app.quit()
 } else {
-  app.on("second-instance", () => {
+  app.on("second-instance", (_event, argv) => {
     showMainWindow()
+    // On Windows/Linux, the deep link URL is in argv
+    const url = argv.find((arg) => arg.startsWith("lumen://"))
+    if (url) handleDeepLink(url)
   })
 
   app.whenReady().then(() => {
@@ -470,6 +536,8 @@ if (!gotTheLock) {
     app.on("activate", () => {
       showMainWindow()
     })
+
+    setupAutoUpdater()
   })
 
   // macOS: do NOT quit when all windows are closed (app lives in tray)

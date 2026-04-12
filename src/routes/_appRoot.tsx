@@ -184,6 +184,17 @@ function RouteComponent() {
     return unlisten
   }, [send])
 
+  // Listen for deep link navigation from Electron (lumen:// protocol)
+  React.useEffect(() => {
+    if (!isElectron()) return
+
+    const unlisten = window.electronAPI!.onDeepLink((path) => {
+      router.navigate({ to: path })
+    })
+
+    return unlisten
+  }, [router])
+
   // Listen for menu actions from Electron main process
   React.useEffect(() => {
     if (!isElectron()) return

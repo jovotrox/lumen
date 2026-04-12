@@ -22,7 +22,7 @@
     "test:storybook:watch": "test-storybook --watch",
     "test:storybook:ci": "concurrently -k -s first -n \"storybook,test\" -c \"magenta,blue\" \"npm run build:storybook --quiet && npx http-server storybook-static --port 6006 --silent\" \"npx wait-on tcp:127.0.0.1:6006 && npm run test:storybook\"",
     "electron:dev": "concurrently -k \"npm run dev -- --port 5173\" \"wait-on http://localhost:5173 && npm run electron:build-main && electron .\"",
-    "electron:build-main": "tsup electron/main.ts electron/preload.ts --outDir electron/dist --format cjs --external electron",
+    "electron:build-main": "tsup electron/main.ts electron/preload.ts --outDir electron/dist --format cjs --external electron --external electron-updater",
     "electron:build": "npm run build && npm run electron:build-main && electron-builder",
     "electron:pack": "npm run build && npm run electron:build-main && electron-builder --dir",
     "benchmark": "vite-node scripts/benchmark.ts",

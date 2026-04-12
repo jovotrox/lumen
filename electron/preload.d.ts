@@ -7,6 +7,7 @@ interface ElectronAPI {
     callback: (payload: { noteId: string; content: string; mode: string }) => void,
   ) => () => void
   onMenuAction: (callback: (action: string) => void) => () => void
+  onDeepLink: (callback: (path: string) => void) => () => void
   fetch: (request: {
     url: string
     method: string
