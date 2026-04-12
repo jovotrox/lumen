@@ -247,6 +247,7 @@ git push origin personal
   - Archivos nuevos: `format-commands.ts`, `format-keymap.ts`, `autocomplete-theme.ts`, `format-toolbar.tsx`
   - Archivos modificados: `live-preview.ts` (major), `note-editor.tsx`, `_appRoot.notes_.$.tsx`, `_appRoot.settings.tsx`, `page-header.tsx`, `sidebar.tsx`, `help-panel.tsx`, `global-state.ts`, `settings-sync.ts`, `codemirror.css`
   - **Pendientes para futuro**: Listas numeradas y links en live preview, tests para format-commands.ts
+- **Command Menu (Cmd+K)**: Added Home, Inbox, Projects, Tasks, People to "Jump to" section. Inbox shows unprocessed count badge. Order matches sidebar.
 
 ### 2026-04-10
 
