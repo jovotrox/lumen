@@ -7,6 +7,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   closeWindow: () => ipcRenderer.invoke("electron:close-window"),
 
+  openInNewWindow: (url: string) => ipcRenderer.invoke("electron:open-in-new-window", url),
+
   quickNoteSave: (payload: { noteId: string; content: string; mode: string }) =>
     ipcRenderer.invoke("electron:quick-note-save", payload),
 

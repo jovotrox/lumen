@@ -10,6 +10,7 @@ import {
   Tray,
 } from "electron"
 import { autoUpdater } from "electron-updater"
+import fs from "fs"
 import path from "path"
 
 // ---------------------------------------------------------------------------
@@ -38,13 +39,54 @@ let tray: Tray | null = null
 const preloadPath = path.join(__dirname, "preload.cjs")
 
 // ---------------------------------------------------------------------------
+// Window state persistence
+// ---------------------------------------------------------------------------
+
+interface WindowState {
+  x?: number
+  y?: number
+  width: number
+  height: number
+  isMaximized: boolean
+}
+
+function getWindowStatePath(): string {
+  return path.join(app.getPath("userData"), "window-state.json")
+}
+
+function loadWindowState(): WindowState {
+  try {
+    const data = fs.readFileSync(getWindowStatePath(), "utf-8")
+    return JSON.parse(data)
+  } catch {
+    return { width: 1200, height: 800, isMaximized: false }
+  }
+}
+
+function saveWindowState(win: BrowserWindow): void {
+  if (win.isDestroyed()) return
+  const isMaximized = win.isMaximized()
+  const bounds = isMaximized ? win.getNormalBounds() : win.getBounds()
+  const state: WindowState = { ...bounds, isMaximized }
+  try {
+    fs.writeFileSync(getWindowStatePath(), JSON.stringify(state))
+  } catch {
+    // Ignore write errors
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Main window
 // ---------------------------------------------------------------------------
 
 function createMainWindow(): void {
+  const windowState = loadWindowState()
+
   mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
+    x: windowState.x,
+    y: windowState.y,
+    width: windowState.width,
+    height: windowState.height,
     minWidth: 800,
     minHeight: 600,
     titleBarStyle: "hiddenInset",
@@ -56,6 +98,14 @@ function createMainWindow(): void {
       preload: preloadPath,
     },
   })
+
+  if (windowState.isMaximized) {
+    mainWindow.maximize()
+  }
+
+  // Save window state on resize and move
+  mainWindow.on("resize", () => saveWindowState(mainWindow!))
+  mainWindow.on("move", () => saveWindowState(mainWindow!))
 
   mainWindow.loadURL(getBaseUrl())
 
@@ -178,6 +228,24 @@ function registerIpcHandlers(): void {
     },
   )
 
+  ipcMain.handle("electron:open-in-new-window", (_event, noteUrl: string) => {
+    const win = new BrowserWindow({
+      width: 900,
+      height: 700,
+      minWidth: 600,
+      minHeight: 400,
+      titleBarStyle: "hiddenInset",
+      title: "Lumen Notes",
+      webPreferences: {
+        contextIsolation: true,
+        nodeIntegration: false,
+        sandbox: true,
+        preload: preloadPath,
+      },
+    })
+    win.loadURL(noteUrl)
+  })
+
   ipcMain.handle(
     "electron:fetch",
     async (
@@ -258,6 +326,10 @@ function createAppMenu(): void {
           click: () => sendMenuAction("new-note"),
         },
         { label: "Quick Note", accelerator: "Alt+Shift+N", click: () => createQuickNoteWindow() },
+        {
+          label: "Open Note in New Window",
+          click: () => sendMenuAction("open-in-new-window"),
+        },
         { type: "separator" },
         { label: "Save", accelerator: "CmdOrCtrl+S", click: () => sendMenuAction("save") },
         { type: "separator" },
