@@ -1057,9 +1057,23 @@ export const hideCompletedTasksAtom = atomWithStorage<boolean>("hide-completed-t
 // -----------------------------------------------------------------------------
 
 export interface Tab {
-  noteId: string
+  /** Route path (e.g., "/notes/my-note", "/inbox", "/projects") */
+  path: string
   title: string
-  type?: "daily" | "weekly" | "note" | "project" | "person" | "inbox"
+  icon?:
+    | "daily"
+    | "weekly"
+    | "note"
+    | "project"
+    | "person"
+    | "inbox"
+    | "home"
+    | "calendar"
+    | "tasks"
+    | "links"
+    | "tags"
+    | "settings"
+    | "people"
 }
 
 export const openTabsAtom = atomWithStorage<Tab[]>("open-tabs", [])

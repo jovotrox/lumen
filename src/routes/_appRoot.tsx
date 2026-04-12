@@ -93,6 +93,40 @@ function RouteComponent() {
     },
   )
 
+  // Update active tab when navigating to non-note routes
+  const { updateActiveTab } = useTabs()
+  React.useEffect(() => {
+    const unsubscribe = router.subscribe("onResolved", ({ toLocation }) => {
+      const path = toLocation.pathname.replace(/^\/lumen/, "").replace(/\/$/, "") || "/"
+
+      // Skip note routes — they handle their own tab updates in _appRoot.notes_.$.tsx
+      if (path.match(/^\/notes\/.+/)) return
+
+      // Map known routes to tab titles and icons
+      const routeMap: Record<
+        string,
+        { title: string; icon: NonNullable<import("../global-state").Tab["icon"]> }
+      > = {
+        "/": { title: "Home", icon: "home" },
+        "/inbox": { title: "Inbox", icon: "inbox" },
+        "/notes": { title: "Notes", icon: "note" },
+        "/projects": { title: "Projects", icon: "project" },
+        "/tasks": { title: "Tasks", icon: "tasks" },
+        "/links": { title: "Links", icon: "links" },
+        "/people": { title: "People", icon: "people" },
+        "/tags": { title: "Tags", icon: "tags" },
+        "/settings": { title: "Settings", icon: "settings" },
+      }
+
+      const route = routeMap[path]
+      if (route) {
+        updateActiveTab(path, route.title, route.icon)
+      }
+    })
+
+    return unsubscribe
+  }, [router, updateActiveTab])
+
   // Sync when the app becomes visible again
   useEvent("visibilitychange", () => {
     if (document.visibilityState === "visible" && online) {
@@ -223,13 +257,12 @@ function RouteComponent() {
     if (!isElectron()) return
 
     const unlisten = window.electronAPI!.onNavigateTo((path) => {
-      // Extract noteId from path like /notes/some-id or /lumen/notes/some-id
-      const noteMatch = path.match(/\/notes\/(.+?)(?:\?|$)/)
-      if (noteMatch) {
-        // Create a new tab entry first, then navigate
-        openTab(noteMatch[1], noteMatch[1])
-      }
-      router.navigate({ to: path })
+      const normalized = path.replace(/^\/lumen/, "").replace(/\/$/, "") || "/"
+      // Create a new tab, then navigate
+      const noteMatch = normalized.match(/^\/notes\/(.+?)(?:\?|$)/)
+      const title = noteMatch ? noteMatch[1] : normalized.replace(/^\//, "") || "Home"
+      openTab(normalized, title)
+      router.navigate({ to: normalized })
     })
 
     return unlisten

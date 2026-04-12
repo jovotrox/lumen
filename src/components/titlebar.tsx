@@ -1,6 +1,6 @@
 import { useRouter } from "@tanstack/react-router"
 import { useAtom, useAtomValue } from "jotai"
-import { FolderOpen, Inbox, Plus, User, X } from "lucide-react"
+import { FolderOpen, Home, Inbox, Link as LinkIcon, Plus, Settings, User, X } from "lucide-react"
 import React from "react"
 import { openTabsAtom, sidebarAtom, Tab } from "../global-state"
 import { useTabs } from "../hooks/use-tabs"
@@ -16,25 +16,40 @@ import {
   NoteIcon16,
   SidebarCollapsedIcon16,
   SidebarIcon16,
+  TagIcon16,
+  TaskListIcon16,
 } from "./icons"
 import { generateNoteId } from "../utils/note-id"
 
 function TabIcon({ tab }: { tab: Tab }) {
-  switch (tab.type) {
+  switch (tab.icon) {
     case "daily": {
-      // Extract day number from noteId (YYYY-MM-DD)
-      const match = tab.noteId.match(/^\d{4}-\d{2}-(\d{2})$/)
+      const match = tab.path.match(/\/notes\/\d{4}-\d{2}-(\d{2})/)
       const day = match ? parseInt(match[1], 10) : undefined
       return <CalendarDateIcon16 date={day} className="size-4 shrink-0" />
     }
     case "weekly":
       return <CalendarIcon16 className="size-4 shrink-0" />
-    case "project":
-      return <FolderOpen className="size-3.5 shrink-0" />
-    case "person":
-      return <User className="size-3.5 shrink-0" />
+    case "home":
+      return <Home className="size-3.5 shrink-0" />
     case "inbox":
       return <Inbox className="size-3.5 shrink-0" />
+    case "calendar":
+      return <CalendarIcon16 className="size-4 shrink-0" />
+    case "project":
+      return <FolderOpen className="size-3.5 shrink-0" />
+    case "tasks":
+      return <TaskListIcon16 className="size-4 shrink-0" />
+    case "links":
+      return <LinkIcon className="size-3.5 shrink-0" />
+    case "people":
+      return <User className="size-3.5 shrink-0" />
+    case "tags":
+      return <TagIcon16 className="size-4 shrink-0" />
+    case "settings":
+      return <Settings className="size-3.5 shrink-0" />
+    case "person":
+      return <User className="size-3.5 shrink-0" />
     default:
       return <NoteIcon16 className="size-4 shrink-0" />
   }
@@ -44,10 +59,9 @@ export function Titlebar() {
   const router = useRouter()
   const [sidebar, setSidebar] = useAtom(sidebarAtom)
   const tabs = useAtomValue(openTabsAtom)
-  const { activeTabId, closeTab } = useTabs()
+  const { activeTabIndex, closeTab } = useTabs()
   const isDesktop = isElectron() || isTauri()
 
-  // Only show in desktop apps (Electron/Tauri)
   if (!isDesktop) return null
 
   const isMac = navigator.platform.startsWith("Mac")
@@ -57,10 +71,8 @@ export function Titlebar() {
       className="flex h-[38px] shrink-0 items-center border-b border-border-secondary bg-bg-secondary print:hidden"
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
-      {/* Traffic light space on macOS */}
       {isMac ? <div className="w-[76px] shrink-0" /> : null}
 
-      {/* Sidebar toggle + nav buttons */}
       <div
         className="flex items-center gap-0.5 px-1"
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
@@ -90,16 +102,15 @@ export function Titlebar() {
         </IconButton>
       </div>
 
-      {/* Tabs scroll area */}
       <div
         className="flex min-w-0 items-center overflow-x-auto scrollbar-hide"
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       >
         {tabs.map((tab, i) => {
-          const isActive = tab.noteId === activeTabId
+          const isActive = i === activeTabIndex
           const isLast = i === tabs.length - 1
           return (
-            <React.Fragment key={tab.noteId}>
+            <React.Fragment key={tab.path}>
               <button
                 className={cx(
                   "group flex h-[37px] shrink-0 items-center gap-1.5 px-3 text-xs transition-colors",
@@ -108,16 +119,12 @@ export function Titlebar() {
                     : "border-t-2 border-t-transparent bg-bg-secondary text-text-secondary hover:text-text",
                 )}
                 onClick={() => {
-                  router.navigate({
-                    to: "/notes/$",
-                    params: { _splat: tab.noteId },
-                    search: { mode: "read", query: undefined, view: "grid" },
-                  })
+                  router.navigate({ to: tab.path })
                 }}
                 onAuxClick={(e) => {
                   if (e.button === 1) {
                     e.preventDefault()
-                    closeTab(tab.noteId)
+                    closeTab(tab.path)
                   }
                 }}
               >
@@ -131,18 +138,17 @@ export function Titlebar() {
                       : "opacity-0 group-hover:opacity-60 hover:!opacity-100",
                   )}
                   onMouseDown={(e) => {
-                    // Prevent parent <button> from receiving focus
                     e.preventDefault()
                     e.stopPropagation()
                   }}
                   onClick={(e) => {
                     e.stopPropagation()
-                    closeTab(tab.noteId)
+                    closeTab(tab.path)
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.stopPropagation()
-                      closeTab(tab.noteId)
+                      closeTab(tab.path)
                     }
                   }}
                   role="button"
@@ -152,16 +158,13 @@ export function Titlebar() {
                   <X className="size-3" />
                 </span>
               </button>
-              {/* Separator between tabs (not after the last one) */}
               {!isLast ? <div className="h-4 w-px shrink-0 bg-border-secondary" /> : null}
             </React.Fragment>
           )
         })}
 
-        {/* Separator before + button if there are tabs */}
         {tabs.length > 0 ? <div className="h-4 w-px shrink-0 bg-border-secondary" /> : null}
 
-        {/* New tab button */}
         <button
           className="mx-0.5 flex shrink-0 items-center justify-center rounded p-1 text-text-secondary hover:bg-bg hover:text-text"
           onClick={() => {
@@ -178,7 +181,6 @@ export function Titlebar() {
         </button>
       </div>
 
-      {/* Draggable space after tabs — fills remaining titlebar width */}
       <div className="flex-1 self-stretch" />
     </div>
   )

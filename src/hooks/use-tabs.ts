@@ -2,83 +2,85 @@ import { useAtom } from "jotai"
 import { useRouter } from "@tanstack/react-router"
 import { openTabsAtom, Tab } from "../global-state"
 
+/** Normalize a route path for comparison (strip trailing slashes, base path) */
+function normalizePath(path: string): string {
+  // Remove base path (/lumen/) if present
+  return path.replace(/^\/lumen/, "").replace(/\/$/, "") || "/"
+}
+
 export function useTabs() {
   const [tabs, setTabs] = useAtom(openTabsAtom)
   const router = useRouter()
 
-  // Derive active tab from current route
-  const activeTabId = (() => {
-    const path = router.state.location.pathname
-    const match = path.match(/\/notes\/(.+)/)
-    return match ? match[1] : null
-  })()
+  // Derive active tab path from current route
+  const currentPath = normalizePath(router.state.location.pathname)
+
+  const activeTabIndex = tabs.findIndex((t) => normalizePath(t.path) === currentPath)
 
   /**
    * Create a NEW tab (explicit action: Cmd+T, +button, Cmd+click).
-   * If a tab for this noteId already exists, just switch to it.
+   * If a tab for this path already exists, just switch to it.
    */
-  const openTab = (noteId: string, title: string, type?: Tab["type"]) => {
+  const openTab = (path: string, title: string, icon?: Tab["icon"]) => {
+    const normalized = normalizePath(path)
     setTabs((prev) => {
-      if (prev.some((t) => t.noteId === noteId)) {
-        return prev.map((t) => (t.noteId === noteId ? { ...t, title, type } : t))
+      if (prev.some((t) => normalizePath(t.path) === normalized)) {
+        return prev.map((t) => (normalizePath(t.path) === normalized ? { ...t, title, icon } : t))
       }
-      return [...prev, { noteId, title, type }]
+      return [...prev, { path: normalized, title, icon }]
     })
   }
 
   /**
-   * Update the current active tab to show a different note.
-   * This is for normal navigation (sidebar clicks, links) — NOT for creating new tabs.
-   * If no tabs exist yet, creates the first one.
+   * Update the current active tab to show a different page.
+   * This is for normal navigation — NOT for creating new tabs.
+   * If no tabs exist, does nothing (tabs are only created explicitly).
    */
-  const updateActiveTab = (noteId: string, title: string, type?: Tab["type"]) => {
+  const updateActiveTab = (path: string, title: string, icon?: Tab["icon"]) => {
+    const normalized = normalizePath(path)
     setTabs((prev) => {
-      // If this noteId already has a tab, just update it
-      if (prev.some((t) => t.noteId === noteId)) {
-        return prev.map((t) => (t.noteId === noteId ? { ...t, title, type } : t))
+      // If this path already has a tab, just update title/icon
+      if (prev.some((t) => normalizePath(t.path) === normalized)) {
+        return prev.map((t) => (normalizePath(t.path) === normalized ? { ...t, title, icon } : t))
       }
 
-      // If no tabs exist, don't create one — tabs are only created explicitly
+      // If no tabs exist, don't create one
       if (prev.length === 0) {
         return prev
       }
 
-      // Replace the active tab with the new note
-      const activeIndex = prev.findIndex((t) => t.noteId === activeTabId)
-      if (activeIndex >= 0) {
-        return prev.map((t, i) => (i === activeIndex ? { noteId, title, type } : t))
+      // Replace the active tab with the new page
+      if (activeTabIndex >= 0) {
+        return prev.map((t, i) => (i === activeTabIndex ? { path: normalized, title, icon } : t))
       }
 
       // Fallback: replace the last tab
-      return prev.map((t, i) => (i === prev.length - 1 ? { noteId, title, type } : t))
+      return prev.map((t, i) => (i === prev.length - 1 ? { path: normalized, title, icon } : t))
     })
   }
 
-  const closeTab = (noteId: string) => {
-    const currentTabs = tabs
-    const index = currentTabs.findIndex((t) => t.noteId === noteId)
+  const closeTab = (path: string) => {
+    const normalized = normalizePath(path)
+    const index = tabs.findIndex((t) => normalizePath(t.path) === normalized)
     if (index === -1) return
 
-    const newTabs = currentTabs.filter((t) => t.noteId !== noteId)
+    const newTabs = tabs.filter((t) => normalizePath(t.path) !== normalized)
     setTabs(newTabs)
 
     // Only navigate if closing the active tab
-    if (noteId === activeTabId) {
+    if (index === activeTabIndex) {
       if (newTabs.length > 0) {
         const nextIndex = Math.min(index, newTabs.length - 1)
-        router.navigate({
-          to: "/notes/$",
-          params: { _splat: newTabs[nextIndex].noteId },
-          search: { mode: "read", query: undefined, view: "grid" },
-        })
+        router.navigate({ to: newTabs[nextIndex].path })
       } else {
         router.navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
       }
     }
   }
 
-  const closeOtherTabs = (noteId: string) => {
-    setTabs((prev) => prev.filter((t) => t.noteId === noteId))
+  const closeOtherTabs = (path: string) => {
+    const normalized = normalizePath(path)
+    setTabs((prev) => prev.filter((t) => normalizePath(t.path) === normalized))
   }
 
   const closeAllTabs = () => {
@@ -86,5 +88,14 @@ export function useTabs() {
     router.navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
   }
 
-  return { tabs, activeTabId, openTab, updateActiveTab, closeTab, closeOtherTabs, closeAllTabs }
+  return {
+    tabs,
+    activeTabIndex,
+    currentPath,
+    openTab,
+    updateActiveTab,
+    closeTab,
+    closeOtherTabs,
+    closeAllTabs,
+  }
 }

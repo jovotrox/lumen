@@ -10,7 +10,7 @@ import { isTauri } from "../utils/tauri"
 
 export function TabBar() {
   const tabs = useAtomValue(openTabsAtom)
-  const { activeTabId, closeTab } = useTabs()
+  const { activeTabIndex, closeTab } = useTabs()
   const router = useRouter()
 
   // On desktop, tabs are shown in the Titlebar instead
@@ -20,11 +20,11 @@ export function TabBar() {
 
   return (
     <div className="flex shrink-0 items-center gap-0 overflow-x-auto border-b border-border-secondary bg-bg-secondary scrollbar-hide print:hidden">
-      {tabs.map((tab) => {
-        const isActive = tab.noteId === activeTabId
+      {tabs.map((tab, i) => {
+        const isActive = i === activeTabIndex
         return (
           <button
-            key={tab.noteId}
+            key={tab.path}
             className={cx(
               "group flex shrink-0 items-center gap-1.5 border-r border-border-secondary px-3 py-1.5 text-xs transition-colors",
               isActive
@@ -32,16 +32,12 @@ export function TabBar() {
                 : "text-text-secondary hover:bg-bg hover:text-text",
             )}
             onClick={() => {
-              router.navigate({
-                to: "/notes/$",
-                params: { _splat: tab.noteId },
-                search: { mode: "read", query: undefined, view: "grid" },
-              })
+              router.navigate({ to: tab.path })
             }}
             onAuxClick={(e) => {
               if (e.button === 1) {
                 e.preventDefault()
-                closeTab(tab.noteId)
+                closeTab(tab.path)
               }
             }}
           >
@@ -53,12 +49,12 @@ export function TabBar() {
               )}
               onClick={(e) => {
                 e.stopPropagation()
-                closeTab(tab.noteId)
+                closeTab(tab.path)
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.stopPropagation()
-                  closeTab(tab.noteId)
+                  closeTab(tab.path)
                 }
               }}
               role="button"

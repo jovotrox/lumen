@@ -498,17 +498,17 @@ function NotePage() {
     if (!noteId) return
 
     let displayTitle = note?.title || noteId
-    let tabType: Tab["type"] = (note?.type as Tab["type"]) ?? "note"
+    let tabIcon: Tab["icon"] = (note?.type as Tab["icon"]) ?? "note"
 
     if (isValidDateString(noteId)) {
       displayTitle = formatDate(noteId)
-      tabType = "daily"
+      tabIcon = "daily"
     } else if (isValidWeekString(noteId)) {
       displayTitle = formatWeek(noteId)
-      tabType = "weekly"
+      tabIcon = "weekly"
     }
 
-    updateActiveTab(noteId, displayTitle, tabType)
+    updateActiveTab(`/notes/${noteId}`, displayTitle, tabIcon)
   }, [noteId, note?.title, note?.type, updateActiveTab])
 
   // Keyboard shortcuts
