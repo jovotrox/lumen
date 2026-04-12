@@ -1076,7 +1076,7 @@ export interface Tab {
     | "people"
 }
 
-export const openTabsAtom = atomWithStorage<Tab[]>("open-tabs", [])
+export const openTabsAtom = atomWithStorage<Tab[]>("open-tabs-v2", [])
 
 // -----------------------------------------------------------------------------
 // AI
