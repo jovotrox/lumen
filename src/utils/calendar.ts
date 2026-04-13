@@ -117,11 +117,3 @@ export async function fetchAllFeedsEvents(
 export function invalidateCalendarCache(): void {
   cache.clear()
 }
-
-export function formatEventTime(event: CalendarEvent): string {
-  if (event.isAllDay) return "All day"
-  const start = new Date(event.start)
-  const end = new Date(event.end)
-  const fmt = (d: Date) => d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })
-  return `${fmt(start)} – ${fmt(end)}`
-}

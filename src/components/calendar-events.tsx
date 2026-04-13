@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from "jotai"
-import { Calendar, Clock, FileText } from "lucide-react"
+import { Calendar } from "lucide-react"
 import React from "react"
 import { useNavigate } from "@tanstack/react-router"
 import {
@@ -9,24 +9,26 @@ import {
   globalStateMachineAtom,
   notesAtom,
 } from "../global-state"
-import {
-  CalendarEvent,
-  fetchAllFeedsEvents,
-  formatEventTime,
-  invalidateCalendarCache,
-} from "../utils/calendar"
+import { CalendarEvent, fetchAllFeedsEvents, invalidateCalendarCache } from "../utils/calendar"
+import { Button } from "./button"
+
+/** Format an event's start time as HH:MM (24h), or "All day" for all-day events. */
+function formatStartTime(event: CalendarEvent): string {
+  if (event.isAllDay) return "All day"
+  const d = new Date(event.start)
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+}
 
 /**
  * Build a stable, human-readable note ID from an event.
  * Format: event-YYYY-MM-DD-slugified-title (max ~80 chars)
- * Same event → same ID across runs, so click always resolves to the same note.
  */
 function getEventNoteId(event: CalendarEvent): string {
-  const date = event.start.slice(0, 10) // YYYY-MM-DD from ISO
+  const date = event.start.slice(0, 10)
   const slug = event.title
     .toLowerCase()
     .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "") // strip diacritics
+    .replace(/[\u0300-\u036f]/g, "")
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40)
@@ -34,9 +36,9 @@ function getEventNoteId(event: CalendarEvent): string {
 }
 
 function buildEventNoteContent(event: CalendarEvent): string {
-  const frontmatterLines = [
+  const lines = [
     "---",
-    `event:`,
+    "event:",
     `  title: ${JSON.stringify(event.title)}`,
     `  start: "${event.start}"`,
     `  end: "${event.end}"`,
@@ -48,7 +50,7 @@ function buildEventNoteContent(event: CalendarEvent): string {
     `# ${event.title}`,
     "",
   ].filter(Boolean)
-  return frontmatterLines.join("\n")
+  return lines.join("\n")
 }
 
 export function CalendarEvents({ dateString }: { dateString: string }) {
@@ -66,8 +68,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   const activeFeeds = feeds.filter((f) => f.enabled && f.url)
   const feedKey = JSON.stringify(activeFeeds.map((f) => [f.id, f.url, f.color, f.name]))
 
-  // Re-fetch when the user brings the window back into focus (they might have
-  // added events in their calendar app while we were in the background).
+  // Re-fetch when the user brings the window back into focus.
   React.useEffect(() => {
     const onFocus = () => {
       invalidateCalendarCache()
@@ -118,7 +119,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   if (!enabled) return null
   if (activeFeeds.length === 0) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 text-xs text-text-tertiary">
+      <div className="mx-4 my-2 flex items-center gap-2 rounded-lg bg-bg-secondary px-3 py-2 text-xs text-text-tertiary">
         <Calendar className="size-3 opacity-60" />
         <span>No calendars configured. Add one in Settings.</span>
       </div>
@@ -128,34 +129,31 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   if (events.length === 0 && errors.length === 0) return null
 
   return (
-    <div className="flex flex-col gap-1 px-4 py-2">
+    <div className="mx-4 my-2 flex flex-col gap-0.5 rounded-lg bg-bg-secondary p-1">
       {events.map((event, i) => {
         const noteId = getEventNoteId(event)
         const hasNote = notes.has(noteId)
         return (
-          <button
+          <div
             key={`${noteId}-${i}`}
-            type="button"
-            onClick={() => openEventNote(event)}
-            className="group flex items-center gap-2 rounded px-2 py-1 text-left text-xs text-text-secondary transition hover:bg-bg-secondary focus:bg-bg-secondary focus:outline-none"
-            title={event.calendar ? `${event.calendar} — click to open linked note` : undefined}
+            className="group flex items-center gap-3 rounded-md px-2.5 py-1.5 transition hover:bg-bg-tertiary"
+            title={event.calendar || undefined}
           >
-            <div
-              className="h-3 w-0.5 shrink-0 rounded-full"
-              style={{ backgroundColor: event.color }}
-            />
-            <span className="flex w-[80px] shrink-0 items-center gap-1 text-text-tertiary">
-              <Clock className="size-2.5" />
-              {formatEventTime(event)}
+            <span
+              className="w-[44px] shrink-0 font-mono text-xs font-medium tabular-nums"
+              style={{ color: event.color }}
+            >
+              {formatStartTime(event)}
             </span>
-            <span className="flex-1 truncate text-text-secondary">{event.title}</span>
-            {hasNote ? (
-              <FileText
-                className="size-3 shrink-0 text-text-tertiary"
-                aria-label="Has linked note"
-              />
-            ) : null}
-          </button>
+            <span className="flex-1 truncate text-sm text-text">{event.title}</span>
+            <Button
+              size="small"
+              className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
+              onClick={() => openEventNote(event)}
+            >
+              {hasNote ? "Open note" : "Create note"}
+            </Button>
+          </div>
         )
       })}
       {errors.length > 0 ? (
