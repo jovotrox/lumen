@@ -1053,6 +1053,8 @@ export const calendarLayoutAtom = atomWithStorage<"week" | "month">("calendar-la
 
 export const calendarIntegrationAtom = atomWithStorage<boolean>("calendar-integration", false)
 export const calendarFeedsAtom = atomWithStorage<CalendarFeed[]>("calendar-feeds", [])
+/** Increment to force CalendarEvents to re-fetch (ignores cache). Not persisted. */
+export const calendarRefreshTickAtom = atom(0)
 
 export const hideCompletedTasksAtom = atomWithStorage<boolean>("hide-completed-tasks", false)
 

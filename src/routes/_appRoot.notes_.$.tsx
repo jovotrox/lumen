@@ -13,6 +13,7 @@ import useResizeObserver from "use-resize-observer"
 import { z } from "zod/v3"
 import { Button } from "../components/button"
 import { Calendar } from "../components/calendar"
+import { RefreshCw } from "lucide-react"
 import { CalendarEvents } from "../components/calendar-events"
 import { CalendarHeader } from "../components/calendar-header"
 import { DaysOfWeek } from "../components/days-of-week"
@@ -52,6 +53,8 @@ import { Tooltip } from "../components/tooltip"
 import { Tool, voiceConversationMachineAtom } from "../components/voice-conversation"
 import {
   Tab,
+  calendarIntegrationAtom,
+  calendarRefreshTickAtom,
   dailyTemplateAtom,
   defaultFontAtom,
   githubRepoAtom,
@@ -69,6 +72,7 @@ import { useValueRef } from "../hooks/value-ref"
 import { Note, NoteId, Template, Width, fontSchema, widthSchema } from "../schema"
 import { cx } from "../utils/cx"
 import { formatDate, formatWeek, isValidDateString, isValidWeekString } from "../utils/date"
+import { invalidateCalendarCache } from "../utils/calendar"
 import { isElectron } from "../utils/electron"
 import { updateFrontmatterValue } from "../utils/frontmatter"
 import { clearNoteDraft, getNoteDraft, setNoteDraft } from "../utils/note-draft"
@@ -139,6 +143,8 @@ function NotePage() {
   const dailyTemplate = useAtomValue(dailyTemplateAtom)
   const weeklyTemplate = useAtomValue(weeklyTemplateAtom)
   const defaultFont = useAtomValue(defaultFontAtom)
+  const calendarEnabled = useAtomValue(calendarIntegrationAtom)
+  const setCalendarRefreshTick = useSetAtom(calendarRefreshTickAtom)
   const { online } = useNetworkState()
 
   // Note data
@@ -734,6 +740,20 @@ function NotePage() {
                     <DropdownMenu.Separator />
                   </>
                 )}
+                {isDailyNote && calendarEnabled ? (
+                  <>
+                    <DropdownMenu.Item
+                      icon={<RefreshCw size={16} strokeWidth={1.75} />}
+                      onClick={() => {
+                        invalidateCalendarCache()
+                        setCalendarRefreshTick((t) => t + 1)
+                      }}
+                    >
+                      Refresh calendar
+                    </DropdownMenu.Item>
+                    <DropdownMenu.Separator />
+                  </>
+                ) : null}
                 <DropdownMenu.Item icon={<CopyIcon16 />} onClick={() => copy(editorValue)}>
                   Copy markdown
                 </DropdownMenu.Item>

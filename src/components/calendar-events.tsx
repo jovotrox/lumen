@@ -5,10 +5,16 @@ import { useNavigate } from "@tanstack/react-router"
 import {
   calendarFeedsAtom,
   calendarIntegrationAtom,
+  calendarRefreshTickAtom,
   globalStateMachineAtom,
   notesAtom,
 } from "../global-state"
-import { CalendarEvent, fetchAllFeedsEvents, formatEventTime } from "../utils/calendar"
+import {
+  CalendarEvent,
+  fetchAllFeedsEvents,
+  formatEventTime,
+  invalidateCalendarCache,
+} from "../utils/calendar"
 
 /**
  * Build a stable, human-readable note ID from an event.
@@ -48,6 +54,8 @@ function buildEventNoteContent(event: CalendarEvent): string {
 export function CalendarEvents({ dateString }: { dateString: string }) {
   const enabled = useAtomValue(calendarIntegrationAtom)
   const feeds = useAtomValue(calendarFeedsAtom)
+  const refreshTick = useAtomValue(calendarRefreshTickAtom)
+  const setRefreshTick = useSetAtom(calendarRefreshTickAtom)
   const notes = useAtomValue(notesAtom)
   const send = useSetAtom(globalStateMachineAtom)
   const navigate = useNavigate()
@@ -57,6 +65,17 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
 
   const activeFeeds = feeds.filter((f) => f.enabled && f.url)
   const feedKey = JSON.stringify(activeFeeds.map((f) => [f.id, f.url, f.color, f.name]))
+
+  // Re-fetch when the user brings the window back into focus (they might have
+  // added events in their calendar app while we were in the background).
+  React.useEffect(() => {
+    const onFocus = () => {
+      invalidateCalendarCache()
+      setRefreshTick((t) => t + 1)
+    }
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [setRefreshTick])
 
   React.useEffect(() => {
     if (!enabled || activeFeeds.length === 0) {
@@ -74,7 +93,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
       })
       .finally(() => setLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateString, enabled, feedKey])
+  }, [dateString, enabled, feedKey, refreshTick])
 
   const openEventNote = (event: CalendarEvent) => {
     const noteId = getEventNoteId(event)
