@@ -37,6 +37,7 @@ function getEventNoteId(event: CalendarEvent): string {
 function buildEventNoteContent(event: CalendarEvent): string {
   const lines = [
     "---",
+    "tags: [event, calendar]",
     "event:",
     `  title: ${JSON.stringify(event.title)}`,
     `  start: "${event.start}"`,
