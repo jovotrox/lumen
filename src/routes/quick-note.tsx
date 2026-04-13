@@ -133,7 +133,7 @@ function QuickNoteComponent() {
     const set = (visible: boolean) => {
       if (lastVisible === visible) return
       lastVisible = visible
-      api.setTrafficLightsVisible!(visible)
+      api.setTrafficLightsVisible(visible)
     }
     const show = () => set(true)
     const hide = () => set(false)
