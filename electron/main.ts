@@ -15,6 +15,82 @@ import fs from "fs"
 import path from "path"
 
 // ---------------------------------------------------------------------------
+// macOS Calendar helper (Swift + EventKit — properly requests permissions)
+// ---------------------------------------------------------------------------
+
+const CALENDAR_SWIFT_SRC = `
+import EventKit
+import Foundation
+import CoreImage
+
+let store = EKEventStore()
+let dateArg = CommandLine.arguments.count > 1 ? CommandLine.arguments[1] : ""
+
+let semaphore = DispatchSemaphore(value: 0)
+var accessGranted = false
+
+if #available(macOS 14.0, *) {
+    store.requestFullAccessToEvents { granted, _ in
+        accessGranted = granted
+        semaphore.signal()
+    }
+} else {
+    store.requestAccess(to: .event) { granted, _ in
+        accessGranted = granted
+        semaphore.signal()
+    }
+}
+semaphore.wait()
+
+guard accessGranted else {
+    print("DENIED")
+    exit(0)
+}
+
+let df = DateFormatter()
+df.dateFormat = "yyyy-MM-dd"
+guard let date = df.date(from: dateArg) else {
+    print("[]")
+    exit(0)
+}
+
+let cal = Calendar.current
+let startOfDay = cal.startOfDay(for: date)
+let endOfDay = cal.date(byAdding: .day, value: 1, to: startOfDay)!
+
+let predicate = store.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: nil)
+let events = store.events(matching: predicate)
+
+var results: [[String: Any]] = []
+let isoFmt = ISO8601DateFormatter()
+
+for event in events {
+    var colorHex = "#888888"
+    if let cgColor = event.calendar.cgColor {
+        let ci = CIColor(cgColor: cgColor)
+        colorHex = String(format: "#%02X%02X%02X",
+            Int(ci.red * 255), Int(ci.green * 255), Int(ci.blue * 255))
+    }
+    results.append([
+        "title": event.title ?? "",
+        "start": isoFmt.string(from: event.startDate),
+        "end": isoFmt.string(from: event.endDate),
+        "calendar": event.calendar.title,
+        "color": colorHex,
+        "isAllDay": event.isAllDay,
+        "location": event.location ?? ""
+    ])
+}
+
+if let data = try? JSONSerialization.data(withJSONObject: results),
+   let json = String(data: data, encoding: .utf8) {
+    print(json)
+} else {
+    print("[]")
+}
+`
+
+// ---------------------------------------------------------------------------
 // URLs
 // ---------------------------------------------------------------------------
 
@@ -264,42 +340,31 @@ function registerIpcHandlers(): void {
     if (process.platform !== "darwin") return []
 
     try {
-      // JXA script to get calendar events for a given date
-      const script = `
-        const app = Application("Calendar");
-        const start = new Date("${dateString}T00:00:00");
-        const end = new Date("${dateString}T23:59:59");
-        const events = [];
-        app.calendars().forEach(cal => {
-          try {
-            cal.events.whose({
-              _and: [
-                { startDate: { _greaterThanEquals: start } },
-                { startDate: { _lessThanEquals: end } }
-              ]
-            })().forEach(ev => {
-              events.push({
-                title: ev.summary(),
-                start: ev.startDate().toISOString(),
-                end: ev.endDate().toISOString(),
-                calendar: cal.name(),
-                color: cal.color() || "#888888",
-                isAllDay: ev.alldayEvent(),
-                location: ev.location() || ""
-              });
-            });
-          } catch(e) {}
-        });
-        JSON.stringify(events);
-      `
-      const result = execSync(`osascript -l JavaScript -e '${script.replace(/'/g, "'\\''")}'`, {
-        timeout: 5000,
+      const binaryPath = path.join(app.getPath("userData"), "lumen-calendar-helper")
+
+      // Compile the Swift EventKit helper once, cache the binary
+      if (!fs.existsSync(binaryPath)) {
+        const srcPath = path.join(app.getPath("temp"), "lumen-calendar-helper.swift")
+        fs.writeFileSync(srcPath, CALENDAR_SWIFT_SRC)
+        execSync(
+          `swiftc "${srcPath}" -o "${binaryPath}" -framework EventKit -framework CoreImage`,
+          { timeout: 30000 },
+        )
+      }
+
+      const result = execSync(`"${binaryPath}" "${dateString}"`, {
+        timeout: 10000,
         encoding: "utf-8",
       })
-      return JSON.parse(result.trim() || "[]")
+
+      const trimmed = result.trim()
+      if (trimmed === "DENIED") {
+        return { denied: true, events: [] }
+      }
+      return { denied: false, events: JSON.parse(trimmed || "[]") }
     } catch (error) {
       console.error("Failed to fetch calendar events:", error)
-      return []
+      return { denied: false, events: [] }
     }
   })
 

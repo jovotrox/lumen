@@ -10,8 +10,9 @@ interface ElectronAPI {
   onMenuAction: (callback: (action: string) => void) => () => void
   onDeepLink: (callback: (path: string) => void) => () => void
   onNavigateTo: (callback: (path: string) => void) => () => void
-  getCalendarEvents: (dateString: string) => Promise<
-    Array<{
+  getCalendarEvents: (dateString: string) => Promise<{
+    denied: boolean
+    events: Array<{
       title: string
       start: string
       end: string
@@ -20,7 +21,7 @@ interface ElectronAPI {
       isAllDay: boolean
       location?: string
     }>
-  >
+  }>
   fetch: (request: {
     url: string
     method: string

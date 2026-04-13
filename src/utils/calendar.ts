@@ -8,26 +8,28 @@ export interface CalendarEvent {
   location?: string
 }
 
+export interface CalendarResult {
+  denied: boolean
+  events: CalendarEvent[]
+}
+
 // Simple in-memory cache to avoid re-fetching
-const cache = new Map<string, { events: CalendarEvent[]; timestamp: number }>()
+const cache = new Map<string, { result: CalendarResult; timestamp: number }>()
 const CACHE_TTL = 60_000 // 1 minute
 
-export async function fetchCalendarEvents(dateString: string): Promise<CalendarEvent[]> {
-  // Check cache
+export async function fetchCalendarEvents(dateString: string): Promise<CalendarResult> {
   const cached = cache.get(dateString)
   if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
-    return cached.events
+    return cached.result
   }
 
-  // In Electron, use IPC to get events from main process
   if (window.electronAPI?.getCalendarEvents) {
-    const events = await window.electronAPI.getCalendarEvents(dateString)
-    cache.set(dateString, { events, timestamp: Date.now() })
-    return events
+    const result = await window.electronAPI.getCalendarEvents(dateString)
+    cache.set(dateString, { result, timestamp: Date.now() })
+    return result
   }
 
-  // Not available in browser
-  return []
+  return { denied: false, events: [] }
 }
 
 export function formatEventTime(event: CalendarEvent): string {
