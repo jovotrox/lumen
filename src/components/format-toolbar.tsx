@@ -1,6 +1,7 @@
 import * as Portal from "@radix-ui/react-portal"
 import { EditorView } from "@codemirror/view"
 import {
+  AtSign,
   Bold,
   Braces,
   Code,
@@ -9,10 +10,12 @@ import {
   List,
   ListChecks,
   ListOrdered,
-  Quote,
   Strikethrough,
+  TextQuote,
 } from "lucide-react"
 import React from "react"
+import { Tooltip } from "./tooltip"
+import { Keys } from "./keys"
 import {
   getHeadingLevel,
   insertLink,
@@ -42,6 +45,11 @@ type FormatToolbarProps = {
   editorView: EditorView | null
   selectionFrom: number
   selectionTo: number
+  /**
+   * "floating" (default) — shown on text selection, positioned above the selection via a Portal.
+   * "pinned" — always visible, rendered inline in the parent's flow (no portal, no positioning).
+   */
+  variant?: "floating" | "pinned"
 }
 
 function isInsideFrontmatter(view: EditorView, from: number): boolean {
@@ -54,11 +62,56 @@ function isInsideFrontmatter(view: EditorView, from: number): boolean {
 
 const preventFocus = (e: React.MouseEvent) => e.preventDefault()
 
-export function FormatToolbar({ editorView, selectionFrom, selectionTo }: FormatToolbarProps) {
+type ToolbarButtonProps = {
+  label: string
+  shortcut?: string[]
+  active?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}
+
+function ToolbarButton({ label, shortcut, active, onClick, children }: ToolbarButtonProps) {
+  const btnClass =
+    "grid h-7 w-7 place-items-center rounded text-text-secondary hover:bg-bg-hover hover:text-text cursor-pointer"
+  const activeClass = "bg-bg-active text-text"
+
+  const trigger = (
+    <button
+      type="button"
+      aria-label={label}
+      className={cx(btnClass, active && activeClass)}
+      onMouseDown={preventFocus}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+
+  return (
+    <Tooltip>
+      <Tooltip.Trigger render={trigger} />
+      <Tooltip.Content side="top" sideOffset={6}>
+        <div className="flex items-center gap-1.5 text-xs">
+          <span>{label}</span>
+          {shortcut ? <Keys keys={shortcut} className="text-text-secondary" /> : null}
+        </div>
+      </Tooltip.Content>
+    </Tooltip>
+  )
+}
+
+export function FormatToolbar({
+  editorView,
+  selectionFrom,
+  selectionTo,
+  variant = "floating",
+}: FormatToolbarProps) {
   const toolbarRef = React.useRef<HTMLDivElement>(null)
   const [coords, setCoords] = React.useState<{ top: number; left: number } | null>(null)
+  const isPinned = variant === "pinned"
 
   React.useLayoutEffect(() => {
+    if (isPinned) return
     if (!editorView || selectionFrom === selectionTo) {
       setCoords(null)
       return
@@ -94,185 +147,142 @@ export function FormatToolbar({ editorView, selectionFrom, selectionTo }: Format
     const finalTop = topAbove < 40 ? toCoords.bottom + 8 : topAbove
 
     setCoords({ top: finalTop, left })
-  }, [editorView, selectionFrom, selectionTo])
+  }, [editorView, selectionFrom, selectionTo, isPinned])
 
-  if (!editorView || selectionFrom === selectionTo) return null
+  if (!editorView) return null
+  // Floating variant only renders when there's a non-empty selection.
+  if (!isPinned && selectionFrom === selectionTo) return null
 
   const state = editorView.state
   const headingLevel = getHeadingLevel(state)
 
-  const btnClass =
-    "grid h-7 w-7 place-items-center rounded text-text-secondary hover:bg-bg-hover hover:text-text cursor-pointer"
-  const activeBtnClass = "bg-bg-active text-text"
   const separatorClass = "mx-0.5 h-4 w-px bg-border-secondary"
 
-  const style: React.CSSProperties = coords
+  const floatingStyle: React.CSSProperties = coords
     ? { position: "fixed", top: coords.top, left: coords.left, zIndex: 9999 }
     : { position: "fixed", top: -9999, left: -9999, zIndex: 9999 }
 
-  return (
-    <Portal.Root>
-      <div
-        ref={toolbarRef}
-        role="toolbar"
-        aria-label="Text formatting"
-        style={style}
-        className="card-2 flex items-center gap-0.5 rounded-lg p-1"
+  const toolbarContent = (
+    <div
+      ref={toolbarRef}
+      role="toolbar"
+      aria-label="Text formatting"
+      style={isPinned ? undefined : floatingStyle}
+      className={cx(
+        "flex items-center gap-0.5 rounded-lg p-1",
+        isPinned ? "w-full justify-center" : "card-2",
+      )}
+    >
+      {/* Group 1 — Inline */}
+      <ToolbarButton
+        label="Bold"
+        shortcut={["⌘", "B"]}
+        active={isBoldActive(state)}
+        onClick={() => toggleBold(editorView)}
       >
-        {/* Group 1 — Inline */}
-        <button
-          className={cx(btnClass, isBoldActive(state) && activeBtnClass)}
-          title="Bold (⌘B)"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleBold(editorView)
-          }}
-        >
-          <Bold size={14} />
-        </button>
-        <button
-          className={cx(btnClass, isItalicActive(state) && activeBtnClass)}
-          title="Italic (⌘I)"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleItalic(editorView)
-          }}
-        >
-          <Italic size={14} />
-        </button>
-        <button
-          className={cx(btnClass, isStrikethroughActive(state) && activeBtnClass)}
-          title="Strikethrough (⌘⇧X)"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleStrikethrough(editorView)
-          }}
-        >
-          <Strikethrough size={14} />
-        </button>
-        <button
-          className={cx(btnClass, isInlineCodeActive(state) && activeBtnClass)}
-          title="Inline Code"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleInlineCode(editorView)
-          }}
-        >
-          <Code size={14} />
-        </button>
+        <Bold size={14} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Italic"
+        shortcut={["⌘", "I"]}
+        active={isItalicActive(state)}
+        onClick={() => toggleItalic(editorView)}
+      >
+        <Italic size={14} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Strikethrough"
+        shortcut={["⌘", "⇧", "X"]}
+        active={isStrikethroughActive(state)}
+        onClick={() => toggleStrikethrough(editorView)}
+      >
+        <Strikethrough size={14} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Inline code"
+        shortcut={["⌘", "⇧", "M"]}
+        active={isInlineCodeActive(state)}
+        onClick={() => toggleInlineCode(editorView)}
+      >
+        <Code size={14} />
+      </ToolbarButton>
 
-        <div className={separatorClass} />
+      <div className={separatorClass} />
 
-        {/* Group 2 — Blocks */}
-        <button
-          className={cx(btnClass, headingLevel === 1 && activeBtnClass)}
-          title="Heading 1"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            setHeading(editorView, 1)
-          }}
-        >
-          <span className="text-[11px] font-bold">H1</span>
-        </button>
-        <button
-          className={cx(btnClass, headingLevel === 2 && activeBtnClass)}
-          title="Heading 2"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            setHeading(editorView, 2)
-          }}
-        >
-          <span className="text-[11px] font-bold">H2</span>
-        </button>
-        <button
-          className={cx(btnClass, headingLevel === 3 && activeBtnClass)}
-          title="Heading 3"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            setHeading(editorView, 3)
-          }}
-        >
-          <span className="text-[11px] font-bold">H3</span>
-        </button>
-        <button
-          className={cx(btnClass, isBlockquoteActive(state) && activeBtnClass)}
-          title="Blockquote"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleBlockquote(editorView)
-          }}
-        >
-          <Quote size={14} />
-        </button>
-        <button
-          className={cx(btnClass)}
-          title="Code Block"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleCodeBlock(editorView)
-          }}
-        >
-          <Braces size={14} />
-        </button>
+      {/* Group 2 — Blocks */}
+      <ToolbarButton
+        label="Heading 1"
+        active={headingLevel === 1}
+        onClick={() => setHeading(editorView, 1)}
+      >
+        <span className="text-[11px] font-bold">H1</span>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Heading 2"
+        active={headingLevel === 2}
+        onClick={() => setHeading(editorView, 2)}
+      >
+        <span className="text-[11px] font-bold">H2</span>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Heading 3"
+        active={headingLevel === 3}
+        onClick={() => setHeading(editorView, 3)}
+      >
+        <span className="text-[11px] font-bold">H3</span>
+      </ToolbarButton>
+      <ToolbarButton
+        label="Quote"
+        shortcut={["⌘", "⇧", "B"]}
+        active={isBlockquoteActive(state)}
+        onClick={() => toggleBlockquote(editorView)}
+      >
+        <TextQuote size={14} />
+      </ToolbarButton>
+      <ToolbarButton label="Code block" onClick={() => toggleCodeBlock(editorView)}>
+        <Braces size={14} />
+      </ToolbarButton>
 
-        <div className={separatorClass} />
+      <div className={separatorClass} />
 
-        {/* Group 3 — Lists */}
-        <button
-          className={cx(btnClass, isBulletListActive(state) && activeBtnClass)}
-          title="Bullet List (⌘⇧8)"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleBulletList(editorView)
-          }}
-        >
-          <List size={14} />
-        </button>
-        <button
-          className={cx(btnClass, isNumberedListActive(state) && activeBtnClass)}
-          title="Numbered List (⌘⇧7)"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleNumberedList(editorView)
-          }}
-        >
-          <ListOrdered size={14} />
-        </button>
-        <button
-          className={cx(btnClass, isTaskListActive(state) && activeBtnClass)}
-          title="Task List"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            toggleTaskList(editorView)
-          }}
-        >
-          <ListChecks size={14} />
-        </button>
+      {/* Group 3 — Lists */}
+      <ToolbarButton
+        label="Bullet list"
+        shortcut={["⌘", "⇧", "8"]}
+        active={isBulletListActive(state)}
+        onClick={() => toggleBulletList(editorView)}
+      >
+        <List size={14} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Numbered list"
+        shortcut={["⌘", "⇧", "7"]}
+        active={isNumberedListActive(state)}
+        onClick={() => toggleNumberedList(editorView)}
+      >
+        <ListOrdered size={14} />
+      </ToolbarButton>
+      <ToolbarButton
+        label="Task list"
+        shortcut={["⌘", "⇧", "T"]}
+        active={isTaskListActive(state)}
+        onClick={() => toggleTaskList(editorView)}
+      >
+        <ListChecks size={14} />
+      </ToolbarButton>
 
-        <div className={separatorClass} />
+      <div className={separatorClass} />
 
-        {/* Group 4 — Links */}
-        <button
-          className={cx(btnClass)}
-          title="Link"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            insertLink(editorView)
-          }}
-        >
-          <Link size={14} />
-        </button>
-        <button
-          className={cx(btnClass)}
-          title="Wikilink"
-          onMouseDown={preventFocus}
-          onClick={() => {
-            insertWikilink(editorView)
-          }}
-        >
-          <span className="text-[10px] font-mono">{"[[]]"}</span>
-        </button>
-      </div>
-    </Portal.Root>
+      {/* Group 4 — Links */}
+      <ToolbarButton label="Link" shortcut={["⌘", "K"]} onClick={() => insertLink(editorView)}>
+        <Link size={14} />
+      </ToolbarButton>
+      <ToolbarButton label="Mention note" onClick={() => insertWikilink(editorView)}>
+        <AtSign size={14} />
+      </ToolbarButton>
+    </div>
   )
+
+  if (isPinned) return toolbarContent
+  return <Portal.Root>{toolbarContent}</Portal.Root>
 }

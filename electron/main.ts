@@ -6,6 +6,7 @@ import {
   Menu,
   nativeImage,
   net,
+  screen,
   shell,
   Tray,
 } from "electron"
@@ -151,6 +152,9 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
   // Reuse existing window if it's still open — instant re-invoke
   if (quickNoteWindow && !quickNoteWindow.isDestroyed()) {
     quickNoteWindow.webContents.send("quick-note-reset")
+    if (process.platform === "darwin") {
+      quickNoteWindow.setWindowButtonVisibility(false)
+    }
     quickNoteWindow.show()
     quickNoteWindow.focus()
     return
@@ -160,17 +164,31 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
   // Append /quick-note route — handle trailing slash in base
   const quickNoteUrl = baseUrl.endsWith("/") ? `${baseUrl}quick-note` : `${baseUrl}/quick-note`
 
+  const isMac = process.platform === "darwin"
   quickNoteWindow = new BrowserWindow({
-    width: 420,
-    height: 320,
+    width: 460,
+    height: 260,
+    maxHeight: 720,
     center: true,
     alwaysOnTop: true,
     resizable: true,
     minimizable: false,
     maximizable: false,
+    fullscreenable: false,
     titleBarStyle: "hiddenInset",
     title: "Quick Note",
-    backgroundColor: "#0a0a0a",
+    // macOS: transparent bg + vibrancy gives the frosted-glass look.
+    // NOTE: deliberately NOT using `transparent: true` — it breaks mouse
+    // event delivery and focus/traffic-light behavior on macOS with vibrancy.
+    // The actual fix for "blur shows through" is overriding body/html bg
+    // to transparent in the renderer (see quick-note.tsx).
+    backgroundColor: isMac ? "#00000000" : "#0a0a0a",
+    ...(isMac
+      ? ({
+          vibrancy: "under-window",
+          visualEffectState: "active",
+        } as const)
+      : {}),
     show: false,
     webPreferences: {
       contextIsolation: true,
@@ -180,15 +198,67 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
     },
   })
 
+  // Some macOS + hiddenInset combinations ignore the maximizable/fullscreenable
+  // constructor options; re-assert them via setters so the green traffic button
+  // actually renders as grayed/disabled.
+  if (isMac) {
+    quickNoteWindow.setMaximizable(false)
+    quickNoteWindow.setFullScreenable(false)
+    // Defensive: if anything still manages to trigger maximize or fullscreen,
+    // bounce back. Keeps the window at the user's intended size.
+    quickNoteWindow.on("maximize", () => quickNoteWindow?.unmaximize())
+    quickNoteWindow.on("enter-full-screen", () => quickNoteWindow?.setFullScreen(false))
+  }
+
+  // Traffic-lights focus-mode: show only when the mouse cursor is within the
+  // window's screen bounds. DOM events are unreliable here because the native
+  // traffic-light buttons render over the content and eat mouseenter/leave on
+  // body — so we poll cursor position directly from main. 200ms is responsive
+  // enough and the IPC bridge is skipped entirely (no renderer involvement).
+  let cursorPollInterval: NodeJS.Timeout | null = null
+  let lastLightsVisible: boolean | null = null
+  const stopCursorPoll = () => {
+    if (cursorPollInterval) {
+      clearInterval(cursorPollInterval)
+      cursorPollInterval = null
+    }
+  }
+  const startCursorPoll = () => {
+    if (!isMac || cursorPollInterval) return
+    lastLightsVisible = null // force first tick to send a state
+    cursorPollInterval = setInterval(() => {
+      if (!quickNoteWindow || quickNoteWindow.isDestroyed()) {
+        stopCursorPoll()
+        return
+      }
+      if (!quickNoteWindow.isVisible()) return
+      const cursor = screen.getCursorScreenPoint()
+      const b = quickNoteWindow.getBounds()
+      const inside =
+        cursor.x >= b.x && cursor.x < b.x + b.width && cursor.y >= b.y && cursor.y < b.y + b.height
+      if (inside !== lastLightsVisible) {
+        lastLightsVisible = inside
+        quickNoteWindow.setWindowButtonVisibility(inside)
+      }
+    }, 200)
+  }
+
   quickNoteWindow.loadURL(quickNoteUrl)
 
   // Only show once content is ready — prevents white flash
   quickNoteWindow.once("ready-to-show", () => {
+    // Start with traffic lights hidden — focus-mode. Polling toggles on hover.
+    if (isMac) {
+      quickNoteWindow?.setWindowButtonVisibility(false)
+    }
     if (!options.prewarm) {
       quickNoteWindow?.show()
       quickNoteWindow?.focus()
     }
   })
+
+  quickNoteWindow.on("show", startCursorPoll)
+  quickNoteWindow.on("hide", stopCursorPoll)
 
   // Hide instead of close — keeps React mounted for instant re-invoke
   quickNoteWindow.on("close", (e) => {
@@ -199,6 +269,7 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
   })
 
   quickNoteWindow.on("closed", () => {
+    stopCursorPoll()
     quickNoteWindow = null
   })
 }

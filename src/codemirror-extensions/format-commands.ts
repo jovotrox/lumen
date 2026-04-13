@@ -327,70 +327,87 @@ export function toggleCodeBlock(view: EditorView): boolean {
   return true
 }
 
-export function toggleBulletList(view: EditorView): boolean {
-  return toggleLinePrefix(view, "- ")
+// Matches any list marker at line start. Order matters: task must be checked
+// before the plain bullet, since "- [ ] " starts with "- " too.
+const LIST_MARKER_REGEX = /^(- \[[ xX]\] |- |\d+\. )/
+
+type ListKind = "bullet" | "numbered" | "task"
+
+function kindOfMarker(marker: string): ListKind {
+  if (/^- \[[ xX]\] /.test(marker)) return "task"
+  if (marker === "- ") return "bullet"
+  return "numbered"
 }
 
-export function toggleNumberedList(view: EditorView): boolean {
+/**
+ * Replace or remove list markers on the selected lines.
+ * - If ALL selected lines already have the target kind → remove markers (toggle off).
+ * - Otherwise, strip any existing list marker on each line and apply the target kind.
+ * For numbered lists, numbering is renumbered starting at 1 on the first affected line.
+ */
+function setListKind(view: EditorView, kind: ListKind): boolean {
   const { state } = view
   const { from, to } = state.selection.main
   const { firstLine, lastLine } = getSelectionLineRange(view)
-
-  const numberedRegex = /^\d+\. /
 
   const lines = []
   for (let i = firstLine; i <= lastLine; i++) {
     lines.push(state.doc.line(i))
   }
 
-  const allHavePrefix = lines.every((l) => numberedRegex.test(l.text))
+  const markers = lines.map((l) => {
+    const m = l.text.match(LIST_MARKER_REGEX)
+    return m ? m[0] : null
+  })
+
+  const allMatchKind = markers.every((m) => m !== null && kindOfMarker(m) === kind)
 
   const changes: { from: number; to?: number; insert: string }[] = []
+  // When the first line is unchanged (`existing === newPrefix`), the loop
+  // skips it and `firstChangeDelta` stays 0 — which is the right value,
+  // since the anchor position on an unchanged line shouldn't move.
+  let firstChangeDelta = 0
+  let totalDelta = 0
+  let counter = 1
 
-  if (allHavePrefix) {
-    // Remove numbered prefix from every line
-    for (const line of lines) {
-      const match = line.text.match(/^\d+\. /)
-      if (match) {
-        changes.push({ from: line.from, to: line.from + match[0].length, insert: "" })
-      }
-    }
-  } else {
-    // Add numbered prefix; auto-increment counter
-    let counter = 1
-    for (const line of lines) {
-      if (!numberedRegex.test(line.text)) {
-        changes.push({ from: line.from, insert: `${counter}. ` })
-      }
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i]
+    const existing = markers[i]
+    const existingLen = existing?.length ?? 0
+
+    let newPrefix: string
+    if (allMatchKind) {
+      // Toggle off
+      newPrefix = ""
+    } else if (kind === "bullet") {
+      newPrefix = "- "
+    } else if (kind === "task") {
+      // Preserve checkbox state if the user was already on a task line of the same kind;
+      // otherwise default to unchecked.
+      newPrefix = existing && /^- \[[xX]\] /.test(existing) ? existing : "- [ ] "
+    } else {
+      // numbered — renumber from 1
+      newPrefix = `${counter}. `
       counter++
+    }
+
+    if (existing === newPrefix) continue
+
+    const lineDelta = newPrefix.length - existingLen
+    if (i === 0) firstChangeDelta = lineDelta
+    totalDelta += lineDelta
+
+    if (existingLen > 0) {
+      changes.push({ from: line.from, to: line.from + existingLen, insert: newPrefix })
+    } else {
+      changes.push({ from: line.from, insert: newPrefix })
     }
   }
 
   if (changes.length === 0) return true
 
-  // Simple selection adjustment: move anchor by the first change delta
-  const firstChange = changes[0]
-  const firstDelta = allHavePrefix
-    ? -(lines[0].text.match(/^\d+\. /)?.[0].length ?? 0)
-    : (firstChange.insert?.length ?? 0)
-
-  const newAnchor = Math.max(0, from + firstDelta)
-
-  // Fix: on remove path, subtract total removed characters from `to` so the
-  // selection head is correctly positioned after the prefixes are stripped.
-  let newHead: number
-  if (from === to) {
-    newHead = newAnchor
-  } else if (allHavePrefix) {
-    const totalRemoved = changes.reduce((sum, c) => {
-      const removeLen = c.to !== undefined ? c.to - c.from : 0
-      return sum + removeLen
-    }, 0)
-    newHead = Math.max(0, to - totalRemoved)
-  } else {
-    const totalAdded = changes.reduce((sum, c) => sum + (c.insert?.length ?? 0), 0)
-    newHead = Math.max(0, to + totalAdded)
-  }
+  const newAnchor = Math.max(0, from + firstChangeDelta)
+  const newHead = from === to ? newAnchor : Math.max(0, to + totalDelta)
 
   view.dispatch({
     changes,
@@ -401,8 +418,16 @@ export function toggleNumberedList(view: EditorView): boolean {
   return true
 }
 
+export function toggleBulletList(view: EditorView): boolean {
+  return setListKind(view, "bullet")
+}
+
+export function toggleNumberedList(view: EditorView): boolean {
+  return setListKind(view, "numbered")
+}
+
 export function toggleTaskList(view: EditorView): boolean {
-  return toggleLinePrefix(view, "- [ ] ")
+  return setListKind(view, "task")
 }
 
 // ---------------------------------------------------------------------------

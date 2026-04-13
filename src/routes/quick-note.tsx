@@ -10,6 +10,7 @@ import { CheckIcon16 } from "../components/icons"
 import { useAtom, useAtomValue } from "jotai"
 import { customThemesAtom, defaultFontAtom, quickNoteModeAtom, themeAtom } from "../global-state"
 import { SegmentedControl } from "../components/segmented-control"
+import { FormatToolbar } from "../components/format-toolbar"
 
 export const Route = createFileRoute("/quick-note")({
   component: QuickNoteComponent,
@@ -21,6 +22,9 @@ function QuickNoteComponent() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false)
   const [saved, setSaved] = React.useState(false)
   const [escPressedOnce, setEscPressedOnce] = React.useState(false)
+  // Bumped on every selection/doc change to re-render the pinned toolbar with
+  // accurate active-state highlights.
+  const [, setSelTick] = React.useState(0)
   const editorRef = React.useRef<ReactCodeMirrorRef>(null)
   const escTimeoutRef = React.useRef<number | null>(null)
 
@@ -114,6 +118,12 @@ function QuickNoteComponent() {
     }
   }, [])
 
+  // Force one re-render after mount so the pinned format toolbar can read
+  // editorRef.current.view (which is null on the initial render).
+  React.useEffect(() => {
+    setSelTick((t) => t + 1)
+  }, [])
+
   // Save note by emitting event to main window
   const handleSave = React.useCallback(async () => {
     if (!content.trim()) return
@@ -180,8 +190,43 @@ function QuickNoteComponent() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [handleSave, handleEsc, closeWindow])
 
+  // Only apply the semi-transparent tint on macOS, where the BrowserWindow has
+  // vibrancy + transparent bg and the blur needs to show through. On Windows/Linux
+  // the window bg is solid, so a partial tint would darken the effective color
+  // (especially noticeable with light themes).
+  const isMacElectron = isElectron() && /Mac/.test(navigator.userAgent)
+
+  // index.css applies `body { bg-bg }` globally which blocks vibrancy from
+  // showing through. Override it on the Quick Note macOS route so the frosted
+  // blur is actually visible. This window is dedicated (only loads /quick-note)
+  // so we don't need to restore on unmount.
+  React.useEffect(() => {
+    if (!isMacElectron) return
+    document.documentElement.style.backgroundColor = "transparent"
+    document.body.style.backgroundColor = "transparent"
+    const root = document.getElementById("root")
+    if (root) root.style.backgroundColor = "transparent"
+  }, [isMacElectron])
+
+  // Fade the editor's top & bottom edges into transparency so text scrolling
+  // under the titlebar / over the toolbar doesn't hard-cut at the boundary.
+  // Matches the pattern already used on tab close buttons (titlebar.tsx:147).
+  const editorFadeMask =
+    "linear-gradient(to bottom, transparent 0, black 12px, black calc(100% - 14px), transparent 100%)"
+
   return (
-    <div className="flex h-screen flex-col bg-bg font-content text-text">
+    <div
+      className={
+        isMacElectron
+          ? "flex h-screen flex-col font-content text-text"
+          : "flex h-screen flex-col bg-bg font-content text-text"
+      }
+      style={
+        isMacElectron
+          ? { backgroundColor: "color-mix(in srgb, var(--color-bg) 30%, transparent)" }
+          : undefined
+      }
+    >
       {/* Header — draggable, with traffic light space on left */}
       <div
         className="flex h-[38px] shrink-0 items-center justify-between px-3"
@@ -217,7 +262,10 @@ function QuickNoteComponent() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-auto px-4 pt-2 pb-3">
+      <div
+        className="flex-1 overflow-auto px-4 pt-3 pb-2"
+        style={{ maskImage: editorFadeMask, WebkitMaskImage: editorFadeMask }}
+      >
         <NoteEditor
           ref={editorRef}
           defaultValue={content}
@@ -227,8 +275,25 @@ function QuickNoteComponent() {
           onChange={handleChange}
           minHeight={200}
           livePreview
+          onStateChange={(update) => {
+            if (update.selectionSet || update.docChanged) {
+              setSelTick((t) => t + 1)
+            }
+          }}
         />
       </div>
+
+      {/* Pinned format toolbar */}
+      {editorRef.current?.view ? (
+        <div className="shrink-0 px-2 py-1">
+          <FormatToolbar
+            variant="pinned"
+            editorView={editorRef.current.view}
+            selectionFrom={editorRef.current.view.state.selection.main.from}
+            selectionTo={editorRef.current.view.state.selection.main.to}
+          />
+        </div>
+      ) : null}
 
       {/* Footer */}
       <div className="shrink-0 px-4 py-1.5">
