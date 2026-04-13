@@ -17,7 +17,7 @@ export function NavBar() {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false)
 
   return (
-    <div className="border-t border-border-secondary">
+    <div className="select-none border-t border-border-secondary">
       <SignInBanner />
       <div className="flex h-(--height-nav-bar) items-stretch  p-2 [&>button]:h-full">
         <Drawer.Root

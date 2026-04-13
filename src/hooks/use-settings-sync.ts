@@ -76,10 +76,7 @@ export function useSettingsSync() {
   }, [])
 }
 
-/**
- * Save current settings to the repo. Call after any setting change.
- */
-export async function saveSettingsToRepo(): Promise<void> {
+async function saveSettingsToRepoNow(): Promise<void> {
   try {
     const settings = collectSettingsFromLocalStorage()
     const existing = await readSettingsFromRepo()
@@ -92,4 +89,36 @@ export async function saveSettingsToRepo(): Promise<void> {
   } catch (error) {
     console.error("Failed to save settings to repo:", error)
   }
+}
+
+// Trailing-edge debounce (500ms) so rapid successive changes — e.g. drag-
+// reordering pinned notes a few times in a row — collapse into one git
+// commit instead of racing with isomorphic-git's file lock. `flush` forces
+// an immediate save when the caller needs it (settings page unmount).
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
+let inFlight: Promise<void> | null = null
+
+/**
+ * Save current settings to the repo. Debounced by 500ms. Safe to call rapidly.
+ */
+export function saveSettingsToRepo(): void {
+  if (saveTimeout) clearTimeout(saveTimeout)
+  saveTimeout = setTimeout(() => {
+    saveTimeout = null
+    // Chain onto any in-flight save so we never have two concurrent git writes.
+    inFlight = (inFlight ?? Promise.resolve()).then(saveSettingsToRepoNow)
+  }, 500)
+}
+
+/**
+ * Force an immediate save, awaiting any pending debounce + in-flight write.
+ * Use before unmount / navigation when the caller needs persistence completed.
+ */
+export async function flushSettingsToRepo(): Promise<void> {
+  if (saveTimeout) {
+    clearTimeout(saveTimeout)
+    saveTimeout = null
+  }
+  inFlight = (inFlight ?? Promise.resolve()).then(saveSettingsToRepoNow)
+  await inFlight
 }

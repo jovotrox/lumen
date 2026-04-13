@@ -16,6 +16,7 @@ export function WebsiteFavicon({
     <img
       aria-hidden
       alt=""
+      draggable={false}
       className={cx("inline-block size-icon rounded-none! object-contain", className)}
       style={{ width: size, height: size, ...style }}
       src={`https://t3.gstatic.com/faviconV2?client=SOCIAL&type=FAVICON&fallback_opts=TYPE,SIZE,URL&url=${encodeURIComponent(

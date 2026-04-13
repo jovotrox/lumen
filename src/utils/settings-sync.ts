@@ -36,6 +36,8 @@ export type SyncedSettings = {
   nudgeInactiveProjectDays?: number
   nudgeInboxThreshold?: number
   nudgeNotificationsEnabled?: boolean
+  /** User-defined order of pinned notes in the sidebar (array of note IDs) */
+  pinnedOrder?: string[]
 }
 
 /** localStorage keys mapped to SyncedSettings keys */
@@ -59,6 +61,7 @@ export const settingsKeyMap: { localStorageKey: string; settingsKey: keyof Synce
   { localStorageKey: "nudge_inactive_project_days", settingsKey: "nudgeInactiveProjectDays" },
   { localStorageKey: "nudge_inbox_threshold", settingsKey: "nudgeInboxThreshold" },
   { localStorageKey: "nudge_notifications_enabled", settingsKey: "nudgeNotificationsEnabled" },
+  { localStorageKey: "pinned-order", settingsKey: "pinnedOrder" },
 ]
 
 /**

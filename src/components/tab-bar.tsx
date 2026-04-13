@@ -19,7 +19,7 @@ export function TabBar() {
   if (tabs.length <= 1) return null
 
   return (
-    <div className="flex shrink-0 items-center gap-0 overflow-x-auto border-b border-border-secondary bg-bg-secondary scrollbar-hide print:hidden">
+    <div className="flex shrink-0 select-none items-center gap-0 overflow-x-auto border-b border-border-secondary bg-bg-secondary scrollbar-hide print:hidden">
       {tabs.map((tab, i) => {
         const isActive = i === activeTabIndex
         return (
