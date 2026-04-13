@@ -21,37 +21,40 @@ import {
 } from "./icons"
 import { generateNoteId } from "../utils/note-id"
 
-const iconClass = "size-3.5 shrink-0 opacity-70"
+// Custom 16x16 SVG icons scale well at 14px
+const icon16 = "size-3.5 shrink-0 opacity-70"
+// Lucide 24x24 icons need to be smaller to visually match
+const iconLucide = "size-3 shrink-0 opacity-70"
 
 function TabIcon({ tab }: { tab: Tab }) {
   switch (tab.icon) {
     case "daily": {
       const match = tab.path.match(/\/notes\/\d{4}-\d{2}-(\d{2})/)
       const day = match ? parseInt(match[1], 10) : undefined
-      return <CalendarDateIcon16 date={day} className={iconClass} />
+      return <CalendarDateIcon16 date={day} className={icon16} />
     }
     case "weekly":
     case "calendar":
-      return <CalendarIcon16 className={iconClass} />
+      return <CalendarIcon16 className={icon16} />
     case "home":
-      return <Home className={iconClass} />
+      return <Home className={iconLucide} />
     case "inbox":
-      return <Inbox className={iconClass} />
+      return <Inbox className={iconLucide} />
     case "project":
-      return <FolderOpen className={iconClass} />
+      return <FolderOpen className={iconLucide} />
     case "tasks":
-      return <TaskListIcon16 className={iconClass} />
+      return <TaskListIcon16 className={icon16} />
     case "links":
-      return <LinkIcon className={iconClass} />
+      return <LinkIcon className={iconLucide} />
     case "people":
     case "person":
-      return <User className={iconClass} />
+      return <User className={iconLucide} />
     case "tags":
-      return <TagIcon16 className={iconClass} />
+      return <TagIcon16 className={icon16} />
     case "settings":
-      return <Settings className={iconClass} />
+      return <Settings className={iconLucide} />
     default:
-      return <NoteIcon16 className={iconClass} />
+      return <NoteIcon16 className={icon16} />
   }
 }
 
