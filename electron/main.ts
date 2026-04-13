@@ -237,10 +237,7 @@ function createQuickNoteWindow(): void {
     resizable: true,
     minimizable: false,
     maximizable: false,
-    titleBarStyle: "customButtonsOnHover",
-    titleBarOverlay: false,
-    transparent: false,
-    frame: false,
+    titleBarStyle: "hiddenInset",
     title: "Quick Note",
     webPreferences: {
       contextIsolation: true,
