@@ -140,7 +140,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
             title={event.calendar || undefined}
           >
             <span
-              className="w-[44px] shrink-0 text-sm font-medium tabular-nums"
+              className="shrink-0 text-sm font-medium tabular-nums"
               style={{ color: event.color }}
             >
               {formatStartTime(event)}
