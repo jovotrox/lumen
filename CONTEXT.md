@@ -272,10 +272,14 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 
 ### v0.3.0 — 2026-04-13
 
-- **feat: Calendar v2 (ICS-based, cross-platform)**
+- **feat: Calendar v2 (multi-feed ICS, cross-platform)**
   - Reemplaza la integración EventKit/Swift (rota en macOS 14+ por bundleID nil)
+  - **Multi-calendar**: lista de feeds, cada uno con name + URL + color + enabled toggle
+  - Palette de 8 colores estilo Apple (FEED_COLORS)
+  - Settings UI: lista con inline rename, color swatch clickeable, per-feed toggle, Remove button, Add form con Test
+  - Eventos de todos los feeds habilitados se mergean, ordenados por hora (all-day primero)
+  - Cada evento muestra el color de su feed
   - Nueva `src/utils/calendar-ics.ts` con parser `ical.js` (soporta RRULE, all-day, webcal://)
-  - Settings: input de URL pública + botón Test + guía de cómo obtener URL (iCloud/Google/Outlook)
   - Funciona en **macOS + Windows + Linux + Web + PWA** (sin permisos de sistema)
   - Usa `electron:fetch` IPC en desktop (bypasa CORS); en browser usa fetch nativo
   - Cache local 5min por URL+fecha
