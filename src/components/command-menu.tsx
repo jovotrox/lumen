@@ -391,8 +391,9 @@ export function CommandMenu() {
                   description={pluralize(noteIds.length, "note")}
                   onSelect={handleSelect(() =>
                     navigate({
-                      to: "/",
-                      search: { query: `tag:${name}`, view: "grid" },
+                      to: "/tags/$",
+                      params: { _splat: name },
+                      search: { query: undefined, view: "grid" },
                     }),
                   )}
                 >

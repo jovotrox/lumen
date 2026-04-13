@@ -180,7 +180,11 @@ function RouteComponent() {
             {searchResults.map(([tag, noteIds]) => (
               <li key={tag}>
                 <PillButton asChild>
-                  <Link to="/" search={{ query: `tag:${tag}`, view: "grid" }}>
+                  <Link
+                    to="/tags/$"
+                    params={{ _splat: tag }}
+                    search={{ query: undefined, view: "grid" }}
+                  >
                     {tag}
                     <span className="text-text-secondary">{noteIds.length}</span>
                   </Link>
@@ -278,7 +282,11 @@ function TagTreeItem({ node, path = [], depth = 0 }: TagTreeItemProps) {
     <li className="flex flex-col gap-3">
       <div className="flex items-center gap-0.5" style={{ paddingLeft: `calc(${depth} * 1.5rem)` }}>
         <PillButton asChild>
-          <Link to="/" search={{ query: `tag:${[...path, node.name].join("/")}`, view: "grid" }}>
+          <Link
+            to="/tags/$"
+            params={{ _splat: [...path, node.name].join("/") }}
+            search={{ query: undefined, view: "grid" }}
+          >
             {node.name}
             <span className="text-text-secondary">{node.count}</span>
           </Link>
