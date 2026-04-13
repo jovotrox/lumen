@@ -3,9 +3,10 @@ import React, { useDeferredValue, useMemo } from "react"
 import { Link, useNavigate } from "@tanstack/react-router"
 import { globalStateMachineAtom, peopleAtom, tasksAtom } from "../global-state"
 import { generateNoteId } from "../utils/note-id"
-import { Plus } from "lucide-react"
+import { Plus, Search, Users } from "lucide-react"
 import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
+import { EmptyState } from "./empty-state"
 import { IconButton } from "./icon-button"
 import { GridIcon16, ListIcon16 } from "./icons"
 import type { Note } from "../schema"
@@ -95,11 +96,19 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
         </DropdownMenu>
       </div>
       {filteredPeople.length === 0 ? (
-        <div className="text-text-secondary text-sm">
-          {people.length === 0
-            ? "No people yet. Create a note with type: person in frontmatter."
-            : "No people match your search."}
-        </div>
+        people.length === 0 ? (
+          <EmptyState
+            icon={<Users size={28} />}
+            title="No people yet"
+            description="Add `type: person` to a note's frontmatter to track contacts."
+          />
+        ) : (
+          <EmptyState
+            icon={<Search size={28} />}
+            title="No matches"
+            description="Try different search terms or clear the filter."
+          />
+        )
       ) : (
         <ul className="flex flex-col gap-2">
           {filteredPeople.map((person) => (

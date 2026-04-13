@@ -734,9 +734,31 @@ export const sortedNotesAtom = atom((get) => {
   })
 })
 
+// User-defined order for pinned notes (drag-to-reorder in the sidebar).
+// Array of note IDs. Synced via .lumen/settings.json so the order propagates
+// across devices. New pins (not yet in this list) fall back to the default
+// timestamp-based sort from sortedNotesAtom.
+export const pinnedOrderAtom = atomWithStorage<string[]>("pinned-order", [])
+
 export const pinnedNotesAtom = atom((get) => {
   const sortedNotes = get(sortedNotesAtom)
-  return sortedNotes.filter((note) => note.pinned)
+  const pinnedNotes = sortedNotes.filter((note) => note.pinned)
+  const order = get(pinnedOrderAtom)
+  if (order.length === 0) return pinnedNotes
+
+  const byId = new Map(pinnedNotes.map((n) => [n.id, n]))
+  const ordered: typeof pinnedNotes = []
+  // First: notes in user-defined order that are still pinned
+  for (const id of order) {
+    const note = byId.get(id)
+    if (note) {
+      ordered.push(note)
+      byId.delete(id)
+    }
+  }
+  // Then: newly pinned notes not yet registered in order — keep timestamp sort
+  for (const note of byId.values()) ordered.push(note)
+  return ordered
 })
 
 export const noteSearcherAtom = atom((get) => {

@@ -136,5 +136,17 @@ module.exports = {
     plugin(function ({ addVariant }) {
       addVariant("epaper", "[data-epaper] &")
     }),
+    // Cross-browser scrollbar hiding for horizontal chrome scroll (titlebar tabs, tab bar).
+    // Before this utility was defined, the class was used but silently missing in the
+    // build, leaking default scrollbars on some browsers.
+    plugin(function ({ addUtilities }) {
+      addUtilities({
+        ".scrollbar-hide": {
+          "-ms-overflow-style": "none",
+          "scrollbar-width": "none",
+          "&::-webkit-scrollbar": { display: "none" },
+        },
+      })
+    }),
   ],
 }

@@ -236,7 +236,10 @@ export function DashboardView() {
 
       {/* Greeting */}
       <section className="flex flex-col gap-3">
-        <h1 className="font-bold tracking-tight" style={{ fontSize: "2rem", lineHeight: 1.1 }}>
+        <h1
+          className="select-none font-bold tracking-tight"
+          style={{ fontSize: "2rem", lineHeight: 1.1 }}
+        >
           {getGreeting()}
           {nickname ? `, ${nickname}` : ""}.
         </h1>
@@ -599,7 +602,9 @@ function DashboardSection({
 }) {
   return (
     <section className="card-1 flex flex-col gap-3 rounded-lg p-4">
-      <h2 className={`flex items-center gap-2 text-sm font-bold ${titleClassName ?? ""}`}>
+      <h2
+        className={`flex select-none items-center gap-2 text-sm font-bold ${titleClassName ?? ""}`}
+      >
         {icon}
         {title}
         {count != null ? (

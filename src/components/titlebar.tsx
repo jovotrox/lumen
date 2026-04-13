@@ -81,7 +81,7 @@ export function Titlebar() {
   return (
     <div
       className={cx(
-        "flex h-[38px] shrink-0 items-center print:hidden",
+        "flex h-[38px] shrink-0 select-none items-center print:hidden",
         tabs.length > 0 ? "bg-bg-secondary" : "bg-bg",
       )}
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}

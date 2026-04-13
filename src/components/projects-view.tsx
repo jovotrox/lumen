@@ -1,11 +1,12 @@
 import { useAtomValue, useSetAtom } from "jotai"
 import React, { useDeferredValue, useMemo } from "react"
 import { Link, useNavigate } from "@tanstack/react-router"
-import { Calendar, CheckSquare, Plus, User } from "lucide-react"
+import { Calendar, CheckSquare, FolderKanban, Plus, Search, User } from "lucide-react"
 import { globalStateMachineAtom, projectsAtom } from "../global-state"
 import { generateNoteId } from "../utils/note-id"
 import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
+import { EmptyState } from "./empty-state"
 import { IconButton } from "./icon-button"
 import { GridIcon16, ListIcon16 } from "./icons"
 import type { Note } from "../schema"
@@ -83,11 +84,19 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
         </DropdownMenu>
       </div>
       {filteredProjects.length === 0 ? (
-        <div className="text-text-secondary text-sm">
-          {projects.length === 0
-            ? "No projects yet. Create a note with type: project in frontmatter."
-            : "No projects match your search."}
-        </div>
+        projects.length === 0 ? (
+          <EmptyState
+            icon={<FolderKanban size={28} />}
+            title="No projects yet"
+            description="Add `type: project` to a note's frontmatter to start tracking."
+          />
+        ) : (
+          <EmptyState
+            icon={<Search size={28} />}
+            title="No matches"
+            description="Try different search terms or clear the filter."
+          />
+        )
       ) : (
         <ul className="flex flex-col gap-2">
           {filteredProjects.map((project) => (

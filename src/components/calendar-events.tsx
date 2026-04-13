@@ -10,6 +10,7 @@ import {
   notesAtom,
 } from "../global-state"
 import { CalendarEvent, fetchAllFeedsEvents, invalidateCalendarCache } from "../utils/calendar"
+import { Skeleton } from "./skeleton"
 
 /** Format an event's start time as HH:MM (24h), or "All day" for all-day events. */
 function formatStartTime(event: CalendarEvent): string {
@@ -129,7 +130,20 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
       </div>
     )
   }
-  if (loading && events.length === 0) return null
+  // Initial load with no cached events yet: render skeleton rows so the
+  // daily note has stable vertical rhythm while the ICS fetch is in-flight.
+  if (loading && events.length === 0) {
+    return (
+      <div className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
+        {[0, 1, 2].map((i) => (
+          <div key={i} className="flex items-center gap-2 px-2.5 py-1">
+            <Skeleton className="h-3 w-10 shrink-0" />
+            <Skeleton className={i === 1 ? "h-3 w-40" : i === 0 ? "h-3 w-56" : "h-3 w-32"} />
+          </div>
+        ))}
+      </div>
+    )
+  }
   if (events.length === 0 && errors.length === 0) return null
 
   return (

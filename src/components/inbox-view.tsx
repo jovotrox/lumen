@@ -25,8 +25,10 @@ import {
 import { SearchInput } from "./search-input"
 import { Button } from "./button"
 import { DropdownMenu } from "./dropdown-menu"
+import { EmptyState } from "./empty-state"
 import { Tooltip } from "./tooltip"
 import { LoadingIcon16 } from "./icons"
+import { Search } from "lucide-react"
 import { classifyInboxItem, type InboxSuggestion } from "../utils/ai-classify"
 import { updateFrontmatterValue } from "../utils/frontmatter"
 import { toDateString } from "../utils/date"
@@ -70,11 +72,19 @@ export function InboxView({ query, onQueryChange }: InboxViewProps) {
         />
       </div>
       {filtered.length === 0 ? (
-        <div className="text-text-secondary text-sm">
-          {inboxItems.length === 0
-            ? "Inbox is empty. Use Quick Note in Inbox mode to capture items."
-            : "No inbox items match your search."}
-        </div>
+        inboxItems.length === 0 ? (
+          <EmptyState
+            icon={<InboxIcon size={28} />}
+            title="Inbox zero"
+            description="Nothing to triage. Capture thoughts with ⌥⇧N in Inbox mode."
+          />
+        ) : (
+          <EmptyState
+            icon={<Search size={28} />}
+            title="No matches"
+            description="Try different search terms."
+          />
+        )
       ) : (
         <ul className="flex flex-col gap-3">
           {filtered.map((item) => (

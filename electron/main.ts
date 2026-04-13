@@ -93,6 +93,11 @@ function createMainWindow(): void {
     minHeight: 600,
     titleBarStyle: "hiddenInset",
     title: "Lumen Notes",
+    // Match default dark theme bg (--color-bg / sand-1) so there's no white
+    // flash before React mounts. `show: false` + `ready-to-show` ensures the
+    // window only appears once the HTML is parsed.
+    backgroundColor: "#111110",
+    show: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -101,9 +106,12 @@ function createMainWindow(): void {
     },
   })
 
-  if (windowState.isMaximized) {
-    mainWindow.maximize()
-  }
+  mainWindow.once("ready-to-show", () => {
+    mainWindow?.show()
+    if (windowState.isMaximized) {
+      mainWindow?.maximize()
+    }
+  })
 
   // Save window state on resize and move (debounced to avoid excessive writes)
   let saveTimeout: ReturnType<typeof setTimeout> | null = null

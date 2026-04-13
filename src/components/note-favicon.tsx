@@ -60,6 +60,7 @@ export const NoteFavicon = React.memo(
           src={`/api/tmdb-poster?imdbId=${imdbId}&size=w92`}
           alt=""
           aria-hidden
+          draggable={false}
         />
       )
     }
@@ -73,6 +74,7 @@ export const NoteFavicon = React.memo(
           src={`https://covers.openlibrary.org/b/isbn/${note.frontmatter.isbn}-S.jpg`}
           alt=""
           aria-hidden
+          draggable={false}
         />
       )
     }

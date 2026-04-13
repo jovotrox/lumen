@@ -33,14 +33,15 @@ declare module "@tanstack/react-router" {
 }
 
 // Render the app
+// Note: `createRoot().render()` replaces the root element's existing children
+// on first render — this is what lets our pre-React splash in index.html be
+// swapped out cleanly once the bundle is ready.
 const rootElement = document.getElementById("root")!
-if (!rootElement.innerHTML) {
-  const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <Tooltip.Provider delay={200}>
-        <RouterProvider router={router} />
-      </Tooltip.Provider>
-    </StrictMode>,
-  )
-}
+const root = ReactDOM.createRoot(rootElement)
+root.render(
+  <StrictMode>
+    <Tooltip.Provider delay={200}>
+      <RouterProvider router={router} />
+    </Tooltip.Provider>
+  </StrictMode>,
+)

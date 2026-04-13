@@ -10,8 +10,36 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon-512.png" />
     <meta name="theme-color" content="" />
   </head>
-  <body>
-    <div id="root"></div>
+  <body style="margin: 0; background: #111110">
+    <div id="root">
+      <!-- Pre-React splash: dark bg + centered Lumen logo in a slightly lighter
+           tone. React replaces this content on first render. Prevents white
+           flash while the SPA bundle loads. -->
+      <div
+        id="splash"
+        style="
+          position: fixed;
+          inset: 0;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: #111110;
+          z-index: 0;
+        "
+      >
+        <svg
+          width="72"
+          height="72"
+          viewBox="0 0 32 32"
+          fill="rgba(255, 255, 255, 0.08)"
+          aria-hidden="true"
+        >
+          <path
+            d="M20 9c0-3.403-2.228-5-4-5-1.772 0-4 1.597-4 5 0 4.787 2.386 9.004 6.142 12.077C21.91 24.161 26.962 26 32 26v4c-5.963 0-11.91-2.16-16.392-5.827C11.114 20.496 8 15.213 8 9c0-5.358 3.772-9 8-9s8 3.642 8 9c0 3.502-.99 6.709-2.658 9.499-.228-.168-.45-.34-.668-.518a14.558 14.558 0 0 1-2.309-2.353A14.304 14.304 0 0 0 20 9ZM9.55 23.801a26.691 26.691 0 0 0 2.95 2.983C8.72 28.843 4.365 30 0 30v-4c3.298 0 6.603-.789 9.55-2.199Z"
+          />
+        </svg>
+      </div>
+    </div>
     <script>
       // GitHub Pages SPA redirect handler
       ;(function () {

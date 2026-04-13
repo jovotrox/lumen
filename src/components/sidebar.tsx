@@ -17,7 +17,7 @@ export function Sidebar() {
   const isDesktop = isElectron() || isTauri()
 
   return (
-    <div className="flex h-full flex-col overflow-hidden border-r border-border-secondary">
+    <div className="flex h-full select-none flex-col overflow-hidden border-r border-border-secondary">
       {/* On desktop, sidebar toggle + nav are in the Titlebar */}
       {!isDesktop ? (
         <div

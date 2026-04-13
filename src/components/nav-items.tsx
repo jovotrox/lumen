@@ -2,14 +2,32 @@ import { FolderOpen, Home, Inbox, User } from "lucide-react"
 import { Link, LinkComponentProps, useLocation } from "@tanstack/react-router"
 import { useAtom, useAtomValue, useSetAtom } from "jotai"
 import { selectAtom } from "jotai/utils"
-import { createContext, useContext } from "react"
+import { createContext, useContext, useState } from "react"
 import { useNetworkState } from "react-use"
 import { useRegisterSW } from "virtual:pwa-register/react"
+import {
+  DndContext,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  DragOverlay,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import type { Note } from "../schema"
 import {
   globalStateMachineAtom,
   isHelpPanelOpenAtom,
   notesAtom,
   pinnedNotesAtom,
+  pinnedOrderAtom,
   unprocessedInboxCountAtom,
 } from "../global-state"
 import { cx } from "../utils/cx"
@@ -44,12 +62,31 @@ export function NavItems({
   onNavigate?: () => void
 }) {
   const pinnedNotes = useAtomValue(pinnedNotesAtom)
+  const setPinnedOrder = useSetAtom(pinnedOrderAtom)
   const hasDailyNote = useAtomValue(hasDailyNoteAtom)
   const inboxCount = useAtomValue(unprocessedInboxCountAtom)
   const syncText = useSyncStatusText()
   const send = useSetAtom(globalStateMachineAtom)
   const { online } = useNetworkState()
   const { pathname } = useLocation()
+
+  // Drag-to-reorder for pinned notes.
+  // activationConstraint: distance=5px so a plain click still navigates —
+  // only actual dragging engages the sortable machinery.
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  const [draggingId, setDraggingId] = useState<string | null>(null)
+  const draggingNote = draggingId ? pinnedNotes.find((n) => n.id === draggingId) : null
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    setDraggingId(null)
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+    const ids = pinnedNotes.map((n) => n.id)
+    const oldIndex = ids.indexOf(active.id as string)
+    const newIndex = ids.indexOf(over.id as string)
+    if (oldIndex === -1 || newIndex === -1) return
+    setPinnedOrder(arrayMove(ids, oldIndex, newIndex))
+  }
 
   const today = new Date()
   const todayString = toDateString(today)
@@ -190,31 +227,41 @@ export function NavItems({
           </ul>
           {pinnedNotes.length > 0 ? (
             <div className="flex flex-col gap-1">
-              <div className="flex h-8 items-center px-2 text-sm text-text-secondary coarse:h-10 coarse:px-3">
+              <div className="flex h-8 select-none items-center px-2 text-sm text-text-secondary coarse:h-10 coarse:px-3">
                 Pinned
               </div>
-              <ul className="flex flex-col gap-1">
-                {pinnedNotes.map((note) => (
-                  <li key={note.id} className="flex">
-                    <NavLink
-                      key={note.id}
-                      to="/notes/$"
-                      params={{ _splat: note.id }}
-                      search={{ mode: "read", query: undefined, view: "grid" }}
-                      icon={
-                        <NoteFavicon
-                          note={note}
-                          className="epaper:[[aria-current=page]_&]:text-bg"
-                        />
-                      }
-                      className="w-0 flex-1"
-                      onNavigate={onNavigate}
-                    >
-                      {note.displayName}
-                    </NavLink>
-                  </li>
-                ))}
-              </ul>
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={(e) => setDraggingId(e.active.id as string)}
+                onDragCancel={() => setDraggingId(null)}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={pinnedNotes.map((n) => n.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  <ul className="flex flex-col gap-1">
+                    {pinnedNotes.map((note) => (
+                      <SortablePinnedItem key={note.id} note={note} onNavigate={onNavigate} />
+                    ))}
+                  </ul>
+                </SortableContext>
+                <DragOverlay
+                  dropAnimation={{ duration: 180, easing: "cubic-bezier(0.2, 0, 0, 1)" }}
+                >
+                  {draggingNote ? (
+                    <div className="cursor-grabbing rounded bg-bg-secondary shadow-lg opacity-90">
+                      <div className="nav-item pointer-events-none">
+                        <span className="flex shrink-0 text-text-secondary">
+                          <NoteFavicon note={draggingNote} />
+                        </span>
+                        <span className="truncate">{draggingNote.displayName}</span>
+                      </div>
+                    </div>
+                  ) : null}
+                </DragOverlay>
+              </DndContext>
             </div>
           ) : null}
         </div>
@@ -308,6 +355,32 @@ function NavLink({
       </span>
       <span className="truncate">{children}</span>
     </Link>
+  )
+}
+
+function SortablePinnedItem({ note, onNavigate }: { note: Note; onNavigate?: () => void }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id: note.id,
+  })
+  const style: React.CSSProperties = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    // Hide the original item while dragging — DragOverlay shows the moving duplicate.
+    opacity: isDragging ? 0 : 1,
+  }
+  return (
+    <li ref={setNodeRef} style={style} className="flex" {...attributes} {...listeners}>
+      <NavLink
+        to="/notes/$"
+        params={{ _splat: note.id }}
+        search={{ mode: "read", query: undefined, view: "grid" }}
+        icon={<NoteFavicon note={note} className="epaper:[[aria-current=page]_&]:text-bg" />}
+        className="w-0 flex-1"
+        onNavigate={onNavigate}
+      >
+        {note.displayName}
+      </NavLink>
+    </li>
   )
 }
 

@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-13 (v0.4.0)
+**Ultima actualizacion:** 2026-04-13 (v0.5.0)
 
 ---
 
@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `personal` (fork personal, rama de compilación)
-- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, Quick Note polish v0.4.0
-- **Version:** 0.4.0
+- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, native-feel polish v0.5.0
+- **Version:** 0.5.0
 
 ### Migracion Tauri → Electron
 
@@ -269,6 +269,17 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.5.0 — 2026-04-13
+
+- **feat: native-feel polish across the app**
+  - **Main window splash**: `BrowserWindow` ahora tiene `backgroundColor: "#111110"` + `show: false` + `ready-to-show` (patrón que ya usaba Quick Note). Además, `index.html` renderiza un splash pre-React con el logo de Lumen centrado en un tono `rgba(255,255,255,0.08)` (apenas más claro que el fondo). React reemplaza el splash al primer render. Adiós flash blanco al abrir la app.
+  - **Pinned notes drag-to-reorder**: `@dnd-kit/core` + `@dnd-kit/sortable`. Cada pinned note es sortable vía `useSortable`. `PointerSensor` con `activationConstraint: { distance: 5 }` para no disparar drag en clicks. `DragOverlay` renderiza el duplicado flotante con opacity 0.9 + shadow. Nuevo atom `pinnedOrderAtom` persiste el orden en localStorage y se sincroniza vía `.lumen/settings.json` como `pinnedOrder: string[]`. Pins nuevos (no registrados en el orden) caen al final con el sort por timestamp default.
+  - **Web-isms removed**: `select-none` en sidebar root, titlebar, tab-bar, nav-bar mobile, command menu items/headings, dashboard h1/h2. `draggable={false}` en todos los `<img>` del chrome (NoteFavicon covers IMDb/ISBN, WebsiteFavicon). La clase `.nav-item` global también tiene `select-none`.
+  - **Scrollbar-hide utility**: plugin nuevo en `tailwind.config.cjs` que define `.scrollbar-hide` cross-browser (`scrollbar-width: none` para Firefox, `::-webkit-scrollbar { display: none }` para Chromium). Antes era una clase usada pero nunca definida — leak de scrollbars default.
+  - **EmptyState + Skeleton components**: nuevos componentes compartidos (`src/components/empty-state.tsx`, `src/components/skeleton.tsx`). EmptyState: ícono + título + descripción + CTA opcional, centrado vertical/horizontal. Skeleton: pulse de Tailwind, con helpers `SkeletonText` y `SkeletonListItem`.
+  - **Empty states aplicados en**: Projects (no projects + no matches), People (no people + no matches), Inbox (inbox zero + no matches). Dashboard ya tenía su propio empty state (celebratorio con Sparkles) — dejamos intacto.
+  - **Skeletons aplicados en**: Calendar events (3 rows durante ICS fetch inicial).
 
 ### v0.4.0 — 2026-04-13
 
