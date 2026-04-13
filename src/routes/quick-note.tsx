@@ -218,9 +218,15 @@ function QuickNoteComponent() {
 
   // Only apply the semi-transparent tint on macOS, where the BrowserWindow has
   // vibrancy + transparent bg and the blur needs to show through. On Windows/Linux
-  // the window bg is solid, so a 70% tint would darken the effective color
+  // the window bg is solid, so a 55% tint would darken the effective color
   // (especially noticeable with light themes).
   const isMacElectron = isElectron() && /Mac/.test(navigator.userAgent)
+
+  // Fade the editor's top & bottom edges into transparency so text scrolling
+  // under the titlebar / over the toolbar doesn't hard-cut at the boundary.
+  // Matches the pattern already used on tab close buttons (titlebar.tsx:147).
+  const editorFadeMask =
+    "linear-gradient(to bottom, transparent 0, black 12px, black calc(100% - 14px), transparent 100%)"
 
   return (
     <div
@@ -231,7 +237,7 @@ function QuickNoteComponent() {
       }
       style={
         isMacElectron
-          ? { backgroundColor: "color-mix(in srgb, var(--color-bg) 70%, transparent)" }
+          ? { backgroundColor: "color-mix(in srgb, var(--color-bg) 55%, transparent)" }
           : undefined
       }
     >
@@ -270,7 +276,10 @@ function QuickNoteComponent() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-auto px-4 pt-3 pb-2">
+      <div
+        className="flex-1 overflow-auto px-4 pt-3 pb-2"
+        style={{ maskImage: editorFadeMask, WebkitMaskImage: editorFadeMask }}
+      >
         <NoteEditor
           ref={editorRef}
           defaultValue={content}
@@ -290,7 +299,7 @@ function QuickNoteComponent() {
 
       {/* Pinned format toolbar */}
       {editorRef.current?.view ? (
-        <div className="shrink-0 border-t border-border-secondary px-2 py-1">
+        <div className="shrink-0 px-2 py-1">
           <FormatToolbar
             variant="pinned"
             editorView={editorRef.current.view}

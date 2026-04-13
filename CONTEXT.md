@@ -282,6 +282,10 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
   - **List toggle fix**: `toggleBulletList`/`toggleNumberedList`/`toggleTaskList` ahora detectan cualquier marker de lista existente (`- `, `- [ ] `, `1. `) y lo REEMPLAZAN en vez de apilarlo. Antes, `bullet → numbered` producía `1. - item` (stacked). Ahora reemplaza correctamente. Factorizado en helper `setListKind(view, "bullet"|"numbered"|"task")`.
   - **Iconos del toolbar**: `Quote` (outline molesta) → `TextQuote` (más limpio); wikilink `[[]]` → `AtSign` para match con el pattern de mentions.
   - **Tooltips**: migración de `title` attribute a `<Tooltip>` de base-ui. Cada botón del FormatToolbar muestra label + shortcut (ej. `Bold ⌘B`) al hover, estilo Raycast. Helper local `ToolbarButton` consolida el pattern.
+  - **Fullscreen disable**: green traffic button deshabilitado (`fullscreenable: false`). No maximiza ni entra a fullscreen — comportamiento esperado para ventana popup.
+  - **Max height 720**: usuario puede redimensionar pero topeado a 720px para evitar Quick Note gigantescos accidentales.
+  - **Gradient fade en edges**: `mask-image` en el editor scroll container hace que el texto que sube/baja fade into transparent en vez de cortarse duro contra header/toolbar. Reemplaza el `border-t` de la toolbar — la separación ahora es natural. Replica el patrón del close button en `titlebar.tsx`.
+  - **Más transparencia**: tint del overlay bajó 70% → 55%. Deja que se vea más el blur de vibrancy de abajo.
 
 ### v0.3.0 — 2026-04-13
 

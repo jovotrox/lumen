@@ -167,11 +167,13 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
   quickNoteWindow = new BrowserWindow({
     width: 460,
     height: 260,
+    maxHeight: 720,
     center: true,
     alwaysOnTop: true,
     resizable: true,
     minimizable: false,
     maximizable: false,
+    fullscreenable: false,
     titleBarStyle: "hiddenInset",
     title: "Quick Note",
     // macOS: transparent bg + vibrancy gives the frosted-glass look.
