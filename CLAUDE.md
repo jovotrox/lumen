@@ -219,10 +219,11 @@ git checkout -b feature/nombre-feature
 
 ```bash
 npm run build          # Verificar que compila sin errores
-npm run format         # Formatear código
 npm run lint           # Verificar linting
+npm run test           # Correr tests
 ```
 
+- **Formato:** no es necesario ejecutar `npm run format` manualmente — el **pre-commit hook** (husky + lint-staged) corre prettier + eslint --fix automáticamente sobre los archivos staged en cada `git commit`.
 - Iniciar dev server para que el usuario pruebe: `npm run electron:dev` (desktop) o `npm run dev` (web)
 - Esperar confirmación del usuario de que funciona correctamente
 
@@ -330,11 +331,11 @@ git push origin personal
 
 Formato: `MAJOR.MINOR.PATCH` (ej: `0.3.1`)
 
-| Tipo de cambio | Bump | Ejemplo |
-|----------------|------|---------|
+| Tipo de cambio                                   | Bump      | Ejemplo           |
+| ------------------------------------------------ | --------- | ----------------- |
 | `fix:`, `chore:`, `docs:`, `refactor:`, `style:` | **PATCH** | `0.2.0` → `0.2.1` |
-| `feat:` (feature visible al usuario) | **MINOR** | `0.2.0` → `0.3.0` |
-| Breaking change, rebrand, nueva arquitectura | **MAJOR** | `0.x.y` → `1.0.0` |
+| `feat:` (feature visible al usuario)             | **MINOR** | `0.2.0` → `0.3.0` |
+| Breaking change, rebrand, nueva arquitectura     | **MAJOR** | `0.x.y` → `1.0.0` |
 
 **Si el branch tiene commits mixtos** (ej: 2 `fix:` + 1 `feat:`), gana el más alto — en ese caso, MINOR.
 
@@ -381,6 +382,7 @@ Cada bump debe agregar una entrada a `CONTEXT.md` en el historial, formato:
 
 ```markdown
 ### v0.3.0 — 2026-04-12
+
 - feat(...): descripción
 - fix(...): descripción
 ```

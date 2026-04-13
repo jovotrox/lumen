@@ -1,7 +1,7 @@
 {
   "name": "lumen",
   "private": true,
-  "version": "0.2.1",
+  "version": "0.2.2",
   "type": "module",
   "main": "electron/dist/main.cjs",
   "scripts": {
@@ -26,7 +26,8 @@
     "electron:build": "npm run build && npm run electron:build-main && electron-builder",
     "electron:pack": "npm run build && npm run electron:build-main && electron-builder --dir",
     "benchmark": "vite-node scripts/benchmark.ts",
-    "postinstall": "patch-package"
+    "postinstall": "patch-package",
+    "prepare": "husky"
   },
   "dependencies": {
     "@ai-sdk/react": "^3.0.6",
@@ -175,6 +176,8 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-storybook": "^0.8.0",
     "http-server": "^14.1.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "patch-package": "^6.4.7",
     "postcss": "^8.4.34",
     "prettier": "^3.4.2",
@@ -198,5 +201,14 @@
     "semi": false,
     "trailingComma": "all",
     "printWidth": 100
+  },
+  "lint-staged": {
+    "*.{js,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{md,json,yml,yaml,css,html}": [
+      "prettier --write"
+    ]
   }
 }

@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-12 (v0.2.1)
+**Ultima actualizacion:** 2026-04-12 (v0.2.2)
 
 ---
 
@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `personal` (fork personal, rama de compilación)
-- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning system activo
-- **Version:** 0.2.1
+- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos
+- **Version:** 0.2.2
 
 ### Migracion Tauri → Electron
 
@@ -257,6 +257,11 @@ El proyecto es un fork MIT de [lumen-notes/lumen](https://github.com/lumen-notes
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.2.2 — 2026-04-12
+
+- **chore:** pre-commit hooks con husky + lint-staged → auto prettier/eslint en archivos staged
+- **fix:** CLAUDE.md reformateado (prettier check failing en CI anterior)
 
 ### v0.2.1 — 2026-04-12
 
