@@ -115,20 +115,24 @@ Lumen is a simple note-taking web application built with React and TypeScript. I
 
 ## Fork Personal - jovotrox
 
-Este es un fork personal con Tauri como wrapper de escritorio para macOS.
+Este es un fork personal con Electron como wrapper de escritorio (migrado de Tauri en v0.2.0).
 
 ### Estructura Adicional
 
 ```
-src-tauri/           # Wrapper Tauri (código custom, no del upstream)
-.env.local           # GitHub OAuth Client ID para Tauri (no se sube a git)
+electron/            # Electron main process, preload, icons
+electron-builder.yml # Configuracion de empaquetado multiplataforma
+src-tauri/           # (Legacy) Wrapper Tauri — será removido
+.env.local           # GitHub OAuth Client ID (no se sube a git)
 ```
 
-### Comandos Tauri
+### Comandos Electron
 
 ```bash
-npm run tauri:dev      # Desarrollo con hot reload (abre ventana nativa)
-npm run tauri:build    # Build producción → Lumen.app
+npm run electron:dev         # Desarrollo (Vite + Electron concurrente)
+npm run electron:build-main  # Compilar main process (tsup)
+npm run electron:build       # Build completo (web + electron + empaquetado)
+npm run electron:pack        # Build sin crear instalador (para testing)
 ```
 
 ### Remotes
@@ -148,13 +152,19 @@ feature/* ← Branches temporales para desarrollo
 
 - Todos los cambios del upstream (proyecto original)
 - Todas las features custom (font-style, OAuth Device Flow, links externos, etc.)
-- Código Tauri para desktop
+- Electron desktop wrapper (main process, preload, IPC)
 
 ### Features Custom Implementadas
 
 | Feature           | Descripción                                        | Archivos Principales                                                           |
 | ----------------- | -------------------------------------------------- | ------------------------------------------------------------------------------ |
-| Tauri Desktop     | Wrapper nativo macOS                               | `src-tauri/*`                                                                  |
+| Electron Desktop  | Wrapper nativo macOS/Win/Linux                     | `electron/main.ts`, `electron/preload.ts`                                      |
+| Native Menubar    | File/Edit/Format/View/Go/Window/Help               | `electron/main.ts`                                                             |
+| Tabs System       | Notion-style tabs en titlebar                      | `src/components/titlebar.tsx`, `src/hooks/use-tabs.ts`                         |
+| Auto-updater      | electron-updater + GitHub Releases                 | `electron/main.ts`                                                             |
+| Protocol Handler  | lumen:// deep links                                | `electron/main.ts`                                                             |
+| Calendar Events   | macOS Calendar.app en daily notes                  | `src/components/calendar-events.tsx`, `src/utils/calendar.ts`                  |
+| Ollama AI         | Local AI sin API key                               | `src/utils/ai-classify.ts`, `src/utils/dashboard-ai.ts`                        |
 | Font Style        | Setting para cambiar tipografía                    | `src/routes/_appRoot.settings.tsx`                                             |
 | OAuth Device Flow | Login GitHub sin servidor                          | `src/components/github-auth-tauri.tsx`                                         |
 | Links Externos    | Abrir links en navegador sistema                   | `src/hooks/use-external-links.ts`                                              |
@@ -213,7 +223,7 @@ npm run format         # Formatear código
 npm run lint           # Verificar linting
 ```
 
-- Iniciar dev server para que el usuario pruebe: `npm run dev`
+- Iniciar dev server para que el usuario pruebe: `npm run electron:dev` (desktop) o `npm run dev` (web)
 - Esperar confirmación del usuario de que funciona correctamente
 
 #### 4. Commit y merge a personal
@@ -243,20 +253,19 @@ git push origin personal
 - Entrada en el historial de cambios con fecha
 - Pendientes para futuras sesiones
 
-#### 7. Compilar Tauri (si aplica)
+#### 7. Compilar Electron (si aplica)
 
-Solo si los cambios requieren recompilación de la app nativa (cambios que no llegan via web refresh):
+Solo si los cambios requieren recompilación del main process (cambios que no llegan via web refresh):
 
-- Cambios en `src-tauri/*`
-- Cambios en configuración de Tauri
-- Nuevas dependencias nativas
+- Cambios en `electron/main.ts` o `electron/preload.ts`
+- Cambios en `electron-builder.yml`
 
 ```bash
-npm run tauri:build
-cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
+npm run electron:build-main  # Recompilar main process
+npm run electron:pack        # Build completo para testing
 ```
 
-**Nota:** Cambios en React/TypeScript/CSS se reciben automáticamente via GitHub Pages (web) o hot reload (dev).
+**Nota:** Cambios en React/TypeScript/CSS se reciben automáticamente via GitHub Pages (web) o hot reload (dev). Solo cambios al main process de Electron requieren rebuild.
 
 ### Sincronización con Upstream (Automatizada)
 
@@ -295,10 +304,6 @@ git checkout personal
 git fetch upstream
 git merge upstream/main --no-edit
 git push origin personal
-
-# 2. Compilar nueva versión
-npm run tauri:build
-cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 ```
 
 ### Reglas para Claude
@@ -306,11 +311,11 @@ cp -r src-tauri/target/release/bundle/macos/Lumen.app /Applications/
 1. **Siempre trabajar desde `personal`** - Es la rama con todas las features
 2. **NUNCA EDITAR ARCHIVOS DIRECTAMENTE EN `personal`** - Esto incluye TODO tipo de cambio: features, fixes, config, docs, vercel.json, CONTEXT.md updates, CUALQUIER archivo. No hay excepciones. No importa si es "solo un fix pequeño" o "solo un cambio de config". SIEMPRE crear feature branch primero: `git checkout -b feature/nombre`. Si se aprueba un plan, lo primero es crear el branch. Si hay que hacer un hotfix, crear branch. Si hay que actualizar docs, crear branch. SIEMPRE.
 3. **Validar approach** con el usuario antes de implementar cambios significativos
-4. **Probar con tauri:dev** antes de hacer build final
+4. **Probar con electron:dev** antes de hacer build final
 5. **Merge a personal** después de completar cada feature
 6. **Mantener compatibilidad** con upstream para facilitar merges futuros
 7. **No modificar .env.local** - contiene el GitHub OAuth Client ID del usuario
-8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features
+8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features. Para releases: `npm run electron:build`
 9. **OBLIGATORIO: Actualizar CONTEXT.md** después de cada feature nueva o fix de errores importantes - SIEMPRE actualizar antes de terminar la sesión. Sin excepciones.
 10. **Confirmar antes de hacer push** - SIEMPRE pedir confirmación al usuario antes de ejecutar `git push`
 

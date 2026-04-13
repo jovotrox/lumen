@@ -240,6 +240,7 @@ git push origin personal
   - Version bump a 0.2.0, dynamic shell version en deploy
 
 - **Electron v2.0 — Phase 3: Tabs + Multi-window**
+
   - Tab system path-based (soporta cualquier ruta, no solo notas)
   - Notion-style titlebar: drag region, traffic light spacing, tabs integrados
   - Sidebar toggle + nav arrows movidos al titlebar en desktop
@@ -249,6 +250,16 @@ git push origin personal
   - Dynamic CalendarDateIcon con numero del dia en tabs
   - Close button con gradient fade estilo Notion (visible solo en hover)
   - Iconos Lucide consistentes (12px, strokeWidth 1.75) + CalendarDateIcon16 custom (11px)
+
+- **Electron v2.0 — Phase 4: Premium Features**
+  - Ollama local AI: tercer proveedor (sin API key), classify + dashboard summary
+  - macOS Calendar.app integration via Swift EventKit (proper permission request)
+  - Calendar toggle en Settings (solo despues de login, solo desktop)
+  - App icons: nuevo branding cerebro/maceta con gradiente coral
+  - Tray icon Retina: trayTemplate.png + trayTemplate@2x.png (macOS Template convention)
+  - Favicon SVG actualizado con nuevo diseño
+  - Quick Note nativo: hiddenInset titlebar, frameless look, same bg-bg
+  - Titlebar adaptivo: bg-bg sin tabs, bg-bg-secondary con tabs
 
 ### 2026-04-11
 
