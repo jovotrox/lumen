@@ -271,9 +271,10 @@ function showMainWindow(): void {
 // ---------------------------------------------------------------------------
 
 function createTray(): void {
-  const iconPath = path.join(__dirname, "..", "icons", "tray-icon.png")
+  // Use "Template" naming convention — macOS auto-picks @2x for Retina
+  // and handles light/dark mode automatically for template images
+  const iconPath = path.join(__dirname, "..", "icons", "trayTemplate.png")
   const icon = nativeImage.createFromPath(iconPath)
-  icon.setTemplateImage(true)
 
   tray = new Tray(icon)
   tray.setToolTip("Lumen")
