@@ -177,12 +177,13 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
     titleBarStyle: "hiddenInset",
     title: "Quick Note",
     // macOS: transparent bg + vibrancy gives the frosted-glass look.
-    // `transparent: true` is required for the vibrancy blur to actually show
-    // through — without it the window composites over an opaque buffer.
+    // NOTE: deliberately NOT using `transparent: true` — it breaks mouse
+    // event delivery and focus/traffic-light behavior on macOS with vibrancy.
+    // The actual fix for "blur shows through" is overriding body/html bg
+    // to transparent in the renderer (see quick-note.tsx).
     backgroundColor: isMac ? "#00000000" : "#0a0a0a",
     ...(isMac
       ? ({
-          transparent: true,
           vibrancy: "under-window",
           visualEffectState: "active",
         } as const)
