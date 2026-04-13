@@ -1100,7 +1100,13 @@ export const claudeApiKeyAtom = atomWithStorage<string>(CLAUDE_KEY_STORAGE_KEY, 
 
 export const hasClaudeKeyAtom = selectAtom(claudeApiKeyAtom, (key) => key !== "")
 
-export const aiProviderAtom = atomWithStorage<"openai" | "claude">("ai_provider", "openai")
+export const aiProviderAtom = atomWithStorage<"openai" | "claude" | "ollama">(
+  "ai_provider",
+  "openai",
+)
+
+export const ollamaUrlAtom = atomWithStorage<string>("ollama_url", "http://localhost:11434")
+export const ollamaModelAtom = atomWithStorage<string>("ollama_model", "llama3.2")
 
 export const quickNoteModeAtom = atomWithStorage<"note" | "inbox">("quick_note_mode", "inbox")
 

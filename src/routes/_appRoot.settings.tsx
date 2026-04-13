@@ -33,6 +33,8 @@ import {
   nudgeInboxThresholdAtom,
   nudgeNotificationsAtom,
   nudgeStaleTaskDaysAtom,
+  ollamaModelAtom,
+  ollamaUrlAtom,
   tempUnitAtom,
   isRepoClonedAtom,
   isRepoNotClonedAtom,
@@ -640,12 +642,35 @@ function AISection() {
   const hasOpenAIKey = useAtomValue(hasOpenAIKeyAtom)
   const [voiceAssistantEnabled, setVoiceAssistantEnabled] = useAtom(voiceAssistantEnabledAtom)
   const [aiProvider, setAiProvider] = useAtom(aiProviderAtom)
+  const [ollamaUrl, setOllamaUrl] = useAtom(ollamaUrlAtom)
+  const [ollamaModel, setOllamaModel] = useAtom(ollamaModelAtom)
+  const [ollamaStatus, setOllamaStatus] = useState<"idle" | "checking" | "ok" | "error">("idle")
+
+  const checkOllamaConnection = React.useCallback(async () => {
+    setOllamaStatus("checking")
+    try {
+      const response = await fetch(`${ollamaUrl}/api/tags`, { signal: AbortSignal.timeout(3000) })
+      setOllamaStatus(response.ok ? "ok" : "error")
+    } catch {
+      setOllamaStatus("error")
+    }
+  }, [ollamaUrl])
+
+  React.useEffect(() => {
+    if (aiProvider === "ollama") {
+      checkOllamaConnection()
+    }
+  }, [aiProvider, checkOllamaConnection])
 
   return (
     <SettingsSection title="AI">
       <div className="flex flex-col gap-4">
-        <OpenAIKeyInput />
-        <AIKeyInput label="Claude key" atom={claudeApiKeyAtom} placeholder="sk-ant-…" />
+        {aiProvider !== "ollama" ? (
+          <>
+            <OpenAIKeyInput />
+            <AIKeyInput label="Claude key" atom={claudeApiKeyAtom} placeholder="sk-ant-..." />
+          </>
+        ) : null}
         <div role="separator" className="h-px bg-border-secondary" />
         <div className="flex items-center justify-between">
           <span className="leading-4">AI provider</span>
@@ -662,8 +687,69 @@ function AISection() {
             >
               Claude
             </SegmentedControl.Segment>
+            <SegmentedControl.Segment
+              selected={aiProvider === "ollama"}
+              onClick={() => setAiProvider("ollama")}
+            >
+              Ollama
+            </SegmentedControl.Segment>
           </SegmentedControl>
         </div>
+        {aiProvider === "ollama" ? (
+          <>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ollama-url" className="text-sm leading-4">
+                Ollama URL
+              </label>
+              <div className="flex items-center gap-2">
+                <TextInput
+                  id="ollama-url"
+                  placeholder="http://localhost:11434"
+                  value={ollamaUrl}
+                  onChange={(event) => setOllamaUrl(event.target.value)}
+                  className="flex-1"
+                />
+                <button
+                  onClick={checkOllamaConnection}
+                  className="shrink-0 rounded-md bg-bg-secondary px-2.5 py-1.5 text-sm hover:bg-bg-secondary-hover"
+                >
+                  Test
+                </button>
+              </div>
+              <span
+                className={cx(
+                  "text-xs",
+                  ollamaStatus === "ok" && "text-text-success",
+                  ollamaStatus === "error" && "text-text-danger",
+                  ollamaStatus === "checking" && "text-text-secondary",
+                  ollamaStatus === "idle" && "text-text-tertiary",
+                )}
+              >
+                {ollamaStatus === "ok"
+                  ? "Connected"
+                  : ollamaStatus === "error"
+                    ? "Cannot reach Ollama"
+                    : ollamaStatus === "checking"
+                      ? "Checking..."
+                      : "Not checked"}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2">
+              <label htmlFor="ollama-model" className="text-sm leading-4">
+                Model
+              </label>
+              <TextInput
+                id="ollama-model"
+                placeholder="llama3.2"
+                value={ollamaModel}
+                onChange={(event) => setOllamaModel(event.target.value)}
+              />
+              <span className="text-xs text-text-tertiary">
+                Must be pulled locally (e.g. <code>ollama pull llama3.2</code>)
+              </span>
+            </div>
+          </>
+        ) : null}
         <div role="separator" className="h-px bg-border-secondary" />
         <div className="flex flex-col gap-3 leading-4 coarse:gap-4">
           <div className="flex items-start gap-2.5">

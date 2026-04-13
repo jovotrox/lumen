@@ -20,10 +20,12 @@ function buildUserMessage(
 
 export async function generateAISummary(
   data: DashboardData,
-  provider: "openai" | "claude",
+  provider: "openai" | "claude" | "ollama",
   apiKey: string,
   projectNames: string[],
   urgentTaskTexts: string[],
+  ollamaUrl?: string,
+  ollamaModel?: string,
 ): Promise<string> {
   const userMessage = buildUserMessage(data, projectNames, urgentTaskTexts)
 
@@ -47,6 +49,24 @@ export async function generateAISummary(
     if (!response.ok) throw new Error(`OpenAI error: ${response.status}`)
     const result = (await response.json()) as { choices: { message: { content: string } }[] }
     return result.choices[0].message.content.trim()
+  }
+
+  if (provider === "ollama" && ollamaUrl && ollamaModel) {
+    const response = await fetch(`${ollamaUrl}/api/chat`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        model: ollamaModel,
+        messages: [
+          { role: "system", content: SYSTEM_PROMPT },
+          { role: "user", content: userMessage },
+        ],
+        stream: false,
+      }),
+    })
+    if (!response.ok) throw new Error(`Ollama error: ${response.statusText}`)
+    const result = (await response.json()) as { message: { content: string } }
+    return result.message.content.trim()
   }
 
   const response = await fetch("https://api.anthropic.com/v1/messages", {

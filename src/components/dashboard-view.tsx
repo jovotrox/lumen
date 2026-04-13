@@ -27,6 +27,8 @@ import {
   inboxAtom,
   nicknameAtom,
   notesAtom,
+  ollamaModelAtom,
+  ollamaUrlAtom,
   openaiKeyAtom,
   nudgeDismissVersionAtom,
   nudgesAtom,
@@ -66,8 +68,10 @@ export function DashboardView() {
   const aiProvider = useAtomValue(aiProviderAtom)
   const openaiKey = useAtomValue(openaiKeyAtom)
   const claudeKey = useAtomValue(claudeApiKeyAtom)
+  const ollamaUrl = useAtomValue(ollamaUrlAtom)
+  const ollamaModel = useAtomValue(ollamaModelAtom)
   const apiKey = aiProvider === "openai" ? openaiKey : claudeKey
-  const hasKey = apiKey !== ""
+  const hasKey = aiProvider === "ollama" || apiKey !== ""
 
   const unprocessed = useMemo(
     () => inboxItems.filter((item) => item.frontmatter.status === "unprocessed"),
@@ -98,7 +102,15 @@ export function DashboardView() {
       topProjectProgress: null,
       nickname,
     }
-    generateAISummary(data, aiProvider as "openai" | "claude", apiKey, projectNames, urgentTexts)
+    generateAISummary(
+      data,
+      aiProvider as "openai" | "claude" | "ollama",
+      apiKey,
+      projectNames,
+      urgentTexts,
+      ollamaUrl,
+      ollamaModel,
+    )
       .then(setAiSummary)
       .catch(() => {})
     // eslint-disable-next-line react-hooks/exhaustive-deps

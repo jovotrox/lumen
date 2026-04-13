@@ -15,6 +15,8 @@ import {
   globalStateMachineAtom,
   inboxAtom,
   notesAtom,
+  ollamaModelAtom,
+  ollamaUrlAtom,
   openaiKeyAtom,
   peopleAtom,
   projectsAtom,
@@ -130,6 +132,8 @@ function InboxItemCard({ item }: { item: Note }) {
   const aiProvider = useAtomValue(aiProviderAtom)
   const openaiKey = useAtomValue(openaiKeyAtom)
   const claudeKey = useAtomValue(claudeApiKeyAtom)
+  const ollamaUrl = useAtomValue(ollamaUrlAtom)
+  const ollamaModel = useAtomValue(ollamaModelAtom)
   const people = useAtomValue(peopleAtom)
   const projects = useAtomValue(projectsAtom)
   const recentNotes = useAtomValue(sortedNotesAtom)
@@ -137,7 +141,7 @@ function InboxItemCard({ item }: { item: Note }) {
   const send = useSetAtom(globalStateMachineAtom)
 
   const apiKey = aiProvider === "openai" ? openaiKey : claudeKey
-  const hasKey = apiKey !== ""
+  const hasKey = aiProvider === "ollama" || apiKey !== ""
 
   // Auto-classify unprocessed items on mount using heuristics
   React.useEffect(() => {
@@ -159,6 +163,8 @@ function InboxItemCard({ item }: { item: Note }) {
         hasKey ? aiProvider : "heuristic",
         apiKey,
         { people, projects, recentNotes },
+        ollamaUrl,
+        ollamaModel,
       )
       setSuggestion(result)
 

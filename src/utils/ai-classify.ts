@@ -110,6 +110,34 @@ export async function classifyWithClaude(
   return JSON.parse(content) as InboxSuggestion
 }
 
+export async function classifyWithOllama(
+  text: string,
+  ollamaUrl: string,
+  ollamaModel: string,
+  context: { people: Note[]; projects: Note[]; recentNotes: Note[] },
+): Promise<InboxSuggestion> {
+  const response = await fetch(`${ollamaUrl}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      model: ollamaModel,
+      messages: [
+        { role: "system", content: buildPrompt(context) },
+        { role: "user", content: text },
+      ],
+      stream: false,
+      format: "json",
+    }),
+  })
+
+  if (!response.ok) {
+    throw new Error(`Ollama error: ${response.statusText}`)
+  }
+
+  const data = (await response.json()) as { message: { content: string } }
+  return JSON.parse(data.message.content) as InboxSuggestion
+}
+
 export function classifyWithHeuristics(
   text: string,
   context: { people: Note[]; projects: Note[]; recentNotes: Note[] },
@@ -197,9 +225,11 @@ export function classifyWithHeuristics(
 
 export async function classifyInboxItem(
   text: string,
-  provider: "openai" | "claude" | "heuristic",
+  provider: "openai" | "claude" | "ollama" | "heuristic",
   apiKey: string,
   context: { people: Note[]; projects: Note[]; recentNotes: Note[] },
+  ollamaUrl?: string,
+  ollamaModel?: string,
 ): Promise<InboxSuggestion> {
   try {
     if (provider === "openai" && apiKey) {
@@ -207,6 +237,9 @@ export async function classifyInboxItem(
     }
     if (provider === "claude" && apiKey) {
       return await classifyWithClaude(text, apiKey, context)
+    }
+    if (provider === "ollama" && ollamaUrl && ollamaModel) {
+      return await classifyWithOllama(text, ollamaUrl, ollamaModel, context)
     }
   } catch (error) {
     console.error("AI classification failed, falling back to heuristics:", error)
