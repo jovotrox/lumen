@@ -21,7 +21,7 @@ import {
 } from "./icons"
 import { generateNoteId } from "../utils/note-id"
 
-const iconClass = "size-3 shrink-0 opacity-70"
+const iconClass = "size-3.5 shrink-0 opacity-70"
 
 function TabIcon({ tab }: { tab: Tab }) {
   switch (tab.icon) {
@@ -127,14 +127,14 @@ export function Titlebar() {
                 }}
               >
                 <TabIcon tab={tab} />
-                <span className="min-w-0 flex-1 truncate">{tab.title}</span>
+                <span className="min-w-0 flex-1 truncate text-left">{tab.title}</span>
                 {/* Close button with gradient fade — hidden until hover */}
                 <span
                   className={cx(
                     "absolute right-0 top-0 flex h-full items-center pr-2 pl-4 opacity-0 transition-opacity group-hover:opacity-100",
                     isActive
-                      ? "bg-gradient-to-l from-[var(--color-bg)] from-60% to-transparent"
-                      : "bg-gradient-to-l from-[var(--color-bg-secondary)] from-60% to-transparent group-hover:from-[var(--color-bg)] group-hover:from-60%",
+                      ? "bg-gradient-to-l from-[var(--color-bg)] from-50% to-transparent"
+                      : "bg-gradient-to-l from-[var(--color-bg-secondary)] from-50% to-transparent",
                   )}
                   onMouseDown={(e) => {
                     e.preventDefault()
