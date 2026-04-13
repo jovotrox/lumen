@@ -17,7 +17,7 @@ export function Sidebar() {
   const isDesktop = isElectron() || isTauri()
 
   return (
-    <div className="grid grid-rows-[auto_1fr] overflow-hidden h-full border-r border-border-secondary">
+    <div className="flex h-full flex-col overflow-hidden border-r border-border-secondary">
       {/* On desktop, sidebar toggle + nav are in the Titlebar */}
       {!isDesktop ? (
         <div
@@ -58,7 +58,7 @@ export function Sidebar() {
           </div>
         </div>
       ) : null}
-      <div className="relative flex h-full scroll-py-2 flex-col gap-2 overflow-auto p-2">
+      <div className="relative flex flex-1 scroll-py-2 flex-col gap-2 overflow-auto p-2">
         <div {...topSentinelProps} />
         <NavItems />
       </div>
