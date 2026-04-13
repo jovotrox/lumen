@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-12 (v0.2.3)
+**Ultima actualizacion:** 2026-04-13 (v0.3.0)
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal` (fork personal, rama de compilación)
 - **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos
-- **Version:** 0.2.3
+- **Version:** 0.3.0
 
 ### Migracion Tauri → Electron
 
@@ -246,6 +246,18 @@ El proyecto es un fork MIT de [lumen-notes/lumen](https://github.com/lumen-notes
 - Credito al proyecto original en README (buena practica)
 - Sync con upstream (sigue siendo util para merges)
 
+### Calendar native enhancement (macOS, futuro)
+
+La integración actual es ICS-based (cross-platform, read-only, sin permisos). Para usuarios macOS que quieran integración live con Calendar.app sin pegar URLs manualmente, hay tres opciones evaluadas:
+
+- **A) Swift EventKit embebido en bundle**: pre-compilar el helper a build time y copiarlo a `Lumen.app/Contents/MacOS/` vía `extraResources` de electron-builder. El helper correría como child con el bundleID del padre → TCC puede matchearlo al `NSCalendarsFullAccessUsageDescription`. Complejidad: media.
+- **B) `node-mac-permissions` (npm native module)**: corre dentro del proceso Electron → hereda bundleID automáticamente. Complejidad: baja. Contra: native module binary debe matchear Electron ABI.
+- **C) AppleScript vía `osascript`**: dispara dialog de **Automation** permission (no Calendars) contra Lumen.app. Funciona unsigned. Contra: lento, requiere Calendar.app abierta, solo Calendar.app (no CalDAV directo).
+
+**Recomendación si se retoma:** Opción B (`node-mac-permissions`) por simplicidad. Pero primero validar que el 90%+ de usuarios estén cubiertos por ICS — si es así, no vale la pena la complejidad native.
+
+**Requisito previo para todas:** code signing (si no, TCC puede seguir comportándose raro aunque bundleID esté ok).
+
 ### Otras ideas futuras
 
 - Code signing + notarizacion para macOS (requiere Apple Developer Program)
@@ -257,6 +269,34 @@ El proyecto es un fork MIT de [lumen-notes/lumen](https://github.com/lumen-notes
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.3.0 — 2026-04-13
+
+- **feat: Calendar v2 (multi-feed ICS, cross-platform, synced, linked to notes)**
+  - Reemplaza la integración EventKit/Swift (rota en macOS 14+ por bundleID nil)
+  - **Multi-calendar**: lista de feeds, cada uno con name + URL + color + enabled toggle
+  - Palette de 8 colores estilo Apple (FEED_COLORS)
+  - Settings UI: lista con inline rename, color swatch clickeable, per-feed toggle, Remove button, Add form con Test
+  - Eventos de todos los feeds habilitados se mergean, ordenados por hora (all-day primero)
+  - Cada evento muestra el color de su feed
+  - Nueva `src/utils/calendar-ics.ts` con parser `ical.js` (soporta RRULE, all-day, webcal://)
+  - Funciona en **macOS + Windows + Linux + Web + PWA** (sin permisos de sistema)
+  - Usa `electron:fetch` IPC en desktop (bypasa CORS); en browser usa fetch nativo
+  - Cache local 5min por URL+fecha
+  - **Sincronizado via `.lumen/settings.json`**: `calendarIntegration` + `calendarFeeds` se propagan entre devices (igual que nickname/theme/etc)
+  - **Settings sync env-scoped**: dev escribe `.lumen/settings.dev.json`, prod escribe `.lumen/settings.json`. Dev lee su archivo, con fallback al prod como seed inicial. Así los runs de dev nunca contaminan las preferencias de producción.
+  - **Click en evento → nota vinculada**: ID determinístico `event-YYYY-MM-DD-slug-titulo`. Si no existe, se crea con frontmatter (`event.title`, `start`, `end`, `calendar`, `location`, `isAllDay`) + heading. Navega a la nota en write mode. Si existe, abre en read mode. Eventos con nota vinculada muestran ícono FileText (📄).
+  - **Refresh:** auto-refresh al reenfocar ventana (window `focus` event) + botón manual "Refresh calendar" en el dropdown `...` de daily notes (solo visible si el toggle master está on). Ambos invalidan el cache Lumen (5min TTL). Nota: el cache del proveedor (Google/iCloud/Outlook) sigue siendo lo que determina cuándo un evento nuevo aparece en el ICS público — típicamente minutos-horas.
+  - **UI estilo Things** (daily note view): contenedor `bg-bg-secondary` con padding chico; cada evento es una row con hora en 24h (coloreada con el color del feed, no dot separado), título, y Button "Create note" / "Open note" al reenfocar hover. Sin Clock icon, sin range de hora (solo start).
+  - **Event frontmatter property render:** `case "event"` en `property-value.tsx` renderiza el objeto como `[DateLink] · HH:MM–HH:MM · Calendar · Location` en vez del JSON crudo. Compatible con yaml-coerced Date y strings ISO.
+- **Diagnóstico EventKit confirmó:** binario Swift standalone no puede pedir permisos en macOS 14+ sin bundle
+  propio con Info.plist. Solución arquitectónica requiere o embedar Swift en el bundle, o usar
+  node-mac-permissions, o AppleScript. **Pospuesto como "plan futuro"** (ver Roadmap).
+- **Removido de Electron:**
+  - CALENDAR_SWIFT_SRC (~120 líneas de Swift embebido)
+  - IPC handler `electron:get-calendar-events` (~110 líneas)
+  - `getCalendarEvents` de preload
+  - `NSCalendarsUsageDescription` + `NSCalendarsFullAccessUsageDescription` de Info.plist
 
 ### v0.2.3 — 2026-04-12
 

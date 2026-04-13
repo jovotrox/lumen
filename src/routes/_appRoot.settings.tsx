@@ -26,6 +26,7 @@ import {
   githubRepoAtom,
   githubUserAtom,
   hasOpenAIKeyAtom,
+  calendarFeedsAtom,
   calendarIntegrationAtom,
   hideCompletedTasksAtom,
   isCloningRepoAtom,
@@ -44,6 +45,7 @@ import {
   livePreviewAtom,
   voiceAssistantEnabledAtom,
 } from "../global-state"
+import { type CalendarFeed as CalendarFeedType, FEED_COLORS } from "../utils/calendar"
 import { cx } from "../utils/cx"
 import { saveCustomThemes } from "../hooks/use-theme-sync"
 import {
@@ -642,11 +644,24 @@ function NotesSection() {
 
 function CalendarSection() {
   const [enabled, setEnabled] = useAtom(calendarIntegrationAtom)
-  const isDesktop = typeof window !== "undefined" && "electronAPI" in window
+  const [feeds, setFeeds] = useAtom(calendarFeedsAtom)
   const isRepoCloned = useAtomValue(isRepoClonedAtom)
+  const [adding, setAdding] = useState(false)
 
-  // Only show when signed in (repo cloned) and running in desktop app
-  if (!isDesktop || !isRepoCloned) return null
+  if (!isRepoCloned) return null
+
+  const updateFeed = (id: string, changes: Partial<CalendarFeedType>) => {
+    setFeeds(feeds.map((f) => (f.id === id ? { ...f, ...changes } : f)))
+  }
+
+  const removeFeed = (id: string) => {
+    setFeeds(feeds.filter((f) => f.id !== id))
+  }
+
+  const addFeed = (feed: CalendarFeedType) => {
+    setFeeds([...feeds, feed])
+    setAdding(false)
+  }
 
   return (
     <SettingsSection title="Calendar">
@@ -654,17 +669,215 @@ function CalendarSection() {
         <div className="flex items-center gap-2.5 leading-4">
           <Switch id="calendar-integration" checked={enabled} onCheckedChange={setEnabled} />
           <label htmlFor="calendar-integration" className="select-none">
-            Show Calendar.app events in daily notes
+            Show calendar events in daily notes
           </label>
         </div>
+
         {enabled ? (
-          <p className="text-xs text-text-tertiary">
-            macOS will ask for calendar access permission the first time. You can manage this in
-            System Settings &gt; Privacy &amp; Security &gt; Calendars.
-          </p>
+          <>
+            {feeds.length > 0 ? (
+              <ul className="flex flex-col gap-2">
+                {feeds.map((feed) => (
+                  <li
+                    key={feed.id}
+                    className="flex items-center gap-3 rounded-md border border-border-secondary p-3"
+                  >
+                    <ColorSwatch
+                      color={feed.color}
+                      onPick={(color) => updateFeed(feed.id, { color })}
+                    />
+                    <div className="flex min-w-0 flex-1 flex-col gap-0.5">
+                      <input
+                        className="bg-transparent text-sm font-medium outline-none focus:ring-1 focus:ring-border-focus rounded px-1 -mx-1"
+                        value={feed.name}
+                        onChange={(e) => updateFeed(feed.id, { name: e.target.value })}
+                        aria-label="Calendar name"
+                      />
+                      <span
+                        className="truncate font-mono text-[10px] text-text-tertiary"
+                        title={feed.url}
+                      >
+                        {feed.url}
+                      </span>
+                    </div>
+                    <Switch
+                      checked={feed.enabled}
+                      onCheckedChange={(v) => updateFeed(feed.id, { enabled: v })}
+                      aria-label={`Enable ${feed.name}`}
+                    />
+                    <Button size="small" onClick={() => removeFeed(feed.id)}>
+                      Remove
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+
+            {adding ? (
+              <AddFeedForm
+                existingCount={feeds.length}
+                onCancel={() => setAdding(false)}
+                onAdd={addFeed}
+              />
+            ) : (
+              <Button onClick={() => setAdding(true)}>+ Add calendar</Button>
+            )}
+
+            <details className="text-xs text-text-tertiary">
+              <summary className="cursor-pointer select-none">
+                How to get a public calendar URL
+              </summary>
+              <div className="mt-2 flex flex-col gap-2 pl-2">
+                <p>
+                  <strong>iCloud:</strong> Calendar.app → right-click calendar → Share Calendar →
+                  Public Calendar → copy URL. <code>webcal://</code> URLs work too (auto-converted
+                  to <code>https://</code>).
+                </p>
+                <p>
+                  <strong>Google Calendar:</strong> Settings → select calendar → "Integrate
+                  calendar" → Public address in iCal format.
+                </p>
+                <p>
+                  <strong>Outlook / Microsoft 365:</strong> Calendar → Share → Publish a calendar →
+                  ICS link.
+                </p>
+              </div>
+            </details>
+          </>
         ) : null}
       </div>
     </SettingsSection>
+  )
+}
+
+function ColorSwatch({ color, onPick }: { color: string; onPick: (color: string) => void }) {
+  const [open, setOpen] = useState(false)
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        className="size-5 shrink-0 rounded-full border border-border-secondary outline-none focus:ring-2 focus:ring-border-focus"
+        style={{ backgroundColor: color }}
+        onClick={() => setOpen(!open)}
+        aria-label="Change color"
+      />
+      {open ? (
+        <>
+          <button
+            type="button"
+            className="fixed inset-0 z-10"
+            onClick={() => setOpen(false)}
+            aria-hidden
+          />
+          <div className="absolute left-0 top-7 z-20 flex gap-1 rounded-md border border-border-secondary bg-bg p-2 shadow-lg">
+            {FEED_COLORS.map((c) => (
+              <button
+                key={c}
+                type="button"
+                className="size-5 rounded-full border border-border-secondary outline-none hover:scale-110 focus:ring-2 focus:ring-border-focus"
+                style={{ backgroundColor: c }}
+                onClick={() => {
+                  onPick(c)
+                  setOpen(false)
+                }}
+                aria-label={`Set color to ${c}`}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+function AddFeedForm({
+  existingCount,
+  onAdd,
+  onCancel,
+}: {
+  existingCount: number
+  onAdd: (feed: CalendarFeedType) => void
+  onCancel: () => void
+}) {
+  const [name, setName] = useState("")
+  const [url, setUrl] = useState("")
+  const [color, setColor] = useState<string>(FEED_COLORS[existingCount % FEED_COLORS.length])
+  const [testStatus, setTestStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "testing" }
+    | { kind: "ok"; eventCount: number }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" })
+
+  const testUrl = async () => {
+    const trimmed = url.trim()
+    if (!trimmed) {
+      setTestStatus({ kind: "error", message: "URL is empty" })
+      return
+    }
+    setTestStatus({ kind: "testing" })
+    try {
+      const { fetchIcsEvents } = await import("../utils/calendar-ics")
+      const today = new Date().toISOString().slice(0, 10)
+      const events = await fetchIcsEvents(trimmed, today)
+      setTestStatus({ kind: "ok", eventCount: events.length })
+    } catch (e) {
+      setTestStatus({ kind: "error", message: (e as Error).message || "Failed" })
+    }
+  }
+
+  const canAdd = name.trim().length > 0 && url.trim().length > 0
+
+  const handleAdd = () => {
+    if (!canAdd) return
+    onAdd({
+      id: crypto.randomUUID(),
+      name: name.trim(),
+      url: url.trim(),
+      color,
+      enabled: true,
+    })
+  }
+
+  return (
+    <div className="flex flex-col gap-3 rounded-md border border-border-secondary bg-bg-secondary p-3">
+      <div className="flex items-center gap-3">
+        <ColorSwatch color={color} onPick={setColor} />
+        <TextInput
+          className="flex-1"
+          value={name}
+          placeholder="Name (e.g. Work)"
+          onChange={(e) => setName(e.target.value)}
+        />
+      </div>
+      <TextInput
+        type="url"
+        value={url}
+        placeholder="https://... (or webcal://...)"
+        onChange={(e) => {
+          setUrl(e.target.value)
+          setTestStatus({ kind: "idle" })
+        }}
+      />
+      {testStatus.kind === "ok" ? (
+        <p className="text-xs text-text-success">
+          ✓ Fetched successfully. Found {testStatus.eventCount} event
+          {testStatus.eventCount === 1 ? "" : "s"} for today.
+        </p>
+      ) : null}
+      {testStatus.kind === "error" ? (
+        <p className="text-xs text-text-danger">✗ {testStatus.message}</p>
+      ) : null}
+      <div className="flex justify-end gap-2">
+        <Button onClick={onCancel}>Cancel</Button>
+        <Button onClick={testUrl} disabled={testStatus.kind === "testing" || !url}>
+          {testStatus.kind === "testing" ? "Testing..." : "Test"}
+        </Button>
+        <Button variant="primary" onClick={handleAdd} disabled={!canAdd}>
+          Add
+        </Button>
+      </div>
+    </div>
   )
 }
 

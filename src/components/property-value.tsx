@@ -110,6 +110,55 @@ export function PropertyValue({ property: [key, value], onChange }: PropertyValu
         </span>
       )
     }
+
+    case "event": {
+      // Renders the frontmatter written by Calendar v2 (see calendar-events.tsx)
+      // Accepts both JS Date (when yaml coerces ISO strings) and plain strings.
+      const toIsoString = (v: unknown) =>
+        v instanceof Date ? v.toISOString() : typeof v === "string" ? v : null
+      const eventSchema = z.object({
+        title: z.string().optional(),
+        start: z.unknown().transform((v) => toIsoString(v)),
+        end: z.unknown().transform((v) => toIsoString(v)),
+        calendar: z.string().optional(),
+        location: z.string().optional(),
+        isAllDay: z.boolean().optional(),
+      })
+      const parsed = eventSchema.safeParse(value)
+      if (!parsed.success || !parsed.data.start) break
+
+      const { start, end, calendar, location, isAllDay } = parsed.data
+      const startDate = new Date(start)
+      const endDate = end ? new Date(end) : null
+      const fmt = (d: Date) =>
+        d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+      const dateString = toDateString(startDate)
+      const timeLabel = isAllDay
+        ? "All day"
+        : endDate
+          ? `${fmt(startDate)} – ${fmt(endDate)}`
+          : fmt(startDate)
+
+      return (
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1 leading-7">
+          <DateLink className="link" date={dateString} />
+          <span className="text-text-secondary">·</span>
+          <span>{timeLabel}</span>
+          {calendar ? (
+            <>
+              <span className="text-text-secondary">·</span>
+              <span className="text-text-secondary">{calendar}</span>
+            </>
+          ) : null}
+          {location ? (
+            <>
+              <span className="text-text-secondary">·</span>
+              <span className="text-text-secondary">{location}</span>
+            </>
+          ) : null}
+        </div>
+      )
+    }
   }
 
   // If value is a string, render it as markdown

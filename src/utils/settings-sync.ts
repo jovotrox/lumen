@@ -1,9 +1,20 @@
 import { fs } from "./fs"
 import { REPO_DIR } from "./git"
 
-const SETTINGS_FILE_PATH = `${REPO_DIR}/.lumen/settings.json`
-/** Relative path (from repo root) for git add */
-export const SETTINGS_FILE_REL_PATH = ".lumen/settings.json"
+/**
+ * Settings sync is environment-scoped to avoid dev runs polluting the user's
+ * production settings (the shared GitHub repo). Dev writes to `settings.dev.json`
+ * and, on first run, seeds from the prod `settings.json` if it exists.
+ */
+const IS_DEV = import.meta.env.DEV
+
+/** Relative path (from repo root) used for git add — scoped to env */
+export const SETTINGS_FILE_REL_PATH = IS_DEV ? ".lumen/settings.dev.json" : ".lumen/settings.json"
+
+const SETTINGS_FILE_PATH = `${REPO_DIR}/${SETTINGS_FILE_REL_PATH}`
+const SETTINGS_FILE_PATH_PROD = `${REPO_DIR}/.lumen/settings.json`
+
+import type { CalendarFeed } from "./calendar"
 
 /** Settings that sync across devices via the user's GitHub repo */
 export type SyncedSettings = {
@@ -16,6 +27,8 @@ export type SyncedSettings = {
   livePreview?: boolean
   hideCompletedTasks?: boolean
   calendarLayout?: "week" | "month"
+  calendarIntegration?: boolean
+  calendarFeeds?: CalendarFeed[]
   aiProvider?: "openai" | "claude"
   voiceAssistantEnabled?: boolean
   quickNoteMode?: "note" | "inbox"
@@ -36,6 +49,8 @@ export const settingsKeyMap: { localStorageKey: string; settingsKey: keyof Synce
   { localStorageKey: "live-preview", settingsKey: "livePreview" },
   { localStorageKey: "hide-completed-tasks", settingsKey: "hideCompletedTasks" },
   { localStorageKey: "calendar-layout", settingsKey: "calendarLayout" },
+  { localStorageKey: "calendar-integration", settingsKey: "calendarIntegration" },
+  { localStorageKey: "calendar-feeds", settingsKey: "calendarFeeds" },
   { localStorageKey: "ai_provider", settingsKey: "aiProvider" },
   // API keys intentionally NOT synced — they are secrets that stay in localStorage only
   { localStorageKey: "voice_assistant_enabled", settingsKey: "voiceAssistantEnabled" },
@@ -46,17 +61,37 @@ export const settingsKeyMap: { localStorageKey: string; settingsKey: keyof Synce
   { localStorageKey: "nudge_notifications_enabled", settingsKey: "nudgeNotificationsEnabled" },
 ]
 
-/** Read settings from `.lumen/settings.json` in the user's repo */
+/**
+ * Read synced settings from the user's repo.
+ *
+ * In dev, reads `.lumen/settings.dev.json`. If absent, falls back to the prod
+ * `.lumen/settings.json` as a seed — this means the first time you run dev you
+ * inherit your prod config, but any subsequent write stays in the dev file.
+ *
+ * In prod, reads `.lumen/settings.json` only.
+ */
 export async function readSettingsFromRepo(): Promise<SyncedSettings | null> {
   try {
     const content = await fs.promises.readFile(SETTINGS_FILE_PATH, "utf8")
     return JSON.parse(content as string) as SyncedSettings
   } catch {
+    if (IS_DEV) {
+      try {
+        const content = await fs.promises.readFile(SETTINGS_FILE_PATH_PROD, "utf8")
+        return JSON.parse(content as string) as SyncedSettings
+      } catch {
+        return null
+      }
+    }
     return null
   }
 }
 
-/** Write settings to `.lumen/settings.json` in the user's repo */
+/**
+ * Write synced settings to the user's repo. Always writes to the env-scoped
+ * file (`settings.dev.json` in dev, `settings.json` in prod) — prod is never
+ * overwritten from dev runs.
+ */
 export async function writeSettingsToRepo(settings: SyncedSettings): Promise<void> {
   try {
     await fs.promises.mkdir(`${REPO_DIR}/.lumen`)

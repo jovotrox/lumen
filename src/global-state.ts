@@ -15,6 +15,7 @@ import {
   githubUserSchema,
   templateSchema,
 } from "./schema"
+import type { CalendarFeed } from "./utils/calendar"
 import { fs, fsWipe } from "./utils/fs"
 import {
   REPO_DIR,
@@ -1051,6 +1052,9 @@ export const isHelpPanelOpenAtom = atomWithStorage<boolean>("help-panel", false)
 export const calendarLayoutAtom = atomWithStorage<"week" | "month">("calendar-layout", "week")
 
 export const calendarIntegrationAtom = atomWithStorage<boolean>("calendar-integration", false)
+export const calendarFeedsAtom = atomWithStorage<CalendarFeed[]>("calendar-feeds", [])
+/** Increment to force CalendarEvents to re-fetch (ignores cache). Not persisted. */
+export const calendarRefreshTickAtom = atom(0)
 
 export const hideCompletedTasksAtom = atomWithStorage<boolean>("hide-completed-tasks", false)
 

@@ -1,72 +1,179 @@
-import { useAtomValue } from "jotai"
-import { Calendar, Clock } from "lucide-react"
+import { useAtomValue, useSetAtom } from "jotai"
+import { Calendar, FileText } from "lucide-react"
 import React from "react"
-import { calendarIntegrationAtom } from "../global-state"
-import { CalendarResult, fetchCalendarEvents, formatEventTime } from "../utils/calendar"
-import { isElectron } from "../utils/electron"
+import { useNavigate } from "@tanstack/react-router"
+import {
+  calendarFeedsAtom,
+  calendarIntegrationAtom,
+  calendarRefreshTickAtom,
+  globalStateMachineAtom,
+  notesAtom,
+} from "../global-state"
+import { CalendarEvent, fetchAllFeedsEvents, invalidateCalendarCache } from "../utils/calendar"
+
+/** Format an event's start time as HH:MM (24h), or "All day" for all-day events. */
+function formatStartTime(event: CalendarEvent): string {
+  if (event.isAllDay) return "All day"
+  const d = new Date(event.start)
+  return d.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", hour12: false })
+}
+
+/**
+ * Build a stable, human-readable note ID from an event.
+ * Format: event-YYYY-MM-DD-HHMM-slug (timed) or event-YYYY-MM-DD-allday-slug (all-day)
+ *
+ * Including the time disambiguates multiple events with the same title on the
+ * same day (e.g., two feeds both have "Standup" at different times).
+ */
+function getEventNoteId(event: CalendarEvent): string {
+  const date = event.start.slice(0, 10)
+  const timePart = event.isAllDay ? "allday" : event.start.slice(11, 16).replace(":", "") // "09:30" → "0930"
+  const slug = event.title
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 40)
+  return `event-${date}-${timePart}-${slug || "untitled"}`
+}
+
+function buildEventNoteContent(event: CalendarEvent): string {
+  const lines = [
+    "---",
+    "tags: [event, calendar]",
+    "event:",
+    `  title: ${JSON.stringify(event.title)}`,
+    `  start: "${event.start}"`,
+    `  end: "${event.end}"`,
+    event.calendar ? `  calendar: ${JSON.stringify(event.calendar)}` : "",
+    event.location ? `  location: ${JSON.stringify(event.location)}` : "",
+    `  isAllDay: ${event.isAllDay}`,
+    "---",
+    "",
+    `# ${event.title}`,
+    "",
+  ].filter(Boolean)
+  return lines.join("\n")
+}
 
 export function CalendarEvents({ dateString }: { dateString: string }) {
   const enabled = useAtomValue(calendarIntegrationAtom)
-  const [result, setResult] = React.useState<CalendarResult>({ denied: false, events: [] })
+  const feeds = useAtomValue(calendarFeedsAtom)
+  const refreshTick = useAtomValue(calendarRefreshTickAtom)
+  const setRefreshTick = useSetAtom(calendarRefreshTickAtom)
+  const notes = useAtomValue(notesAtom)
+  const send = useSetAtom(globalStateMachineAtom)
+  const navigate = useNavigate()
+  const [events, setEvents] = React.useState<CalendarEvent[]>([])
+  const [errors, setErrors] = React.useState<Array<{ feedName: string; message: string }>>([])
   const [loading, setLoading] = React.useState(false)
 
+  const activeFeeds = feeds.filter((f) => f.enabled && f.url)
+  const feedKey = JSON.stringify(activeFeeds.map((f) => [f.id, f.url, f.color, f.name]))
+
+  // Re-fetch when the user brings the window back into focus.
   React.useEffect(() => {
-    if (!isElectron() || !enabled) {
-      setResult({ denied: false, events: [] })
+    const onFocus = () => {
+      invalidateCalendarCache()
+      setRefreshTick((t) => t + 1)
+    }
+    window.addEventListener("focus", onFocus)
+    return () => window.removeEventListener("focus", onFocus)
+  }, [setRefreshTick])
+
+  React.useEffect(() => {
+    if (!enabled || activeFeeds.length === 0) {
+      setEvents([])
+      setErrors([])
       setLoading(false)
       return
     }
 
     setLoading(true)
-    fetchCalendarEvents(dateString)
-      .then(setResult)
-      .catch(() => setResult({ denied: true, events: [] }))
+    fetchAllFeedsEvents(activeFeeds, dateString)
+      .then(({ events, errors }) => {
+        setEvents(events)
+        setErrors(errors)
+      })
       .finally(() => setLoading(false))
-  }, [dateString, enabled])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [dateString, enabled, feedKey, refreshTick])
 
-  if (!isElectron() || !enabled) return null
-  if (loading) return null
+  const openEventNote = (event: CalendarEvent) => {
+    const noteId = getEventNoteId(event)
+    const exists = notes.has(noteId)
 
-  if (result.denied) {
+    if (!exists) {
+      const content = buildEventNoteContent(event)
+      send({
+        type: "WRITE_FILES",
+        markdownFiles: { [`${noteId}.md`]: content },
+        commitMessage: `Create linked note for event "${event.title}"`,
+      })
+    }
+
+    navigate({
+      to: "/notes/$",
+      params: { _splat: noteId },
+      search: { mode: exists ? "read" : "write", query: undefined, view: "grid" },
+    })
+  }
+
+  if (!enabled) return null
+  if (activeFeeds.length === 0) {
     return (
-      <div className="flex items-center gap-2 px-4 py-2 text-xs text-text-tertiary">
+      <div className="my-2 flex items-center gap-2 rounded-lg bg-bg-secondary px-3 py-2 text-sm text-text-tertiary">
         <Calendar className="size-3 opacity-60" />
-        <span>
-          Calendar access denied. Enable in{" "}
-          <span className="text-text-secondary">
-            System Settings &gt; Privacy &amp; Security &gt; Calendars
-          </span>
-        </span>
+        <span>No calendars configured. Add one in Settings.</span>
       </div>
     )
   }
-
-  if (result.events.length === 0) return null
-
-  const sorted = [...result.events].sort((a, b) => {
-    if (a.isAllDay && !b.isAllDay) return -1
-    if (!a.isAllDay && b.isAllDay) return 1
-    return new Date(a.start).getTime() - new Date(b.start).getTime()
-  })
+  if (loading && events.length === 0) return null
+  if (events.length === 0 && errors.length === 0) return null
 
   return (
-    <div className="flex flex-col gap-1 px-4 py-2">
-      {sorted.map((event, i) => (
-        <div
-          key={`${event.title}-${event.start}-${i}`}
-          className="flex items-center gap-2 rounded px-2 py-1 text-xs text-text-secondary"
-        >
-          <div
-            className="h-3 w-0.5 shrink-0 rounded-full"
-            style={{ backgroundColor: event.color }}
-          />
-          <span className="flex w-[80px] shrink-0 items-center gap-1 text-text-tertiary">
-            <Clock className="size-2.5" />
-            {formatEventTime(event)}
-          </span>
-          <span className="truncate text-text-secondary">{event.title}</span>
+    <div className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
+      {events.map((event, i) => {
+        const noteId = getEventNoteId(event)
+        const hasNote = notes.has(noteId)
+        return (
+          <button
+            key={`${noteId}-${i}`}
+            type="button"
+            onClick={() => openEventNote(event)}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none"
+            title={
+              event.calendar
+                ? `${event.calendar} — ${hasNote ? "open linked note" : "create linked note"}`
+                : undefined
+            }
+          >
+            <span
+              className="shrink-0 text-sm font-medium tabular-nums"
+              style={{ color: event.color }}
+            >
+              {formatStartTime(event)}
+            </span>
+            <span className="flex-1 truncate text-sm text-text">{event.title}</span>
+            {hasNote ? (
+              <FileText
+                className="size-3 shrink-0 text-text-tertiary"
+                aria-label="Has linked note"
+              />
+            ) : null}
+          </button>
+        )
+      })}
+      {errors.length > 0 ? (
+        <div className="mt-1 flex flex-col gap-0.5 px-2 text-[10px] text-text-tertiary">
+          {errors.map((e, i) => (
+            <span key={i}>
+              ⚠ {e.feedName}: {e.message}
+            </span>
+          ))}
         </div>
-      ))}
+      ) : null}
     </div>
   )
 }
