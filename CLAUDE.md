@@ -196,116 +196,34 @@ feature/* ← Branches temporales para desarrollo
 | Slash Commands    | / menu Notion-style con íconos Lucide              | `src/components/note-editor.tsx`                                               |
 | Autocomplete UX   | Backdrop blur + íconos en /, @, [[ menus           | `src/codemirror-extensions/autocomplete-theme.ts`, `src/styles/codemirror.css` |
 
-### Flujo de Trabajo para Nuevas Features (PR-based)
+### Flujo de Trabajo (PR-based)
 
-**OBLIGATORIO: Todo cambio va por Pull Request. No se hace merge local + push directo a `personal`.**
+**Todo cambio va por Pull Request. No se hace merge local + push directo a `personal`.**
 
-Razones:
+El flujo completo vive en skills dedicadas para no llenar este archivo:
 
-- Historial trazable en GitHub (diff viewer, comments, review)
+- **`create-pr`** — branch + dev + test + version bump + CONTEXT.md + abrir PR
+- **`release`** — tag + push + verify workflow (después del squash merge)
+
+Claude debe invocar la skill `create-pr` al empezar cualquier cambio, y `release` tras el squash merge si hubo version bump.
+
+Razones del PR flow:
+
+- Historial trazable en GitHub (diff viewer, comments, code review)
 - CI corre antes del merge (safety net)
 - `personal` queda limpio con squash merges (1 commit por feature)
 - PRs pueden cerrarse sin merge si algo está mal
 
-#### 1. Crear branch desde personal (ANTES de cualquier edición)
+**Pre-commit hook:** husky + lint-staged corre prettier + eslint --fix automáticamente. No hace falta `npm run format` manual.
 
-**Este paso es BLOQUEANTE. No se puede editar ningún archivo sin haber creado el branch primero.**
-
-```bash
-git checkout personal
-git pull origin personal
-git checkout -b feature/nombre-feature
-```
-
-#### 2. Desarrollar
-
-- Analizar código existente antes de modificar
-- Proponer approach y validar con el usuario antes de implementar
-- Commits pequeños y descriptivos (squash-friendly)
-
-#### 3. Probar antes de commit
+**Electron local** (solo para testing rápido de cambios en `electron/main.ts` o `preload.ts`):
 
 ```bash
-npm run build          # Verificar que compila sin errores
-npm run lint           # Verificar linting
-npm run test           # Correr tests
+npm run electron:build-main
+npm run electron:pack
 ```
 
-- **Formato:** no ejecutar `npm run format` manualmente — el **pre-commit hook** (husky + lint-staged) corre prettier + eslint --fix automáticamente sobre los archivos staged en cada `git commit`.
-- Iniciar dev server para que el usuario pruebe: `npm run electron:dev` (desktop) o `npm run dev` (web)
-- Esperar confirmación del usuario de que funciona correctamente
-
-#### 4. Version bump (si aplica)
-
-Si el branch toca `electron/**`, `electron-builder.yml`, o `package.json`, va a disparar el release workflow al llegar a `personal`. Bumpear ahora en el branch:
-
-- Leer `git log personal..HEAD --oneline` → determinar PATCH/MINOR/MAJOR (ver sección Versionado)
-- Editar `package.json` → commit `chore: bump version to X.Y.Z`
-
-#### 5. Code review (opcional pero recomendado)
-
-Antes de abrir el PR, correr el `superpowers:code-reviewer` agent sobre el branch. Si encuentra blockers, arreglar en el mismo branch antes de push.
-
-#### 6. Push branch + abrir Pull Request
-
-```bash
-git push -u origin feature/nombre-feature
-gh pr create --base personal --head feature/nombre-feature \
-  --title "<title>" --body "<body con Summary + Test plan>"
-```
-
-**El título del PR** debe ser claro y corto (<70 chars). **El body** debe incluir:
-
-- `## Summary` con 2-5 bullets de qué cambia y por qué
-- `## Test plan` — checklist de cómo verificar
-
-**Siempre pedir confirmación al usuario antes de abrir el PR.**
-
-#### 7. Actualizar CONTEXT.md (OBLIGATORIO)
-
-**Antes de abrir el PR** (en el mismo branch), actualizar `CONTEXT.md`:
-
-- Estado actual y última versión
-- Archivos nuevos/modificados en la tabla de features
-- Entrada en el historial de cambios con fecha
-
-#### 8. Review, iterar, y merge
-
-- Usuario revisa el PR en GitHub
-- Si pide cambios: commit en el branch, push → PR se actualiza automáticamente
-- Cuando aprueba: **Squash and merge** desde GitHub UI (mantiene `personal` con historial lineal)
-- Si el cambio es grande y querés preservar commits individuales: **Rebase and merge** (o merge commit)
-
-#### 9. Tag release (si hubo version bump)
-
-Tras el squash merge en GitHub:
-
-```bash
-git checkout personal
-git pull origin personal
-git tag v0.X.Y
-git push origin v0.X.Y
-```
-
-Esto dispara el `electron-release.yml` workflow si cambió `package.json`/`electron/**`/`electron-builder.yml`.
-
-#### 10. Cleanup
-
-```bash
-git branch -d feature/nombre-feature              # borra local
-git push origin --delete feature/nombre-feature   # borra remoto (GitHub lo ofrece en el PR UI también)
-```
-
-#### 11. Compilar Electron local (si aplica, para testing rápido)
-
-Solo si el cambio toca `electron/main.ts`, `electron/preload.ts`, o `electron-builder.yml`:
-
-```bash
-npm run electron:build-main  # Recompilar main process
-npm run electron:pack        # Build local sin installer
-```
-
-**Nota:** Cambios en React/TypeScript/CSS se reciben automáticamente via GitHub Pages (web) o hot reload (dev). Solo cambios al main process de Electron requieren rebuild para testear localmente.
+Cambios React/TypeScript/CSS: hot reload en dev, GitHub Pages en prod — no requieren rebuild del main process.
 
 ### Sincronización con Upstream (Automatizada)
 

@@ -56,3 +56,6 @@ publish:
   provider: github
   owner: jovotrox
   repo: lumen
+  # Publish as a live Release instead of a Draft so the README download
+  # badge (shields.io/github/v/release) picks it up automatically.
+  releaseType: release
