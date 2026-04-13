@@ -2,7 +2,6 @@ interface ElectronAPI {
   isElectron: true
   openExternal: (url: string) => Promise<void>
   closeWindow: () => Promise<void>
-  setTrafficLightsVisible: (visible: boolean) => Promise<void>
   openInNewWindow: (url: string) => Promise<void>
   quickNoteSave: (payload: { noteId: string; content: string; mode: string }) => Promise<void>
   onQuickNoteSaved: (

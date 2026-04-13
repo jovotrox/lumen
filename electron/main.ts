@@ -6,6 +6,7 @@ import {
   Menu,
   nativeImage,
   net,
+  screen,
   shell,
   Tray,
 } from "electron"
@@ -209,12 +210,45 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
     quickNoteWindow.on("enter-full-screen", () => quickNoteWindow?.setFullScreen(false))
   }
 
+  // Traffic-lights focus-mode: show only when the mouse cursor is within the
+  // window's screen bounds. DOM events are unreliable here because the native
+  // traffic-light buttons render over the content and eat mouseenter/leave on
+  // body — so we poll cursor position directly from main. 200ms is responsive
+  // enough and the IPC bridge is skipped entirely (no renderer involvement).
+  let cursorPollInterval: NodeJS.Timeout | null = null
+  let lastLightsVisible: boolean | null = null
+  const stopCursorPoll = () => {
+    if (cursorPollInterval) {
+      clearInterval(cursorPollInterval)
+      cursorPollInterval = null
+    }
+  }
+  const startCursorPoll = () => {
+    if (!isMac || cursorPollInterval) return
+    lastLightsVisible = null // force first tick to send a state
+    cursorPollInterval = setInterval(() => {
+      if (!quickNoteWindow || quickNoteWindow.isDestroyed()) {
+        stopCursorPoll()
+        return
+      }
+      if (!quickNoteWindow.isVisible()) return
+      const cursor = screen.getCursorScreenPoint()
+      const b = quickNoteWindow.getBounds()
+      const inside =
+        cursor.x >= b.x && cursor.x < b.x + b.width && cursor.y >= b.y && cursor.y < b.y + b.height
+      if (inside !== lastLightsVisible) {
+        lastLightsVisible = inside
+        quickNoteWindow.setWindowButtonVisibility(inside)
+      }
+    }, 200)
+  }
+
   quickNoteWindow.loadURL(quickNoteUrl)
 
   // Only show once content is ready — prevents white flash
   quickNoteWindow.once("ready-to-show", () => {
-    // Start with traffic lights hidden — focus-mode. Renderer toggles on hover.
-    if (process.platform === "darwin") {
+    // Start with traffic lights hidden — focus-mode. Polling toggles on hover.
+    if (isMac) {
       quickNoteWindow?.setWindowButtonVisibility(false)
     }
     if (!options.prewarm) {
@@ -222,6 +256,9 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
       quickNoteWindow?.focus()
     }
   })
+
+  quickNoteWindow.on("show", startCursorPoll)
+  quickNoteWindow.on("hide", stopCursorPoll)
 
   // Hide instead of close — keeps React mounted for instant re-invoke
   quickNoteWindow.on("close", (e) => {
@@ -298,14 +335,6 @@ function registerIpcHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (win) {
       win.close()
-    }
-  })
-
-  ipcMain.handle("electron:set-traffic-lights-visible", (event, visible: boolean) => {
-    if (process.platform !== "darwin") return
-    const win = BrowserWindow.fromWebContents(event.sender)
-    if (win) {
-      win.setWindowButtonVisibility(visible)
     }
   })
 

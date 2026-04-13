@@ -26,10 +26,6 @@ function QuickNoteComponent() {
   // accurate active-state highlights.
   const [, setSelTick] = React.useState(0)
   const editorRef = React.useRef<ReactCodeMirrorRef>(null)
-  // Cache of the last traffic-lights visibility we sent to the main process.
-  // Shared between the mousemove/keydown effect and the reset handler so both
-  // stay in sync when the window is re-invoked (main resets to hidden there).
-  const trafficLightsVisibleRef = React.useRef<boolean | null>(null)
   const escTimeoutRef = React.useRef<number | null>(null)
 
   // Reset state when Quick Note window is re-invoked (Electron reuses persisted window)
@@ -41,10 +37,6 @@ function QuickNoteComponent() {
       setHasUnsavedChanges(false)
       setSaved(false)
       setEscPressedOnce(false)
-      // Main process hides traffic lights on re-invoke (setWindowButtonVisibility(false)).
-      // Sync our cache so the next mousemove actually fires a show IPC instead of
-      // thinking the lights are already visible from a previous session.
-      trafficLightsVisibleRef.current = false
       // Clear editor content and refocus
       const view = editorRef.current?.view
       if (view) {
@@ -130,31 +122,6 @@ function QuickNoteComponent() {
   // editorRef.current.view (which is null on the initial render).
   React.useEffect(() => {
     setSelTick((t) => t + 1)
-  }, [])
-
-  // Traffic lights: hide while typing, show on any mouse movement in the window.
-  // Focus-mode pattern. We use mousemove (not mouseenter/leave) because the
-  // native traffic-light buttons are rendered OUTSIDE document.body by macOS —
-  // hovering them fires mouseleave on body, which would hide the very buttons
-  // the user is trying to click.
-  React.useEffect(() => {
-    if (!isElectron() || !window.electronAPI?.setTrafficLightsVisible) return
-    const api = window.electronAPI
-    const set = (visible: boolean) => {
-      if (trafficLightsVisibleRef.current === visible) return
-      trafficLightsVisibleRef.current = visible
-      api.setTrafficLightsVisible(visible)
-    }
-    const show = () => set(true)
-    const hide = () => set(false)
-
-    window.addEventListener("mousemove", show)
-    document.addEventListener("keydown", hide)
-
-    return () => {
-      window.removeEventListener("mousemove", show)
-      document.removeEventListener("keydown", hide)
-    }
   }, [])
 
   // Save note by emitting event to main window

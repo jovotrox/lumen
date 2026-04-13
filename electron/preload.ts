@@ -7,9 +7,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
   closeWindow: () => ipcRenderer.invoke("electron:close-window"),
 
-  setTrafficLightsVisible: (visible: boolean) =>
-    ipcRenderer.invoke("electron:set-traffic-lights-visible", visible),
-
   openInNewWindow: (url: string) => ipcRenderer.invoke("electron:open-in-new-window", url),
 
   quickNoteSave: (payload: { noteId: string; content: string; mode: string }) =>
