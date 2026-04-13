@@ -10,7 +10,7 @@ import {
   Tray,
 } from "electron"
 import { autoUpdater } from "electron-updater"
-import { execSync } from "child_process"
+import { execFileSync, execSync } from "child_process"
 import fs from "fs"
 import path from "path"
 
@@ -180,9 +180,14 @@ function createMainWindow(): void {
     mainWindow.maximize()
   }
 
-  // Save window state on resize and move
-  mainWindow.on("resize", () => saveWindowState(mainWindow!))
-  mainWindow.on("move", () => saveWindowState(mainWindow!))
+  // Save window state on resize and move (debounced to avoid excessive writes)
+  let saveTimeout: ReturnType<typeof setTimeout> | null = null
+  const debouncedSave = () => {
+    if (saveTimeout) clearTimeout(saveTimeout)
+    saveTimeout = setTimeout(() => saveWindowState(mainWindow!), 500)
+  }
+  mainWindow.on("resize", debouncedSave)
+  mainWindow.on("move", debouncedSave)
 
   mainWindow.loadURL(getBaseUrl())
 
@@ -301,7 +306,15 @@ function createTray(): void {
 
 function registerIpcHandlers(): void {
   ipcMain.handle("electron:open-external", async (_event, url: string) => {
-    await shell.openExternal(url)
+    // Only allow http/https URLs to prevent file:// and protocol handler abuse
+    try {
+      const parsed = new URL(url)
+      if (parsed.protocol === "https:" || parsed.protocol === "http:") {
+        await shell.openExternal(url)
+      }
+    } catch {
+      // Invalid URL, ignore
+    }
   })
 
   ipcMain.handle("electron:close-window", (event) => {
@@ -321,6 +334,10 @@ function registerIpcHandlers(): void {
   )
 
   ipcMain.handle("electron:open-in-new-window", (_event, noteUrl: string) => {
+    // Only allow URLs matching our app's base URL
+    const baseUrl = getBaseUrl()
+    if (!noteUrl.startsWith(baseUrl)) return
+
     const win = new BrowserWindow({
       width: 900,
       height: 700,
@@ -339,7 +356,12 @@ function registerIpcHandlers(): void {
   })
 
   ipcMain.handle("electron:get-calendar-events", async (_event, dateString: string) => {
-    if (process.platform !== "darwin") return []
+    if (process.platform !== "darwin") return { denied: false, events: [] }
+
+    // Validate date format to prevent command injection
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateString)) {
+      return { denied: false, events: [] }
+    }
 
     try {
       const binaryPath = path.join(app.getPath("userData"), "lumen-calendar-helper")
@@ -354,7 +376,8 @@ function registerIpcHandlers(): void {
         )
       }
 
-      const result = execSync(`"${binaryPath}" "${dateString}"`, {
+      // Use execFileSync to avoid shell interpretation entirely
+      const result = execFileSync(binaryPath, [dateString], {
         timeout: 10000,
         encoding: "utf-8",
       })
