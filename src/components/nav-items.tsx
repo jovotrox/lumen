@@ -344,6 +344,9 @@ function NavLink({
       data-size={size}
       className={cx("nav-item", className)}
       aria-current={forceActive ? "page" : undefined}
+      // Prevent the browser's default link-drag (ghost showing the URL).
+      // Native apps don't let you drag a nav item out of the window.
+      draggable={false}
       onClick={(event) => {
         onClick?.(event)
         if (!event.defaultPrevented) {
