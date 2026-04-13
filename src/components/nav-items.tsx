@@ -7,6 +7,7 @@ import { useNetworkState } from "react-use"
 import { useRegisterSW } from "virtual:pwa-register/react"
 import {
   DndContext,
+  KeyboardSensor,
   PointerSensor,
   closestCenter,
   useSensor,
@@ -16,11 +17,13 @@ import {
 } from "@dnd-kit/core"
 import {
   SortableContext,
+  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
+import { saveSettingsToRepo } from "../hooks/use-settings-sync"
 import type { Note } from "../schema"
 import {
   globalStateMachineAtom,
@@ -73,7 +76,11 @@ export function NavItems({
   // Drag-to-reorder for pinned notes.
   // activationConstraint: distance=5px so a plain click still navigates —
   // only actual dragging engages the sortable machinery.
-  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }))
+  // KeyboardSensor enables arrow-key reordering for non-pointer users.
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
+  )
   const [draggingId, setDraggingId] = useState<string | null>(null)
   const draggingNote = draggingId ? pinnedNotes.find((n) => n.id === draggingId) : null
 
@@ -86,6 +93,9 @@ export function NavItems({
     const newIndex = ids.indexOf(over.id as string)
     if (oldIndex === -1 || newIndex === -1) return
     setPinnedOrder(arrayMove(ids, oldIndex, newIndex))
+    // Persist to the synced settings file so the order propagates across devices.
+    // Fire-and-forget — the localStorage atom write already took effect.
+    void saveSettingsToRepo()
   }
 
   const today = new Date()
@@ -361,6 +371,10 @@ function NavLink({
 function SortablePinnedItem({ note, onNavigate }: { note: Note; onNavigate?: () => void }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
     id: note.id,
+    // Preserve native list-item semantics — dnd-kit defaults to role="button"
+    // which would make screen readers announce each pinned note as a button
+    // rather than a list item containing a link.
+    attributes: { role: "listitem" },
   })
   const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
@@ -369,7 +383,13 @@ function SortablePinnedItem({ note, onNavigate }: { note: Note; onNavigate?: () 
     opacity: isDragging ? 0 : 1,
   }
   return (
-    <li ref={setNodeRef} style={style} className="flex" {...attributes} {...listeners}>
+    <li
+      ref={setNodeRef}
+      style={style}
+      className="flex cursor-grab active:cursor-grabbing"
+      {...attributes}
+      {...listeners}
+    >
       <NavLink
         to="/notes/$"
         params={{ _splat: note.id }}
