@@ -2,6 +2,11 @@ name: Electron Release
 
 on:
   push:
+    branches: [personal]
+    paths:
+      - "electron/**"
+      - "electron-builder.yml"
+      - "package.json"
     tags:
       - "v*"
   workflow_dispatch:
