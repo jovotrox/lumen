@@ -16,13 +16,34 @@ export const Route = createFileRoute("/quick-note")({
 })
 
 function QuickNoteComponent() {
-  const [noteId] = React.useState(() => generateNoteId())
+  const [noteId, setNoteId] = React.useState(generateNoteId)
   const [content, setContent] = React.useState("")
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false)
   const [saved, setSaved] = React.useState(false)
   const [escPressedOnce, setEscPressedOnce] = React.useState(false)
   const editorRef = React.useRef<ReactCodeMirrorRef>(null)
   const escTimeoutRef = React.useRef<number | null>(null)
+
+  // Reset state when Quick Note window is re-invoked (Electron reuses persisted window)
+  React.useEffect(() => {
+    if (!isElectron() || !window.electronAPI?.onQuickNoteReset) return
+    const cleanup = window.electronAPI.onQuickNoteReset(() => {
+      setContent("")
+      setNoteId(generateNoteId())
+      setHasUnsavedChanges(false)
+      setSaved(false)
+      setEscPressedOnce(false)
+      // Clear editor content and refocus
+      const view = editorRef.current?.view
+      if (view) {
+        view.dispatch({
+          changes: { from: 0, to: view.state.doc.length, insert: "" },
+        })
+        view.focus()
+      }
+    })
+    return cleanup
+  }, [])
   const defaultFont = useAtomValue(defaultFontAtom)
   const themeId = useAtomValue(themeAtom)
   const customThemes = useAtomValue(customThemesAtom)

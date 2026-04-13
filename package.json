@@ -1,7 +1,7 @@
 {
   "name": "lumen",
   "private": true,
-  "version": "0.2.2",
+  "version": "0.2.3",
   "type": "module",
   "main": "electron/dist/main.cjs",
   "scripts": {
@@ -203,8 +203,11 @@
     "printWidth": 100
   },
   "lint-staged": {
-    "*.{js,ts,tsx}": [
+    "src/**/*.{js,ts,tsx}": [
       "eslint --fix",
+      "prettier --write"
+    ],
+    "{electron,api,scripts}/**/*.{js,ts,tsx}": [
       "prettier --write"
     ],
     "*.{md,json,yml,yaml,css,html}": [

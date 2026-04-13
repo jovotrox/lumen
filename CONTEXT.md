@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-12 (v0.2.2)
+**Ultima actualizacion:** 2026-04-12 (v0.2.3)
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal` (fork personal, rama de compilación)
 - **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos
-- **Version:** 0.2.2
+- **Version:** 0.2.3
 
 ### Migracion Tauri → Electron
 
@@ -257,6 +257,18 @@ El proyecto es un fork MIT de [lumen-notes/lumen](https://github.com/lumen-notes
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.2.3 — 2026-04-12
+
+- **fix(electron):** Calendar permission dialog ahora aparece — agregado `NSCalendarsFullAccessUsageDescription` + `NSCalendarsUsageDescription` en `Info.plist` via `extendInfo`
+- **fix(electron):** Calendar catch ahora retorna `denied: true` (en vez de tragar el error silenciosamente)
+- **fix:** Sidebar Sync/Settings/Help anclados al fondo — `h-full` en scroll container
+- **fix(electron):** Quick Note carga instantánea (patrón Spotlight/Alfred)
+  - `backgroundColor` + `show: false` + `ready-to-show` → no white flash
+  - Close → hide en vez de destroy → React persiste, re-invoke instant
+  - Pre-warm al startup (2s delay) → primera invocación también instant
+  - IPC `quick-note-reset` limpia state al reabrir
+- **Nota post-install:** Si el dialog de Calendar no aparece tras instalar, correr `tccutil reset Calendar com.lumen.notes` (macOS cachea el denial silencioso de versiones anteriores)
 
 ### v0.2.2 — 2026-04-12
 

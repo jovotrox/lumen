@@ -20,6 +20,14 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }
   },
 
+  onQuickNoteReset: (callback: () => void) => {
+    const handler = () => callback()
+    ipcRenderer.on("quick-note-reset", handler)
+    return () => {
+      ipcRenderer.removeListener("quick-note-reset", handler)
+    }
+  },
+
   onMenuAction: (callback: (action: string) => void) => {
     const handler = (_event: any, action: string) => callback(action)
     ipcRenderer.on("menu-action", handler)

@@ -58,7 +58,7 @@ export function Sidebar() {
           </div>
         </div>
       ) : null}
-      <div className="relative flex scroll-py-2 flex-col gap-2 overflow-auto p-2">
+      <div className="relative flex h-full scroll-py-2 flex-col gap-2 overflow-auto p-2">
         <div {...topSentinelProps} />
         <NavItems />
       </div>

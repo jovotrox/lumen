@@ -7,6 +7,7 @@ interface ElectronAPI {
   onQuickNoteSaved: (
     callback: (payload: { noteId: string; content: string; mode: string }) => void,
   ) => () => void
+  onQuickNoteReset: (callback: () => void) => () => void
   onMenuAction: (callback: (action: string) => void) => () => void
   onDeepLink: (callback: (path: string) => void) => () => void
   onNavigateTo: (callback: (path: string) => void) => () => void

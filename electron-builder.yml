@@ -17,6 +17,9 @@ extraMetadata:
 mac:
   category: public.app-category.productivity
   icon: electron/icons/icon.icns
+  extendInfo:
+    NSCalendarsUsageDescription: "Lumen accesses your calendar to show events alongside your daily notes."
+    NSCalendarsFullAccessUsageDescription: "Lumen accesses your calendar to show events alongside your daily notes."
   protocols:
     - name: Lumen Notes
       schemes:

@@ -224,9 +224,10 @@ function createMainWindow(): void {
 // Quick-note window
 // ---------------------------------------------------------------------------
 
-function createQuickNoteWindow(): void {
-  // Reuse existing window if it's still open
+function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
+  // Reuse existing window if it's still open — instant re-invoke
   if (quickNoteWindow && !quickNoteWindow.isDestroyed()) {
+    quickNoteWindow.webContents.send("quick-note-reset")
     quickNoteWindow.show()
     quickNoteWindow.focus()
     return
@@ -246,6 +247,8 @@ function createQuickNoteWindow(): void {
     maximizable: false,
     titleBarStyle: "hiddenInset",
     title: "Quick Note",
+    backgroundColor: "#0a0a0a",
+    show: false,
     webPreferences: {
       contextIsolation: true,
       nodeIntegration: false,
@@ -255,6 +258,22 @@ function createQuickNoteWindow(): void {
   })
 
   quickNoteWindow.loadURL(quickNoteUrl)
+
+  // Only show once content is ready — prevents white flash
+  quickNoteWindow.once("ready-to-show", () => {
+    if (!options.prewarm) {
+      quickNoteWindow?.show()
+      quickNoteWindow?.focus()
+    }
+  })
+
+  // Hide instead of close — keeps React mounted for instant re-invoke
+  quickNoteWindow.on("close", (e) => {
+    if (!isQuitting) {
+      e.preventDefault()
+      quickNoteWindow?.hide()
+    }
+  })
 
   quickNoteWindow.on("closed", () => {
     quickNoteWindow = null
@@ -289,7 +308,7 @@ function createTray(): void {
 
   const contextMenu = Menu.buildFromTemplate([
     { label: "Show Lumen", click: showMainWindow },
-    { label: "Quick Note (\u2325\u21e7N)", click: createQuickNoteWindow },
+    { label: "Quick Note (\u2325\u21e7N)", click: () => createQuickNoteWindow() },
     { type: "separator" },
     {
       label: "Quit Lumen",
@@ -391,7 +410,7 @@ function registerIpcHandlers(): void {
       return { denied: false, events: JSON.parse(trimmed || "[]") }
     } catch (error) {
       console.error("Failed to fetch calendar events:", error)
-      return { denied: false, events: [] }
+      return { denied: true, events: [] }
     }
   })
 
@@ -758,7 +777,12 @@ if (!gotTheLock) {
     createTray()
 
     // Global shortcut: Alt+Shift+N → Quick Note
-    globalShortcut.register("Alt+Shift+N", createQuickNoteWindow)
+    globalShortcut.register("Alt+Shift+N", () => createQuickNoteWindow())
+
+    // Pre-warm Quick Note window so first invocation is instant (no white flash, no React bootstrap delay)
+    setTimeout(() => {
+      if (!quickNoteWindow) createQuickNoteWindow({ prewarm: true })
+    }, 2000)
 
     // macOS: re-create window when clicking dock icon with no windows visible
     app.on("activate", () => {
