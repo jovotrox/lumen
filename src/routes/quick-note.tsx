@@ -216,16 +216,24 @@ function QuickNoteComponent() {
     return () => window.removeEventListener("keydown", handleKeyDown)
   }, [handleSave, handleEsc, closeWindow])
 
+  // Only apply the semi-transparent tint on macOS, where the BrowserWindow has
+  // vibrancy + transparent bg and the blur needs to show through. On Windows/Linux
+  // the window bg is solid, so a 70% tint would darken the effective color
+  // (especially noticeable with light themes).
+  const isMacElectron = isElectron() && /Mac/.test(navigator.userAgent)
+
   return (
     <div
-      className="flex h-screen flex-col font-content text-text"
-      // On macOS the BrowserWindow has vibrancy: "under-window" + transparent bg.
-      // We layer a semi-transparent tint on top so text stays readable while
-      // the wallpaper/apps behind show through the frosted blur.
-      // color-mix is supported in Chromium 120+ (Electron 29+).
-      style={{
-        backgroundColor: "color-mix(in srgb, var(--color-bg) 70%, transparent)",
-      }}
+      className={
+        isMacElectron
+          ? "flex h-screen flex-col font-content text-text"
+          : "flex h-screen flex-col bg-bg font-content text-text"
+      }
+      style={
+        isMacElectron
+          ? { backgroundColor: "color-mix(in srgb, var(--color-bg) 70%, transparent)" }
+          : undefined
+      }
     >
       {/* Header — draggable, with traffic light space on left */}
       <div

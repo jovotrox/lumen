@@ -363,6 +363,9 @@ function setListKind(view: EditorView, kind: ListKind): boolean {
   const allMatchKind = markers.every((m) => m !== null && kindOfMarker(m) === kind)
 
   const changes: { from: number; to?: number; insert: string }[] = []
+  // When the first line is unchanged (`existing === newPrefix`), the loop
+  // skips it and `firstChangeDelta` stays 0 — which is the right value,
+  // since the anchor position on an unchanged line shouldn't move.
   let firstChangeDelta = 0
   let totalDelta = 0
   let counter = 1
