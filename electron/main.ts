@@ -230,13 +230,18 @@ function createQuickNoteWindow(): void {
   const quickNoteUrl = baseUrl.endsWith("/") ? `${baseUrl}quick-note` : `${baseUrl}/quick-note`
 
   quickNoteWindow = new BrowserWindow({
-    width: 400,
-    height: 300,
+    width: 420,
+    height: 320,
     center: true,
     alwaysOnTop: true,
     resizable: true,
     minimizable: false,
     maximizable: false,
+    titleBarStyle: "hidden",
+    trafficLightPosition: { x: 12, y: 12 },
+    vibrancy: "under-window",
+    visualEffectState: "active",
+    transparent: true,
     title: "Quick Note",
     webPreferences: {
       contextIsolation: true,

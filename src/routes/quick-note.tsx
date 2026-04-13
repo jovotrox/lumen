@@ -160,22 +160,37 @@ function QuickNoteComponent() {
   }, [handleSave, handleEsc, closeWindow])
 
   return (
-    <div className="flex h-screen flex-col bg-bg font-content text-text">
-      {/* Header */}
-      <div className="flex shrink-0 items-center justify-between border-b border-border-secondary px-3 py-2">
-        <SegmentedControl aria-label="Quick note mode" size="small">
-          <SegmentedControl.Segment selected={mode === "note"} onClick={() => setMode("note")}>
-            Note
-          </SegmentedControl.Segment>
-          <SegmentedControl.Segment selected={mode === "inbox"} onClick={() => setMode("inbox")}>
-            Inbox
-          </SegmentedControl.Segment>
-        </SegmentedControl>
-        <div className="flex items-center gap-1">
+    <div
+      className="flex h-screen flex-col font-content text-text"
+      style={{ background: "transparent" }}
+    >
+      {/* Draggable titlebar area */}
+      <div
+        className="flex h-[38px] shrink-0 items-center justify-between px-3"
+        style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
+      >
+        {/* Traffic light space */}
+        <div className="w-[60px]" />
+        <div
+          className="flex items-center gap-2"
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+        >
+          <SegmentedControl aria-label="Quick note mode" size="small">
+            <SegmentedControl.Segment selected={mode === "note"} onClick={() => setMode("note")}>
+              Note
+            </SegmentedControl.Segment>
+            <SegmentedControl.Segment selected={mode === "inbox"} onClick={() => setMode("inbox")}>
+              Inbox
+            </SegmentedControl.Segment>
+          </SegmentedControl>
+        </div>
+        <div
+          className="flex w-[60px] items-center justify-end gap-1"
+          style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
+        >
           {saved && (
             <span className="flex items-center gap-1 text-xs text-text-success">
               <CheckIcon16 className="size-3" />
-              Saved
             </span>
           )}
           <Button variant="primary" size="small" onClick={handleSave} disabled={!content.trim()}>
@@ -185,7 +200,7 @@ function QuickNoteComponent() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-auto p-3">
+      <div className="flex-1 overflow-auto px-4 pb-3">
         <NoteEditor
           ref={editorRef}
           defaultValue={content}
@@ -198,16 +213,16 @@ function QuickNoteComponent() {
         />
       </div>
 
-      {/* Footer with shortcuts / ESC warning */}
-      <div className="shrink-0 border-t border-border-secondary px-3 py-1.5">
+      {/* Footer */}
+      <div className="shrink-0 px-4 py-1.5">
         {escPressedOnce ? (
           <div className="text-center text-xs text-text-pending">
             Press ESC again to discard changes
           </div>
         ) : (
-          <div className="flex items-center justify-between text-[10px] text-text-tertiary">
+          <div className="flex items-center justify-between text-[10px] text-text-tertiary opacity-50">
             <span>⌘S save · ⌘↵ save+close</span>
-            <span>ESC to close</span>
+            <span>ESC close</span>
           </div>
         )}
       </div>
