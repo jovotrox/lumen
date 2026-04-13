@@ -177,10 +177,12 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
     titleBarStyle: "hiddenInset",
     title: "Quick Note",
     // macOS: transparent bg + vibrancy gives the frosted-glass look.
-    // Other platforms keep a solid dark bg (vibrancy is a no-op).
+    // `transparent: true` is required for the vibrancy blur to actually show
+    // through — without it the window composites over an opaque buffer.
     backgroundColor: isMac ? "#00000000" : "#0a0a0a",
     ...(isMac
       ? ({
+          transparent: true,
           vibrancy: "under-window",
           visualEffectState: "active",
         } as const)
@@ -193,6 +195,18 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
       preload: preloadPath,
     },
   })
+
+  // Some macOS + hiddenInset combinations ignore the maximizable/fullscreenable
+  // constructor options; re-assert them via setters so the green traffic button
+  // actually renders as grayed/disabled.
+  if (isMac) {
+    quickNoteWindow.setMaximizable(false)
+    quickNoteWindow.setFullScreenable(false)
+    // Defensive: if anything still manages to trigger maximize or fullscreen,
+    // bounce back. Keeps the window at the user's intended size.
+    quickNoteWindow.on("maximize", () => quickNoteWindow?.unmaximize())
+    quickNoteWindow.on("enter-full-screen", () => quickNoteWindow?.setFullScreen(false))
+  }
 
   quickNoteWindow.loadURL(quickNoteUrl)
 

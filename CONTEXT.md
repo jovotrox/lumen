@@ -286,6 +286,8 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
   - **Max height 720**: usuario puede redimensionar pero topeado a 720px para evitar Quick Note gigantescos accidentales.
   - **Gradient fade en edges**: `mask-image` en el editor scroll container hace que el texto que sube/baja fade into transparent en vez de cortarse duro contra header/toolbar. Reemplaza el `border-t` de la toolbar — la separación ahora es natural. Replica el patrón del close button en `titlebar.tsx`.
   - **Más transparencia**: tint del overlay bajó 70% → 55%. Deja que se vea más el blur de vibrancy de abajo.
+  - **Transparency wiring fix**: el `body { @apply bg-bg }` global de `src/styles/index.css` era opaco y bloqueaba la vibrancy (por eso el 55% no se veía). El route de Quick Note ahora override body/html/#root a `transparent` via efecto. Además `transparent: true` en la BrowserWindow (necesario junto con `vibrancy` para que el blur realmente se componga).
+  - **Green button enforcement**: `setMaximizable(false)` + `setFullScreenable(false)` explícitos tras crear la ventana (los constructor options no siempre los respetan con `hiddenInset`). Además listeners defensivos `on("maximize")` + `on("enter-full-screen")` que rebotan al tamaño normal por si algo logra dispararlos.
 
 ### v0.3.0 — 2026-04-13
 

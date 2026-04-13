@@ -222,6 +222,18 @@ function QuickNoteComponent() {
   // (especially noticeable with light themes).
   const isMacElectron = isElectron() && /Mac/.test(navigator.userAgent)
 
+  // index.css applies `body { bg-bg }` globally which blocks vibrancy from
+  // showing through. Override it on the Quick Note macOS route so the frosted
+  // blur is actually visible. This window is dedicated (only loads /quick-note)
+  // so we don't need to restore on unmount.
+  React.useEffect(() => {
+    if (!isMacElectron) return
+    document.documentElement.style.backgroundColor = "transparent"
+    document.body.style.backgroundColor = "transparent"
+    const root = document.getElementById("root")
+    if (root) root.style.backgroundColor = "transparent"
+  }, [isMacElectron])
+
   // Fade the editor's top & bottom edges into transparency so text scrolling
   // under the titlebar / over the toolbar doesn't hard-cut at the boundary.
   // Matches the pattern already used on tab close buttons (titlebar.tsx:147).
