@@ -643,8 +643,10 @@ function NotesSection() {
 function CalendarSection() {
   const [enabled, setEnabled] = useAtom(calendarIntegrationAtom)
   const isDesktop = typeof window !== "undefined" && "electronAPI" in window
+  const isRepoCloned = useAtomValue(isRepoClonedAtom)
 
-  if (!isDesktop) return null
+  // Only show when signed in (repo cloned) and running in desktop app
+  if (!isDesktop || !isRepoCloned) return null
 
   return (
     <SettingsSection title="Calendar">
