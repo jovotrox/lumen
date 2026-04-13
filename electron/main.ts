@@ -151,6 +151,9 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
   // Reuse existing window if it's still open — instant re-invoke
   if (quickNoteWindow && !quickNoteWindow.isDestroyed()) {
     quickNoteWindow.webContents.send("quick-note-reset")
+    if (process.platform === "darwin") {
+      quickNoteWindow.setWindowButtonVisibility(false)
+    }
     quickNoteWindow.show()
     quickNoteWindow.focus()
     return
@@ -162,7 +165,7 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
 
   quickNoteWindow = new BrowserWindow({
     width: 420,
-    height: 320,
+    height: 360,
     center: true,
     alwaysOnTop: true,
     resizable: true,
@@ -184,6 +187,10 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
 
   // Only show once content is ready — prevents white flash
   quickNoteWindow.once("ready-to-show", () => {
+    // Start with traffic lights hidden — focus-mode. Renderer toggles on hover.
+    if (process.platform === "darwin") {
+      quickNoteWindow?.setWindowButtonVisibility(false)
+    }
     if (!options.prewarm) {
       quickNoteWindow?.show()
       quickNoteWindow?.focus()
@@ -265,6 +272,14 @@ function registerIpcHandlers(): void {
     const win = BrowserWindow.fromWebContents(event.sender)
     if (win) {
       win.close()
+    }
+  })
+
+  ipcMain.handle("electron:set-traffic-lights-visible", (event, visible: boolean) => {
+    if (process.platform !== "darwin") return
+    const win = BrowserWindow.fromWebContents(event.sender)
+    if (win) {
+      win.setWindowButtonVisibility(visible)
     }
   })
 

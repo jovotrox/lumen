@@ -349,8 +349,8 @@ const livePreviewTheme = EditorView.baseTheme({
   ".cm-live-header": {
     fontWeight: "var(--font-weight-bold)",
     lineHeight: "1.4",
-    paddingTop: "calc(var(--font-size-base) * 0.5)",
-    paddingBottom: "calc(var(--font-size-base) * 0.25)",
+    paddingTop: "calc(var(--font-size-base) * 0.75)",
+    paddingBottom: "calc(var(--font-size-base) * 0.4)",
   },
   ".cm-live-header-1": {
     fontSize: "var(--font-size-xl)",
@@ -383,8 +383,8 @@ const livePreviewTheme = EditorView.baseTheme({
   ".cm-live-blockquote-line": {
     position: "relative",
     paddingLeft: "calc(var(--font-size-base) * 1.25) !important",
-    paddingTop: "2px",
-    paddingBottom: "2px",
+    paddingTop: "4px",
+    paddingBottom: "4px",
     marginLeft: "0 !important",
     textIndent: "0 !important",
     color: "var(--color-text-secondary)",
@@ -416,8 +416,8 @@ const livePreviewTheme = EditorView.baseTheme({
   ".cm-live-list-line": {
     marginLeft: "0 !important",
     textIndent: "0 !important",
-    paddingTop: "6px",
-    paddingBottom: "6px",
+    paddingTop: "4px",
+    paddingBottom: "4px",
     paddingLeft: "6px",
   },
   // Match view mode: size-7 (28px) container + gap-1.5 (6px margin-right)
@@ -458,8 +458,8 @@ const livePreviewTheme = EditorView.baseTheme({
   ".cm-live-task-line": {
     marginLeft: "0 !important",
     textIndent: "0 !important",
-    paddingTop: "6px",
-    paddingBottom: "6px",
+    paddingTop: "4px",
+    paddingBottom: "4px",
     paddingLeft: "6px",
   },
 })

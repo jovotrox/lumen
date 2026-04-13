@@ -10,6 +10,7 @@ import { CheckIcon16 } from "../components/icons"
 import { useAtom, useAtomValue } from "jotai"
 import { customThemesAtom, defaultFontAtom, quickNoteModeAtom, themeAtom } from "../global-state"
 import { SegmentedControl } from "../components/segmented-control"
+import { FormatToolbar } from "../components/format-toolbar"
 
 export const Route = createFileRoute("/quick-note")({
   component: QuickNoteComponent,
@@ -21,6 +22,9 @@ function QuickNoteComponent() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = React.useState(false)
   const [saved, setSaved] = React.useState(false)
   const [escPressedOnce, setEscPressedOnce] = React.useState(false)
+  // Bumped on every selection/doc change to re-render the pinned toolbar with
+  // accurate active-state highlights.
+  const [, setSelTick] = React.useState(0)
   const editorRef = React.useRef<ReactCodeMirrorRef>(null)
   const escTimeoutRef = React.useRef<number | null>(null)
 
@@ -111,6 +115,37 @@ function QuickNoteComponent() {
       if (escTimeoutRef.current) {
         clearTimeout(escTimeoutRef.current)
       }
+    }
+  }, [])
+
+  // Force one re-render after mount so the pinned format toolbar can read
+  // editorRef.current.view (which is null on the initial render).
+  React.useEffect(() => {
+    setSelTick((t) => t + 1)
+  }, [])
+
+  // Traffic lights: hide while typing, show on mouse hover over the window.
+  // Focus-mode pattern — keeps attention on the text.
+  React.useEffect(() => {
+    if (!isElectron() || !window.electronAPI?.setTrafficLightsVisible) return
+    const api = window.electronAPI
+    let lastVisible: boolean | null = null
+    const set = (visible: boolean) => {
+      if (lastVisible === visible) return
+      lastVisible = visible
+      api.setTrafficLightsVisible!(visible)
+    }
+    const show = () => set(true)
+    const hide = () => set(false)
+
+    document.body.addEventListener("mouseenter", show)
+    document.body.addEventListener("mouseleave", hide)
+    document.addEventListener("keydown", hide)
+
+    return () => {
+      document.body.removeEventListener("mouseenter", show)
+      document.body.removeEventListener("mouseleave", hide)
+      document.removeEventListener("keydown", hide)
     }
   }, [])
 
@@ -217,7 +252,7 @@ function QuickNoteComponent() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-auto px-4 pt-2 pb-3">
+      <div className="flex-1 overflow-auto px-4 pt-3 pb-2">
         <NoteEditor
           ref={editorRef}
           defaultValue={content}
@@ -227,8 +262,25 @@ function QuickNoteComponent() {
           onChange={handleChange}
           minHeight={200}
           livePreview
+          onStateChange={(update) => {
+            if (update.selectionSet || update.docChanged) {
+              setSelTick((t) => t + 1)
+            }
+          }}
         />
       </div>
+
+      {/* Pinned format toolbar */}
+      {editorRef.current?.view ? (
+        <div className="shrink-0 border-t border-border-secondary px-2 py-1">
+          <FormatToolbar
+            variant="pinned"
+            editorView={editorRef.current.view}
+            selectionFrom={editorRef.current.view.state.selection.main.from}
+            selectionTo={editorRef.current.view.state.selection.main.to}
+          />
+        </div>
+      ) : null}
 
       {/* Footer */}
       <div className="shrink-0 px-4 py-1.5">
