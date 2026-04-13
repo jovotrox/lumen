@@ -119,7 +119,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   if (!enabled) return null
   if (activeFeeds.length === 0) {
     return (
-      <div className="mx-4 my-2 flex items-center gap-2 rounded-lg bg-bg-secondary px-3 py-2 text-xs text-text-tertiary">
+      <div className="my-2 flex items-center gap-2 rounded-lg bg-bg-secondary px-3 py-2 text-sm text-text-tertiary">
         <Calendar className="size-3 opacity-60" />
         <span>No calendars configured. Add one in Settings.</span>
       </div>
@@ -129,18 +129,18 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   if (events.length === 0 && errors.length === 0) return null
 
   return (
-    <div className="mx-4 my-2 flex flex-col gap-0 overflow-hidden rounded-lg bg-bg-secondary p-0.5">
+    <div className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
       {events.map((event, i) => {
         const noteId = getEventNoteId(event)
         const hasNote = notes.has(noteId)
         return (
           <div
             key={`${noteId}-${i}`}
-            className="group flex items-center gap-3 rounded-md px-3 py-2 transition hover:bg-bg-tertiary"
+            className="group flex items-center gap-3 rounded-lg px-2.5 py-1.5 transition hover:bg-bg-tertiary"
             title={event.calendar || undefined}
           >
             <span
-              className="w-[44px] shrink-0 text-xs font-medium tabular-nums"
+              className="w-[44px] shrink-0 text-sm font-medium tabular-nums"
               style={{ color: event.color }}
             >
               {formatStartTime(event)}
