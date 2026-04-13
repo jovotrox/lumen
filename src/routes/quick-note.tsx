@@ -160,17 +160,12 @@ function QuickNoteComponent() {
   }, [handleSave, handleEsc, closeWindow])
 
   return (
-    <div
-      className="flex h-screen flex-col font-content text-text"
-      style={{ background: "transparent" }}
-    >
-      {/* Draggable titlebar area */}
+    <div className="flex h-screen flex-col bg-bg font-content text-text">
+      {/* Header — draggable to move the window */}
       <div
-        className="flex h-[38px] shrink-0 items-center justify-between px-3"
+        className="flex shrink-0 items-center justify-between px-3 py-2"
         style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
       >
-        {/* Traffic light space */}
-        <div className="w-[60px]" />
         <div
           className="flex items-center gap-2"
           style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
