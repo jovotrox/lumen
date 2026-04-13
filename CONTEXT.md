@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-13 (v0.3.0)
+**Ultima actualizacion:** 2026-04-13 (v0.4.0)
 
 ---
 
@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `personal` (fork personal, rama de compilación)
-- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos
-- **Version:** 0.3.0
+- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, Quick Note polish v0.4.0
+- **Version:** 0.4.0
 
 ### Migracion Tauri → Electron
 
@@ -269,6 +269,15 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.4.0 — 2026-04-13
+
+- **feat(quick-note): UX polish — native feel**
+  - **Spacing & balance (live-preview)**: headers ganan más aire (`0.5x → 0.75x` padding-top, `0.25x → 0.4x` padding-bottom), list/task lines se ajustan (`6px → 4px` vertical) para sentirse más compactos, blockquotes ganan respiración (`2px → 4px`). Afecta Quick Note y notas normales — mejora global consistente.
+  - **Container Quick Note**: `pt-2 pb-3 → pt-3 pb-2` para despegar del header draggable.
+  - **Traffic lights focus-mode (macOS)**: semáforo oculto al abrir/escribir, visible al hover sobre la ventana. Nuevo IPC `electron:set-traffic-lights-visible` usando `BrowserWindow.setWindowButtonVisibility`. El renderer controla vía `document.body mouseenter/leave` + `document keydown`. Dedup local para evitar IPC chatty.
+  - **Pinned format toolbar**: `FormatToolbar` recibe `variant: "floating" | "pinned"`. Pinned skipea Portal + positioning, renderiza inline, siempre visible. Floating conserva el comportamiento actual en notas normales.
+  - **Quick Note window**: altura 320 → 360 para dar espacio a la nueva toolbar anclada al fondo.
 
 ### v0.3.0 — 2026-04-13
 
