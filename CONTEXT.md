@@ -284,6 +284,7 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
   - Usa `electron:fetch` IPC en desktop (bypasa CORS); en browser usa fetch nativo
   - Cache local 5min por URL+fecha
   - **Sincronizado via `.lumen/settings.json`**: `calendarIntegration` + `calendarFeeds` se propagan entre devices (igual que nickname/theme/etc)
+  - **Settings sync env-scoped**: dev escribe `.lumen/settings.dev.json`, prod escribe `.lumen/settings.json`. Dev lee su archivo, con fallback al prod como seed inicial. Así los runs de dev nunca contaminan las preferencias de producción.
   - **Click en evento → nota vinculada**: ID determinístico `event-YYYY-MM-DD-slug-titulo`. Si no existe, se crea con frontmatter (`event.title`, `start`, `end`, `calendar`, `location`, `isAllDay`) + heading. Navega a la nota en write mode. Si existe, abre en read mode. Eventos con nota vinculada muestran ícono FileText (📄).
 - **Diagnóstico EventKit confirmó:** binario Swift standalone no puede pedir permisos en macOS 14+ sin bundle
   propio con Info.plist. Solución arquitectónica requiere o embedar Swift en el bundle, o usar
