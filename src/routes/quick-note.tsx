@@ -192,7 +192,7 @@ function QuickNoteComponent() {
 
   // Only apply the semi-transparent tint on macOS, where the BrowserWindow has
   // vibrancy + transparent bg and the blur needs to show through. On Windows/Linux
-  // the window bg is solid, so a 55% tint would darken the effective color
+  // the window bg is solid, so a partial tint would darken the effective color
   // (especially noticeable with light themes).
   const isMacElectron = isElectron() && /Mac/.test(navigator.userAgent)
 

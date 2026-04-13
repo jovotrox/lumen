@@ -269,6 +269,7 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
   })
 
   quickNoteWindow.on("closed", () => {
+    stopCursorPoll()
     quickNoteWindow = null
   })
 }
