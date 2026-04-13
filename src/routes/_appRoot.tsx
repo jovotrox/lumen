@@ -93,6 +93,20 @@ function RouteComponent() {
     },
   )
 
+  // Cmd+, to open Settings (native macOS convention)
+  useHotkeys(
+    "mod+comma",
+    (e) => {
+      e.preventDefault()
+      navigate({ to: "/settings", search: { query: undefined } })
+    },
+    {
+      preventDefault: true,
+      enableOnFormTags: true,
+      enableOnContentEditable: true,
+    },
+  )
+
   // Update active tab when navigating to non-note routes
   const { updateActiveTab } = useTabs()
   React.useEffect(() => {

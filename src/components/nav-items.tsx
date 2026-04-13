@@ -83,7 +83,7 @@ export function NavItems({
 
   return (
     <SizeContext.Provider value={size}>
-      <div className="flex grow flex-col justify-between gap-6">
+      <div className="flex min-h-full grow flex-col justify-between gap-6">
         <div className="flex flex-col gap-2">
           <ul className="flex flex-col gap-1">
             <li>
