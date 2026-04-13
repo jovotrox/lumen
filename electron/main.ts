@@ -718,6 +718,13 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(() => {
+    // Set app name and dock icon (for dev mode — production uses electron-builder config)
+    app.setName("Lumen")
+    if (process.platform === "darwin") {
+      const dockIcon = nativeImage.createFromPath(path.join(__dirname, "..", "icons", "icon.png"))
+      app.dock.setIcon(dockIcon)
+    }
+
     registerIpcHandlers()
     createMainWindow()
     createAppMenu()
