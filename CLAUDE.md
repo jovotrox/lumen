@@ -203,9 +203,9 @@ feature/* ← Branches temporales para desarrollo
 El flujo completo vive en skills dedicadas para no llenar este archivo:
 
 - **`create-pr`** — branch + dev + test + version bump + CONTEXT.md + abrir PR
-- **`release`** — tag + push + verify workflow (después del squash merge)
+- **`release`** — fallback MANUAL para cuando el workflow automatizado de release falla (casi nunca se usa)
 
-Claude debe invocar la skill `create-pr` al empezar cualquier cambio, y `release` tras el squash merge si hubo version bump.
+Claude debe invocar la skill `create-pr` al empezar cualquier cambio. **Tras el squash merge, no hay que hacer nada manualmente** — el workflow `electron-release.yml` se dispara solo y `electron-builder --publish always` crea el tag `v<VERSION>` + el GitHub Release (con DMG/nsis/AppImage) en el mismo paso (~3-5 min).
 
 Razones del PR flow:
 
@@ -268,16 +268,16 @@ git push origin personal
 
 1. **Siempre trabajar desde `personal`** - Es la rama con todas las features
 2. **NUNCA EDITAR ARCHIVOS DIRECTAMENTE EN `personal`** - Esto incluye TODO tipo de cambio: features, fixes, config, docs, vercel.json, CONTEXT.md updates, CUALQUIER archivo. No hay excepciones. No importa si es "solo un fix pequeño" o "solo un cambio de config". SIEMPRE crear feature branch primero: `git checkout -b feature/nombre`. Si se aprueba un plan, lo primero es crear el branch. Si hay que hacer un hotfix, crear branch. Si hay que actualizar docs, crear branch. SIEMPRE.
-3. **NUNCA hacer merge local a `personal`** - Todos los merges van por Pull Request en GitHub. El flujo es: push branch + `gh pr create --base personal` + review + squash merge en GitHub UI. Después tag si corresponde.
+3. **NUNCA hacer merge local a `personal`** - Todos los merges van por Pull Request en GitHub. El flujo es: push branch + `gh pr create --base personal` + review + squash merge en GitHub UI.
 4. **Validar approach** con el usuario antes de implementar cambios significativos
 5. **Probar con electron:dev** antes de hacer build final
 6. **Mantener compatibilidad** con upstream para facilitar merges futuros
 7. **No modificar .env.local** - contiene el GitHub OAuth Client ID del usuario
-8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features. Para releases: el tag dispara el GitHub Action automático
+8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features. **El release es 100% automático**: tras el squash merge a `personal`, `electron-release.yml` dispara electron-builder que crea el tag + GitHub Release en un solo paso. No hay que taguear manualmente.
 9. **OBLIGATORIO: Actualizar CONTEXT.md** después de cada feature nueva o fix de errores importantes - ANTES de abrir el PR. Sin excepciones.
 10. **Confirmar antes de abrir el PR** - SIEMPRE pedir confirmación al usuario antes de ejecutar `gh pr create`. Mostrar resumen de cambios, title propuesto y body.
 11. **OBLIGATORIO: Bumpear versión antes del PR** (si toca `electron/**`, `electron-builder.yml`, o `package.json`) - Ver sección "Versionado". El workflow FALLA si la versión no sube.
-12. **Tag solo tras el squash merge en GitHub** - No taguear antes del merge; el hash del commit en `personal` no existe hasta que GitHub cree el squash commit.
+12. **NO taguear manualmente tras el merge** - electron-builder lo hace solo. Si por alguna razón el workflow falla y hay que intervenir manualmente, ver la skill `release` como fallback documentado.
 
 ---
 
@@ -326,17 +326,17 @@ gh pr create --base personal --head feature/nombre-feature \
   --title "..." --body "..."
 
 # 5. Usuario revisa y hace Squash and merge en GitHub UI
-
-# 6. Tag DESPUÉS del merge (sobre el squash commit de personal)
-git checkout personal
-git pull origin personal
-git tag v0.3.0
-git push origin v0.3.0
+# 6. LISTO — electron-release.yml corre solo, electron-builder publica el
+#    GitHub Release con tag v<VERSION> sobre el squash commit.
+#    ~3-5 min y está live. No requiere ninguna acción manual.
 ```
 
-**El workflow `electron-release.yml` verifica que `v<VERSION>` no exista ya como release — si existe, falla con error claro.** Esto es el safety net que garantiza que nunca olvidemos el bump.
+**El workflow `electron-release.yml` tiene dos jobs:**
 
-**Por qué tag después del merge:** El squash merge de GitHub crea un commit NUEVO en `personal`. Si tagueás el commit del feature branch, el tag apunta a un commit que no está en `personal` → el release apunta a nada útil.
+1. `verify-version` — falla fast si `v<VERSION>` ya existe como release (protege contra olvidar el bump)
+2. `build` matrix (mac/linux/win) corre `npx electron-builder --publish always`. Con `publish.provider: github` + `releaseType: release` en `electron-builder.yml`, electron-builder **crea el tag + el GitHub Release + sube los assets en el mismo paso**.
+
+**No hay que taguear manualmente.** Si lo hacés, en el mejor caso es no-op; en el peor, podés apuntar a un commit equivocado. La skill `release` sólo existe como fallback documentado si el workflow falla y hay que intervenir a mano.
 
 ### Changelog
 
@@ -354,7 +354,7 @@ Cada bump debe agregar una entrada a `CONTEXT.md` en el historial, formato:
 1. **Verificar versión antes del PR**: leer `package.json.version` y comparar con el último tag (`git describe --tags --abbrev=0`). Si son iguales y el branch toca archivos de Electron, proponer bump.
 2. **Proponer el bump correcto**: leer los commits del branch con `git log personal..HEAD --oneline` y sugerir PATCH/MINOR/MAJOR según la tabla.
 3. **Nunca abrir PR sin bump** si el branch dispara release — el workflow va a fallar igual, mejor evitarlo de raíz.
-4. **Crear el tag DESPUÉS del squash merge** (sobre `personal` actualizado, no sobre el branch). Pushearlo con `git push origin v<VERSION>`.
+4. **NO taguear manualmente tras el squash merge** — electron-builder crea el tag + release en el workflow automático. La skill `release` es sólo fallback para cuando el workflow falla.
 5. **Actualizar CONTEXT.md** con la entrada de la nueva versión antes de abrir el PR.
 
 ---

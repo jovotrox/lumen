@@ -190,7 +190,7 @@ EOF
 - ❌ Never merge locally (`git merge feature/xxx`) to `personal`
 - ❌ Never `git push origin personal` directly
 - ❌ Never bump version on `personal` (always in the feature branch)
-- ❌ Never tag before the squash merge — the squash creates a new commit on `personal`; tagging the feature branch HEAD points to a commit that isn't on `personal`
+- ❌ Never tag manually — the release workflow tags + publishes automatically when the squash merge lands. Manual tagging is documented as a fallback in the `release` skill and should almost never run.
 - ❌ Never skip `CONTEXT.md` update because "it's a small change"
 - ❌ Never skip the code review step — even for "trivial" changes. Trivial-looking PRs are exactly where quiet bugs slip in.
 
@@ -198,4 +198,5 @@ EOF
 
 - Reviewer (user or Claude) may request changes → push more commits to the same branch → PR updates automatically
 - When approved → user does "Squash and merge" in the GitHub UI
-- If version was bumped → run the `release` skill next
+- **Release happens automatically**: the push to `personal` triggers `.github/workflows/electron-release.yml`. `electron-builder --publish always` creates the `v<VERSION>` tag and publishes the GitHub Release with macOS/Linux/Windows assets (~3–5 min). No manual step required.
+- Only reach for the `release` skill if the workflow failed and you've diagnosed the root cause — see that skill for fallback steps.
