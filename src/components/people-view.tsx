@@ -134,7 +134,8 @@ function PersonListItem({ person, taskCount }: { person: Note; taskCount: number
         to="/notes/$"
         params={{ _splat: person.id }}
         search={{ mode: "read", query: undefined, view: "grid" }}
-        className="card-1 flex items-center justify-between gap-3 rounded-lg px-4 py-3"
+        draggable={false}
+        className="card-1 flex items-center justify-between gap-3 rounded-lg px-4 py-3 transition-colors hover:bg-bg-secondary active:bg-bg-tertiary"
       >
         <div className="flex flex-col gap-1 overflow-hidden">
           <span className="truncate font-medium">{person.displayName}</span>

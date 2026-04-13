@@ -145,7 +145,8 @@ function ProjectListItem({ project }: { project: Note }) {
         to="/notes/$"
         params={{ _splat: project.id }}
         search={{ mode: "read", query: undefined, view: "grid" }}
-        className="card-1 flex flex-col gap-2.5 rounded-lg px-4 py-3"
+        draggable={false}
+        className="card-1 flex flex-col gap-2.5 rounded-lg px-4 py-3 transition-colors hover:bg-bg-secondary active:bg-bg-tertiary"
       >
         {/* Header: name + status */}
         <div className="flex items-center justify-between gap-3">
