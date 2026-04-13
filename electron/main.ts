@@ -743,9 +743,9 @@ if (!gotTheLock) {
   })
 
   app.whenReady().then(() => {
-    // Set app name and dock icon (for dev mode — production uses electron-builder config)
+    // Only override dock icon in dev — packaged app uses .icns from bundle (has rounded corners mask)
     app.setName("Lumen")
-    if (process.platform === "darwin") {
+    if (process.platform === "darwin" && !app.isPackaged) {
       const dockIcon = nativeImage.createFromPath(path.join(__dirname, "..", "icons", "icon.png"))
       app.dock.setIcon(dockIcon)
     }
