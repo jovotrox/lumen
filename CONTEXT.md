@@ -275,9 +275,13 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 - **feat(quick-note): UX polish — native feel**
   - **Spacing & balance (live-preview)**: headers ganan más aire (`0.5x → 0.75x` padding-top, `0.25x → 0.4x` padding-bottom), list/task lines se ajustan (`6px → 4px` vertical) para sentirse más compactos, blockquotes ganan respiración (`2px → 4px`). Afecta Quick Note y notas normales — mejora global consistente.
   - **Container Quick Note**: `pt-2 pb-3 → pt-3 pb-2` para despegar del header draggable.
-  - **Traffic lights focus-mode (macOS)**: semáforo oculto al abrir/escribir, visible al hover sobre la ventana. Nuevo IPC `electron:set-traffic-lights-visible` usando `BrowserWindow.setWindowButtonVisibility`. El renderer controla vía `document.body mouseenter/leave` + `document keydown`. Dedup local para evitar IPC chatty.
+  - **Traffic lights focus-mode (macOS)**: semáforo oculto al abrir/escribir, visible al mover el mouse sobre la ventana. Nuevo IPC `electron:set-traffic-lights-visible` usando `BrowserWindow.setWindowButtonVisibility`. Renderer usa `window mousemove` (show) + `document keydown` (hide) — NO mouseleave, porque el semáforo está renderizado fuera del DOM en el chrome nativo y un `mouseenter` sobre él dispararía mouseleave del body ocultando los propios botones. Dedup local para evitar IPC chatty.
   - **Pinned format toolbar**: `FormatToolbar` recibe `variant: "floating" | "pinned"`. Pinned skipea Portal + positioning, renderiza inline, siempre visible. Floating conserva el comportamiento actual en notas normales.
-  - **Quick Note window**: altura 320 → 360 para dar espacio a la nueva toolbar anclada al fondo.
+  - **Ventana Quick Note**: redimensionada a 460×260 (antes 420×320). Balance más plano, mejor para captura rápida tipo Raycast.
+  - **macOS vibrancy blur**: `vibrancy: "under-window"` + `visualEffectState: "active"` + `backgroundColor` transparente. Root del Quick Note usa `color-mix(in srgb, var(--color-bg) 70%, transparent)` para dejar que el blur se vea sin perder legibilidad del texto. Resto de plataformas mantiene bg sólido.
+  - **List toggle fix**: `toggleBulletList`/`toggleNumberedList`/`toggleTaskList` ahora detectan cualquier marker de lista existente (`- `, `- [ ] `, `1. `) y lo REEMPLAZAN en vez de apilarlo. Antes, `bullet → numbered` producía `1. - item` (stacked). Ahora reemplaza correctamente. Factorizado en helper `setListKind(view, "bullet"|"numbered"|"task")`.
+  - **Iconos del toolbar**: `Quote` (outline molesta) → `TextQuote` (más limpio); wikilink `[[]]` → `AtSign` para match con el pattern de mentions.
+  - **Tooltips**: migración de `title` attribute a `<Tooltip>` de base-ui. Cada botón del FormatToolbar muestra label + shortcut (ej. `Bold ⌘B`) al hover, estilo Raycast. Helper local `ToolbarButton` consolida el pattern.
 
 ### v0.3.0 — 2026-04-13
 

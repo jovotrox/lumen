@@ -124,8 +124,11 @@ function QuickNoteComponent() {
     setSelTick((t) => t + 1)
   }, [])
 
-  // Traffic lights: hide while typing, show on mouse hover over the window.
-  // Focus-mode pattern — keeps attention on the text.
+  // Traffic lights: hide while typing, show on any mouse movement in the window.
+  // Focus-mode pattern. We use mousemove (not mouseenter/leave) because the
+  // native traffic-light buttons are rendered OUTSIDE document.body by macOS —
+  // hovering them fires mouseleave on body, which would hide the very buttons
+  // the user is trying to click.
   React.useEffect(() => {
     if (!isElectron() || !window.electronAPI?.setTrafficLightsVisible) return
     const api = window.electronAPI
@@ -138,13 +141,11 @@ function QuickNoteComponent() {
     const show = () => set(true)
     const hide = () => set(false)
 
-    document.body.addEventListener("mouseenter", show)
-    document.body.addEventListener("mouseleave", hide)
+    window.addEventListener("mousemove", show)
     document.addEventListener("keydown", hide)
 
     return () => {
-      document.body.removeEventListener("mouseenter", show)
-      document.body.removeEventListener("mouseleave", hide)
+      window.removeEventListener("mousemove", show)
       document.removeEventListener("keydown", hide)
     }
   }, [])
@@ -216,7 +217,16 @@ function QuickNoteComponent() {
   }, [handleSave, handleEsc, closeWindow])
 
   return (
-    <div className="flex h-screen flex-col bg-bg font-content text-text">
+    <div
+      className="flex h-screen flex-col font-content text-text"
+      // On macOS the BrowserWindow has vibrancy: "under-window" + transparent bg.
+      // We layer a semi-transparent tint on top so text stays readable while
+      // the wallpaper/apps behind show through the frosted blur.
+      // color-mix is supported in Chromium 120+ (Electron 29+).
+      style={{
+        backgroundColor: "color-mix(in srgb, var(--color-bg) 70%, transparent)",
+      }}
+    >
       {/* Header — draggable, with traffic light space on left */}
       <div
         className="flex h-[38px] shrink-0 items-center justify-between px-3"

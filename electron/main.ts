@@ -163,9 +163,10 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
   // Append /quick-note route — handle trailing slash in base
   const quickNoteUrl = baseUrl.endsWith("/") ? `${baseUrl}quick-note` : `${baseUrl}/quick-note`
 
+  const isMac = process.platform === "darwin"
   quickNoteWindow = new BrowserWindow({
-    width: 420,
-    height: 360,
+    width: 460,
+    height: 260,
     center: true,
     alwaysOnTop: true,
     resizable: true,
@@ -173,7 +174,15 @@ function createQuickNoteWindow(options: { prewarm?: boolean } = {}): void {
     maximizable: false,
     titleBarStyle: "hiddenInset",
     title: "Quick Note",
-    backgroundColor: "#0a0a0a",
+    // macOS: transparent bg + vibrancy gives the frosted-glass look.
+    // Other platforms keep a solid dark bg (vibrancy is a no-op).
+    backgroundColor: isMac ? "#00000000" : "#0a0a0a",
+    ...(isMac
+      ? ({
+          vibrancy: "under-window",
+          visualEffectState: "active",
+        } as const)
+      : {}),
     show: false,
     webPreferences: {
       contextIsolation: true,

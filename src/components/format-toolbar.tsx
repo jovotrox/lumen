@@ -1,6 +1,7 @@
 import * as Portal from "@radix-ui/react-portal"
 import { EditorView } from "@codemirror/view"
 import {
+  AtSign,
   Bold,
   Braces,
   Code,
@@ -9,10 +10,12 @@ import {
   List,
   ListChecks,
   ListOrdered,
-  Quote,
   Strikethrough,
+  TextQuote,
 } from "lucide-react"
 import React from "react"
+import { Tooltip } from "./tooltip"
+import { Keys } from "./keys"
 import {
   getHeadingLevel,
   insertLink,
@@ -58,6 +61,44 @@ function isInsideFrontmatter(view: EditorView, from: number): boolean {
 }
 
 const preventFocus = (e: React.MouseEvent) => e.preventDefault()
+
+type ToolbarButtonProps = {
+  label: string
+  shortcut?: string[]
+  active?: boolean
+  onClick: () => void
+  children: React.ReactNode
+}
+
+function ToolbarButton({ label, shortcut, active, onClick, children }: ToolbarButtonProps) {
+  const btnClass =
+    "grid h-7 w-7 place-items-center rounded text-text-secondary hover:bg-bg-hover hover:text-text cursor-pointer"
+  const activeClass = "bg-bg-active text-text"
+
+  const trigger = (
+    <button
+      type="button"
+      aria-label={label}
+      className={cx(btnClass, active && activeClass)}
+      onMouseDown={preventFocus}
+      onClick={onClick}
+    >
+      {children}
+    </button>
+  )
+
+  return (
+    <Tooltip>
+      <Tooltip.Trigger render={trigger} />
+      <Tooltip.Content side="top" sideOffset={6}>
+        <div className="flex items-center gap-1.5 text-xs">
+          <span>{label}</span>
+          {shortcut ? <Keys keys={shortcut} className="text-text-secondary" /> : null}
+        </div>
+      </Tooltip.Content>
+    </Tooltip>
+  )
+}
 
 export function FormatToolbar({
   editorView,
@@ -115,9 +156,6 @@ export function FormatToolbar({
   const state = editorView.state
   const headingLevel = getHeadingLevel(state)
 
-  const btnClass =
-    "grid h-7 w-7 place-items-center rounded text-text-secondary hover:bg-bg-hover hover:text-text cursor-pointer"
-  const activeBtnClass = "bg-bg-active text-text"
   const separatorClass = "mx-0.5 h-4 w-px bg-border-secondary"
 
   const floatingStyle: React.CSSProperties = coords
@@ -136,158 +174,112 @@ export function FormatToolbar({
       )}
     >
       {/* Group 1 — Inline */}
-      <button
-        className={cx(btnClass, isBoldActive(state) && activeBtnClass)}
-        title="Bold (⌘B)"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleBold(editorView)
-        }}
+      <ToolbarButton
+        label="Bold"
+        shortcut={["⌘", "B"]}
+        active={isBoldActive(state)}
+        onClick={() => toggleBold(editorView)}
       >
         <Bold size={14} />
-      </button>
-      <button
-        className={cx(btnClass, isItalicActive(state) && activeBtnClass)}
-        title="Italic (⌘I)"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleItalic(editorView)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Italic"
+        shortcut={["⌘", "I"]}
+        active={isItalicActive(state)}
+        onClick={() => toggleItalic(editorView)}
       >
         <Italic size={14} />
-      </button>
-      <button
-        className={cx(btnClass, isStrikethroughActive(state) && activeBtnClass)}
-        title="Strikethrough (⌘⇧X)"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleStrikethrough(editorView)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Strikethrough"
+        shortcut={["⌘", "⇧", "X"]}
+        active={isStrikethroughActive(state)}
+        onClick={() => toggleStrikethrough(editorView)}
       >
         <Strikethrough size={14} />
-      </button>
-      <button
-        className={cx(btnClass, isInlineCodeActive(state) && activeBtnClass)}
-        title="Inline Code"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleInlineCode(editorView)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Inline code"
+        shortcut={["⌘", "⇧", "M"]}
+        active={isInlineCodeActive(state)}
+        onClick={() => toggleInlineCode(editorView)}
       >
         <Code size={14} />
-      </button>
+      </ToolbarButton>
 
       <div className={separatorClass} />
 
       {/* Group 2 — Blocks */}
-      <button
-        className={cx(btnClass, headingLevel === 1 && activeBtnClass)}
-        title="Heading 1"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          setHeading(editorView, 1)
-        }}
+      <ToolbarButton
+        label="Heading 1"
+        active={headingLevel === 1}
+        onClick={() => setHeading(editorView, 1)}
       >
         <span className="text-[11px] font-bold">H1</span>
-      </button>
-      <button
-        className={cx(btnClass, headingLevel === 2 && activeBtnClass)}
-        title="Heading 2"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          setHeading(editorView, 2)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Heading 2"
+        active={headingLevel === 2}
+        onClick={() => setHeading(editorView, 2)}
       >
         <span className="text-[11px] font-bold">H2</span>
-      </button>
-      <button
-        className={cx(btnClass, headingLevel === 3 && activeBtnClass)}
-        title="Heading 3"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          setHeading(editorView, 3)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Heading 3"
+        active={headingLevel === 3}
+        onClick={() => setHeading(editorView, 3)}
       >
         <span className="text-[11px] font-bold">H3</span>
-      </button>
-      <button
-        className={cx(btnClass, isBlockquoteActive(state) && activeBtnClass)}
-        title="Blockquote"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleBlockquote(editorView)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Quote"
+        shortcut={["⌘", "⇧", "B"]}
+        active={isBlockquoteActive(state)}
+        onClick={() => toggleBlockquote(editorView)}
       >
-        <Quote size={14} />
-      </button>
-      <button
-        className={cx(btnClass)}
-        title="Code Block"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleCodeBlock(editorView)
-        }}
-      >
+        <TextQuote size={14} />
+      </ToolbarButton>
+      <ToolbarButton label="Code block" onClick={() => toggleCodeBlock(editorView)}>
         <Braces size={14} />
-      </button>
+      </ToolbarButton>
 
       <div className={separatorClass} />
 
       {/* Group 3 — Lists */}
-      <button
-        className={cx(btnClass, isBulletListActive(state) && activeBtnClass)}
-        title="Bullet List (⌘⇧8)"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleBulletList(editorView)
-        }}
+      <ToolbarButton
+        label="Bullet list"
+        shortcut={["⌘", "⇧", "8"]}
+        active={isBulletListActive(state)}
+        onClick={() => toggleBulletList(editorView)}
       >
         <List size={14} />
-      </button>
-      <button
-        className={cx(btnClass, isNumberedListActive(state) && activeBtnClass)}
-        title="Numbered List (⌘⇧7)"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleNumberedList(editorView)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Numbered list"
+        shortcut={["⌘", "⇧", "7"]}
+        active={isNumberedListActive(state)}
+        onClick={() => toggleNumberedList(editorView)}
       >
         <ListOrdered size={14} />
-      </button>
-      <button
-        className={cx(btnClass, isTaskListActive(state) && activeBtnClass)}
-        title="Task List"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          toggleTaskList(editorView)
-        }}
+      </ToolbarButton>
+      <ToolbarButton
+        label="Task list"
+        shortcut={["⌘", "⇧", "T"]}
+        active={isTaskListActive(state)}
+        onClick={() => toggleTaskList(editorView)}
       >
         <ListChecks size={14} />
-      </button>
+      </ToolbarButton>
 
       <div className={separatorClass} />
 
       {/* Group 4 — Links */}
-      <button
-        className={cx(btnClass)}
-        title="Link"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          insertLink(editorView)
-        }}
-      >
+      <ToolbarButton label="Link" shortcut={["⌘", "K"]} onClick={() => insertLink(editorView)}>
         <Link size={14} />
-      </button>
-      <button
-        className={cx(btnClass)}
-        title="Wikilink"
-        onMouseDown={preventFocus}
-        onClick={() => {
-          insertWikilink(editorView)
-        }}
-      >
-        <span className="text-[10px] font-mono">{"[[]]"}</span>
-      </button>
+      </ToolbarButton>
+      <ToolbarButton label="Mention note" onClick={() => insertWikilink(editorView)}>
+        <AtSign size={14} />
+      </ToolbarButton>
     </div>
   )
 
