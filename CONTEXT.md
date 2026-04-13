@@ -272,7 +272,7 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 
 ### v0.3.0 — 2026-04-13
 
-- **feat: Calendar v2 (multi-feed ICS, cross-platform)**
+- **feat: Calendar v2 (multi-feed ICS, cross-platform, synced, linked to notes)**
   - Reemplaza la integración EventKit/Swift (rota en macOS 14+ por bundleID nil)
   - **Multi-calendar**: lista de feeds, cada uno con name + URL + color + enabled toggle
   - Palette de 8 colores estilo Apple (FEED_COLORS)
@@ -283,6 +283,8 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
   - Funciona en **macOS + Windows + Linux + Web + PWA** (sin permisos de sistema)
   - Usa `electron:fetch` IPC en desktop (bypasa CORS); en browser usa fetch nativo
   - Cache local 5min por URL+fecha
+  - **Sincronizado via `.lumen/settings.json`**: `calendarIntegration` + `calendarFeeds` se propagan entre devices (igual que nickname/theme/etc)
+  - **Click en evento → nota vinculada**: ID determinístico `event-YYYY-MM-DD-slug-titulo`. Si no existe, se crea con frontmatter (`event.title`, `start`, `end`, `calendar`, `location`, `isAllDay`) + heading. Navega a la nota en write mode. Si existe, abre en read mode. Eventos con nota vinculada muestran ícono FileText (📄).
 - **Diagnóstico EventKit confirmó:** binario Swift standalone no puede pedir permisos en macOS 14+ sin bundle
   propio con Info.plist. Solución arquitectónica requiere o embedar Swift en el bundle, o usar
   node-mac-permissions, o AppleScript. **Pospuesto como "plan futuro"** (ver Roadmap).

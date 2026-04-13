@@ -5,6 +5,8 @@ const SETTINGS_FILE_PATH = `${REPO_DIR}/.lumen/settings.json`
 /** Relative path (from repo root) for git add */
 export const SETTINGS_FILE_REL_PATH = ".lumen/settings.json"
 
+import type { CalendarFeed } from "./calendar"
+
 /** Settings that sync across devices via the user's GitHub repo */
 export type SyncedSettings = {
   nickname?: string
@@ -16,6 +18,8 @@ export type SyncedSettings = {
   livePreview?: boolean
   hideCompletedTasks?: boolean
   calendarLayout?: "week" | "month"
+  calendarIntegration?: boolean
+  calendarFeeds?: CalendarFeed[]
   aiProvider?: "openai" | "claude"
   voiceAssistantEnabled?: boolean
   quickNoteMode?: "note" | "inbox"
@@ -36,6 +40,8 @@ export const settingsKeyMap: { localStorageKey: string; settingsKey: keyof Synce
   { localStorageKey: "live-preview", settingsKey: "livePreview" },
   { localStorageKey: "hide-completed-tasks", settingsKey: "hideCompletedTasks" },
   { localStorageKey: "calendar-layout", settingsKey: "calendarLayout" },
+  { localStorageKey: "calendar-integration", settingsKey: "calendarIntegration" },
+  { localStorageKey: "calendar-feeds", settingsKey: "calendarFeeds" },
   { localStorageKey: "ai_provider", settingsKey: "aiProvider" },
   // API keys intentionally NOT synced — they are secrets that stay in localStorage only
   { localStorageKey: "voice_assistant_enabled", settingsKey: "voiceAssistantEnabled" },
