@@ -129,18 +129,18 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   if (events.length === 0 && errors.length === 0) return null
 
   return (
-    <div className="mx-4 my-2 flex flex-col gap-0.5 rounded-lg bg-bg-secondary p-1">
+    <div className="mx-4 my-2 flex flex-col gap-0 overflow-hidden rounded-lg bg-bg-secondary p-0.5">
       {events.map((event, i) => {
         const noteId = getEventNoteId(event)
         const hasNote = notes.has(noteId)
         return (
           <div
             key={`${noteId}-${i}`}
-            className="group flex items-center gap-3 rounded-md px-2.5 py-1.5 transition hover:bg-bg-tertiary"
+            className="group flex items-center gap-3 rounded-md px-3 py-2 transition hover:bg-bg-tertiary"
             title={event.calendar || undefined}
           >
             <span
-              className="w-[44px] shrink-0 font-mono text-xs font-medium tabular-nums"
+              className="w-[44px] shrink-0 text-xs font-medium tabular-nums"
               style={{ color: event.color }}
             >
               {formatStartTime(event)}
