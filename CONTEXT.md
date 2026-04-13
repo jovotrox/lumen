@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-12
+**Ultima actualizacion:** 2026-04-12 (v0.2.1)
 
 ---
 
@@ -10,9 +10,9 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 ### Branch Activo
 
-- **Branch:** `feature/electron-migration` (desde `personal`)
-- **Estado:** Electron v2.0 Phases 1-3 completadas, Phase 4 pendiente
-- **Version:** 0.2.0
+- **Branch:** `personal` (fork personal, rama de compilación)
+- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning system activo
+- **Version:** 0.2.1
 
 ### Migracion Tauri → Electron
 
@@ -257,6 +257,14 @@ El proyecto es un fork MIT de [lumen-notes/lumen](https://github.com/lumen-notes
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.2.1 — 2026-04-12
+
+- **Versioning system** (chore): SemVer rules en CLAUDE.md + `verify-version` job en workflow (falla si la versión no sube antes del merge)
+- **fix(electron):** app se demoraba en cerrar por close handler siempre con preventDefault → flag `isQuitting` + `before-quit` listener
+- **fix:** sidebar bottom items (sync/settings/help) se subían bajo pinned notes → `min-h-full` en flex container de NavItems
+- **feat:** Cmd+, abre Settings (convención macOS)
+- **fix(electron):** dock icon cuadrado sin rounded corners en producción → `app.dock.setIcon()` solo en dev (`!app.isPackaged`)
 
 ### 2026-04-12
 

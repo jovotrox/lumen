@@ -12,7 +12,33 @@ on:
   workflow_dispatch:
 
 jobs:
+  verify-version:
+    # Fails fast if package.json version wasn't bumped before merge.
+    # Skipped on tag pushes (tag itself guarantees version is new) and manual dispatch.
+    if: github.event_name == 'push' && github.ref == 'refs/heads/personal'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Verify version not yet released
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "package.json version: $VERSION"
+          if gh release view "v$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1; then
+            echo "::error::Release v$VERSION already exists. Bump package.json version before merging to personal. See CLAUDE.md 'Versionado' section."
+            exit 1
+          fi
+          echo "✓ v$VERSION is new — proceeding with build"
+
   build:
+    needs: verify-version
+    # Run even if verify-version was skipped (tag push / manual dispatch)
+    if: always() && (needs.verify-version.result == 'success' || needs.verify-version.result == 'skipped')
     strategy:
       fail-fast: false
       matrix:

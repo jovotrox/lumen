@@ -318,6 +318,80 @@ git push origin personal
 8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features. Para releases: `npm run electron:build`
 9. **OBLIGATORIO: Actualizar CONTEXT.md** después de cada feature nueva o fix de errores importantes - SIEMPRE actualizar antes de terminar la sesión. Sin excepciones.
 10. **Confirmar antes de hacer push** - SIEMPRE pedir confirmación al usuario antes de ejecutar `git push`
+11. **OBLIGATORIO: Bumpear versión antes de merge a personal** - Ver sección "Versionado". El workflow FALLA si la versión no sube.
+
+---
+
+## Versionado (SemVer)
+
+**Por qué importa:** `electron-updater` compara `package.json.version` con la última release en GitHub. Si la versión no sube, **el auto-update no detecta updates nuevos** y los usuarios se quedan con la versión vieja. Además, dos releases con la misma versión colisionan en GitHub Releases.
+
+### Reglas de bump
+
+Formato: `MAJOR.MINOR.PATCH` (ej: `0.3.1`)
+
+| Tipo de cambio | Bump | Ejemplo |
+|----------------|------|---------|
+| `fix:`, `chore:`, `docs:`, `refactor:`, `style:` | **PATCH** | `0.2.0` → `0.2.1` |
+| `feat:` (feature visible al usuario) | **MINOR** | `0.2.0` → `0.3.0` |
+| Breaking change, rebrand, nueva arquitectura | **MAJOR** | `0.x.y` → `1.0.0` |
+
+**Si el branch tiene commits mixtos** (ej: 2 `fix:` + 1 `feat:`), gana el más alto — en ese caso, MINOR.
+
+### Cuándo bumpear
+
+**SIEMPRE antes del merge a `personal`**, cuando el branch va a disparar el workflow de release. Esto ocurre si el branch toca cualquiera de:
+
+- `electron/**`
+- `electron-builder.yml`
+- `package.json`
+
+Si el branch es solo web (React/CSS/utils), **no es necesario bumpear** — no se dispara release de Electron.
+
+### Proceso
+
+En el último commit del feature branch (antes de merge):
+
+```bash
+# 1. Determinar el bump leyendo los commits del branch
+git log personal..HEAD --oneline
+
+# 2. Editar package.json — campo "version"
+# 3. Commit el bump
+git add package.json
+git commit -m "chore: bump version to 0.3.0"
+
+# 4. Merge a personal (flujo normal)
+git checkout personal
+git merge feature/nombre-feature --no-edit
+
+# 5. Tag del release ANTES de pushear
+git tag v0.3.0
+
+# 6. Push (incluyendo el tag)
+git push origin personal
+git push origin v0.3.0
+```
+
+**El workflow `electron-release.yml` verifica que `v<VERSION>` no exista ya como release — si existe, falla con error claro.** Esto es el safety net que garantiza que nunca olvidemos el bump.
+
+### Changelog
+
+Cada bump debe agregar una entrada a `CONTEXT.md` en el historial, formato:
+
+```markdown
+### v0.3.0 — 2026-04-12
+- feat(...): descripción
+- fix(...): descripción
+```
+
+### Reglas para Claude
+
+1. **Verificar versión antes de proponer merge**: leer `package.json.version` y comparar con el último tag (`git describe --tags --abbrev=0`). Si son iguales y el branch toca archivos de Electron, proponer bump.
+2. **Proponer el bump correcto**: leer los commits del branch con `git log personal..HEAD --oneline` y sugerir PATCH/MINOR/MAJOR según la tabla.
+3. **Nunca mergear sin bump** si el branch dispara release — el workflow va a fallar igual, mejor evitarlo de raíz.
+4. **Crear el tag después del merge** y pushearlo junto con `personal`.
+5. **Actualizar CONTEXT.md** con la entrada de la nueva versión.
 
 ---
 
