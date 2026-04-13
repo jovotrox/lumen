@@ -21,36 +21,49 @@ import { isElectron } from "../utils/electron"
 import { isTauri } from "../utils/tauri"
 import { cx } from "../utils/cx"
 import { IconButton } from "./icon-button"
-import { ArrowLeftIcon16, ArrowRightIcon16, SidebarCollapsedIcon16, SidebarIcon16 } from "./icons"
+import {
+  ArrowLeftIcon16,
+  ArrowRightIcon16,
+  CalendarDateIcon16,
+  SidebarCollapsedIcon16,
+  SidebarIcon16,
+} from "./icons"
 import { generateNoteId } from "../utils/note-id"
 
-const ic = "size-3.5 shrink-0 opacity-60"
+// Lucide icons: size-3 (12px) with thinner strokes to feel subtle
+const lucide = { className: "shrink-0 opacity-60", size: 12, strokeWidth: 1.75 }
+// Custom 16x16 filled icons: slightly smaller to match Lucide visual weight
+const custom = "size-[11px] shrink-0 opacity-60"
 
 function TabIcon({ tab }: { tab: Tab }) {
   switch (tab.icon) {
-    case "daily":
+    case "daily": {
+      const match = tab.path.match(/\/notes\/\d{4}-\d{2}-(\d{2})/)
+      const day = match ? parseInt(match[1], 10) : undefined
+      return <CalendarDateIcon16 date={day} className={custom} />
+    }
     case "weekly":
     case "calendar":
-      return <Calendar className={ic} />
+      return <Calendar {...lucide} />
     case "home":
-      return <Home className={ic} />
+      return <Home {...lucide} />
     case "inbox":
-      return <Inbox className={ic} />
+      return <Inbox {...lucide} />
     case "project":
-      return <FolderOpen className={ic} />
+      return <FolderOpen {...lucide} />
     case "tasks":
-      return <ListChecks className={ic} />
+      return <ListChecks {...lucide} />
     case "links":
-      return <LinkIcon className={ic} />
+      return <LinkIcon {...lucide} />
     case "people":
     case "person":
-      return <User className={ic} />
+      return <User {...lucide} />
     case "tags":
-      return <Tag className={ic} />
+      return <Tag {...lucide} />
     case "settings":
-      return <Settings className={ic} />
+      return <Settings {...lucide} />
     default:
-      return <FileText className={ic} />
+      return <FileText {...lucide} />
   }
 }
 
