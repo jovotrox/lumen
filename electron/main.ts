@@ -108,6 +108,7 @@ function getBaseUrl(): string {
 let mainWindow: BrowserWindow | null = null
 let quickNoteWindow: BrowserWindow | null = null
 let tray: Tray | null = null
+let isQuitting = false
 
 // ---------------------------------------------------------------------------
 // Preload path — tsup outputs CJS to electron/dist/
@@ -206,8 +207,9 @@ function createMainWindow(): void {
   })
 
   // macOS: hide instead of close
+  // On macOS, hide instead of close — unless the user is quitting the app
   mainWindow.on("close", (e) => {
-    if (process.platform === "darwin") {
+    if (process.platform === "darwin" && !isQuitting) {
       e.preventDefault()
       mainWindow?.hide()
     }
@@ -764,6 +766,11 @@ if (!gotTheLock) {
     })
 
     setupAutoUpdater()
+  })
+
+  // Mark as quitting so the main window's "close" handler can actually close
+  app.on("before-quit", () => {
+    isQuitting = true
   })
 
   // macOS: do NOT quit when all windows are closed (app lives in tray)
