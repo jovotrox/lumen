@@ -195,9 +195,8 @@ function showMainWindow(): void {
 // ---------------------------------------------------------------------------
 
 function createTray(): void {
-  const iconPath = path.join(__dirname, "..", "icons", "icon.png")
-  const icon = nativeImage.createFromPath(iconPath).resize({ width: 16, height: 16 })
-  // Mark as template so macOS renders it correctly in light/dark mode
+  const iconPath = path.join(__dirname, "..", "icons", "tray-icon.png")
+  const icon = nativeImage.createFromPath(iconPath)
   icon.setTemplateImage(true)
 
   tray = new Tray(icon)
