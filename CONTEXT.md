@@ -216,6 +216,46 @@ git push origin personal
 
 ---
 
+## Roadmap / Pendientes
+
+### Rebrand para publicacion masiva (prioridad: media)
+
+El proyecto es un fork MIT de [lumen-notes/lumen](https://github.com/lumen-notes/lumen). Legalmente se puede publicar tal cual (MIT lo permite), pero para masificar como producto propio conviene rebrandear:
+
+**Por que:**
+
+- Evitar confusion con el proyecto original (uselumen.com)
+- Establecer identidad propia (el fork ya es significativamente diferente: Electron, tabs, AI, calendar, dashboard, projects/people, etc.)
+- Evitar potenciales conflictos de trademark
+
+**Que cambiar:**
+
+- Nombre de la app (Lumen → nuevo nombre)
+- Bundle ID: `com.lumen.notes` → `com.<newname>.app`
+- Dominio para GitHub Pages
+- Referencias en README, CLAUDE.md, CONTEXT.md, DESIGN.md
+- Iconos (ya propios — se mantienen)
+- `productName` en electron-builder.yml
+- Protocol handler: `lumen://` → `<newname>://`
+- `app.setName()` en electron/main.ts
+- Copyright en LICENSE (agregar linea con autor del fork, mantener original)
+
+**Que mantener:**
+
+- LICENSE original con copyright "Lumen" (MIT lo requiere)
+- Credito al proyecto original en README (buena practica)
+- Sync con upstream (sigue siendo util para merges)
+
+### Otras ideas futuras
+
+- Code signing + notarizacion para macOS (requiere Apple Developer Program)
+- Plugin system (expandir tema de themes a behavior)
+- Spotlight integration (macOS)
+- Backlinks graph view
+- Export a PDF/HTML/DOCX
+
+---
+
 ## Historial de Cambios Importantes
 
 ### 2026-04-12
