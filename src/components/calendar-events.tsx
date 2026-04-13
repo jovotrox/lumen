@@ -1,42 +1,45 @@
 import { useAtomValue } from "jotai"
 import { Calendar, Clock } from "lucide-react"
 import React from "react"
-import { calendarIntegrationAtom } from "../global-state"
+import { calendarIcsUrlAtom, calendarIntegrationAtom } from "../global-state"
 import { CalendarResult, fetchCalendarEvents, formatEventTime } from "../utils/calendar"
-import { isElectron } from "../utils/electron"
 
 export function CalendarEvents({ dateString }: { dateString: string }) {
   const enabled = useAtomValue(calendarIntegrationAtom)
-  const [result, setResult] = React.useState<CalendarResult>({ denied: false, events: [] })
+  const icsUrl = useAtomValue(calendarIcsUrlAtom)
+  const [result, setResult] = React.useState<CalendarResult>({ events: [] })
   const [loading, setLoading] = React.useState(false)
 
   React.useEffect(() => {
-    if (!isElectron() || !enabled) {
-      setResult({ denied: false, events: [] })
+    if (!enabled || !icsUrl) {
+      setResult({ events: [] })
       setLoading(false)
       return
     }
 
     setLoading(true)
-    fetchCalendarEvents(dateString)
+    fetchCalendarEvents(dateString, icsUrl)
       .then(setResult)
-      .catch(() => setResult({ denied: true, events: [] }))
+      .catch((e) => setResult({ events: [], error: (e as Error).message }))
       .finally(() => setLoading(false))
-  }, [dateString, enabled])
+  }, [dateString, enabled, icsUrl])
 
-  if (!isElectron() || !enabled) return null
-  if (loading) return null
-
-  if (result.denied) {
+  if (!enabled) return null
+  if (!icsUrl) {
     return (
       <div className="flex items-center gap-2 px-4 py-2 text-xs text-text-tertiary">
         <Calendar className="size-3 opacity-60" />
-        <span>
-          Calendar access denied. Enable in{" "}
-          <span className="text-text-secondary">
-            System Settings &gt; Privacy &amp; Security &gt; Calendars
-          </span>
-        </span>
+        <span>No calendar URL configured. Add one in Settings.</span>
+      </div>
+    )
+  }
+  if (loading) return null
+
+  if (result.error) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 text-xs text-text-tertiary">
+        <Calendar className="size-3 opacity-60" />
+        <span>Calendar error: {result.error}</span>
       </div>
     )
   }

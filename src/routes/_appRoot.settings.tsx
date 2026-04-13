@@ -27,6 +27,7 @@ import {
   githubUserAtom,
   hasOpenAIKeyAtom,
   calendarIntegrationAtom,
+  calendarIcsUrlAtom,
   hideCompletedTasksAtom,
   isCloningRepoAtom,
   nicknameAtom,
@@ -642,11 +643,41 @@ function NotesSection() {
 
 function CalendarSection() {
   const [enabled, setEnabled] = useAtom(calendarIntegrationAtom)
-  const isDesktop = typeof window !== "undefined" && "electronAPI" in window
+  const [icsUrl, setIcsUrl] = useAtom(calendarIcsUrlAtom)
+  const [draftUrl, setDraftUrl] = useState(icsUrl)
   const isRepoCloned = useAtomValue(isRepoClonedAtom)
+  const [testStatus, setTestStatus] = useState<
+    | { kind: "idle" }
+    | { kind: "testing" }
+    | { kind: "ok"; eventCount: number }
+    | { kind: "error"; message: string }
+  >({ kind: "idle" })
 
-  // Only show when signed in (repo cloned) and running in desktop app
-  if (!isDesktop || !isRepoCloned) return null
+  // Only show when signed in (repo cloned). Works on all platforms (desktop + web).
+  if (!isRepoCloned) return null
+
+  const save = () => {
+    setIcsUrl(draftUrl.trim())
+  }
+
+  const testUrl = async () => {
+    const url = draftUrl.trim()
+    if (!url) {
+      setTestStatus({ kind: "error", message: "URL is empty" })
+      return
+    }
+    setTestStatus({ kind: "testing" })
+    try {
+      const { fetchIcsEvents } = await import("../utils/calendar-ics")
+      const today = new Date().toISOString().slice(0, 10)
+      const events = await fetchIcsEvents(url, today)
+      setTestStatus({ kind: "ok", eventCount: events.length })
+    } catch (e) {
+      setTestStatus({ kind: "error", message: (e as Error).message || "Failed" })
+    }
+  }
+
+  const urlChanged = draftUrl.trim() !== icsUrl
 
   return (
     <SettingsSection title="Calendar">
@@ -654,14 +685,69 @@ function CalendarSection() {
         <div className="flex items-center gap-2.5 leading-4">
           <Switch id="calendar-integration" checked={enabled} onCheckedChange={setEnabled} />
           <label htmlFor="calendar-integration" className="select-none">
-            Show Calendar.app events in daily notes
+            Show calendar events in daily notes
           </label>
         </div>
+
         {enabled ? (
-          <p className="text-xs text-text-tertiary">
-            macOS will ask for calendar access permission the first time. You can manage this in
-            System Settings &gt; Privacy &amp; Security &gt; Calendars.
-          </p>
+          <>
+            <FormControl
+              htmlFor="calendar-ics-url"
+              label="Calendar URL (ICS)"
+              description="Paste a public calendar URL. Examples: iCloud shared calendar, Google Calendar public URL, Outlook published URL. The calendar must be publicly accessible (read-only)."
+            >
+              <div className="flex gap-2">
+                <TextInput
+                  id="calendar-ics-url"
+                  type="url"
+                  className="flex-1"
+                  value={draftUrl}
+                  placeholder="https://..."
+                  onChange={(e) => {
+                    setDraftUrl(e.target.value)
+                    setTestStatus({ kind: "idle" })
+                  }}
+                />
+                <Button onClick={testUrl} disabled={testStatus.kind === "testing" || !draftUrl}>
+                  {testStatus.kind === "testing" ? "Testing..." : "Test"}
+                </Button>
+                <Button variant="primary" onClick={save} disabled={!urlChanged}>
+                  Save
+                </Button>
+              </div>
+            </FormControl>
+
+            {testStatus.kind === "ok" ? (
+              <p className="text-xs text-text-success">
+                ✓ Fetched successfully. Found {testStatus.eventCount} event
+                {testStatus.eventCount === 1 ? "" : "s"} for today.
+              </p>
+            ) : null}
+            {testStatus.kind === "error" ? (
+              <p className="text-xs text-text-danger">✗ {testStatus.message}</p>
+            ) : null}
+
+            <details className="text-xs text-text-tertiary">
+              <summary className="cursor-pointer select-none">
+                How to get a public calendar URL
+              </summary>
+              <div className="mt-2 flex flex-col gap-2 pl-2">
+                <p>
+                  <strong>iCloud:</strong> Calendar.app → right-click calendar → Share Calendar →
+                  Public Calendar → copy URL. Replace <code>webcal://</code> with{" "}
+                  <code>https://</code>.
+                </p>
+                <p>
+                  <strong>Google Calendar:</strong> Settings → select calendar → "Integrate
+                  calendar" → Public address in iCal format.
+                </p>
+                <p>
+                  <strong>Outlook / Microsoft 365:</strong> Calendar → Share → Publish a calendar →
+                  ICS link.
+                </p>
+              </div>
+            </details>
+          </>
         ) : null}
       </div>
     </SettingsSection>

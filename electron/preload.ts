@@ -52,9 +52,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     }
   },
 
-  getCalendarEvents: (dateString: string) =>
-    ipcRenderer.invoke("electron:get-calendar-events", dateString),
-
   fetch: (request: {
     url: string
     method: string
