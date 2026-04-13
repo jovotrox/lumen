@@ -94,8 +94,8 @@ export function NavItems({
     if (oldIndex === -1 || newIndex === -1) return
     setPinnedOrder(arrayMove(ids, oldIndex, newIndex))
     // Persist to the synced settings file so the order propagates across devices.
-    // Fire-and-forget — the localStorage atom write already took effect.
-    void saveSettingsToRepo()
+    // Debounced 500ms inside — rapid successive reorders collapse into one commit.
+    saveSettingsToRepo()
   }
 
   const today = new Date()

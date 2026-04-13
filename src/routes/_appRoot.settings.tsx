@@ -65,9 +65,11 @@ export const Route = createFileRoute("/_appRoot/settings")({
 
 function RouteComponent() {
   // Save settings to repo when leaving the settings page
+  // Use flush (not the debounced save) so persistence completes before the
+  // user might navigate away or close the app.
   React.useEffect(() => {
     return () => {
-      import("../hooks/use-settings-sync").then(({ saveSettingsToRepo }) => saveSettingsToRepo())
+      import("../hooks/use-settings-sync").then(({ flushSettingsToRepo }) => flushSettingsToRepo())
     }
   }, [])
 
