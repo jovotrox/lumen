@@ -196,77 +196,34 @@ feature/* ← Branches temporales para desarrollo
 | Slash Commands    | / menu Notion-style con íconos Lucide              | `src/components/note-editor.tsx`                                               |
 | Autocomplete UX   | Backdrop blur + íconos en /, @, [[ menus           | `src/codemirror-extensions/autocomplete-theme.ts`, `src/styles/codemirror.css` |
 
-### Flujo de Trabajo para Nuevas Features
+### Flujo de Trabajo (PR-based)
 
-**OBLIGATORIO: Seguir siempre este flujo. No se puede saltar ningún paso.**
+**Todo cambio va por Pull Request. No se hace merge local + push directo a `personal`.**
 
-#### 1. Crear branch desde personal (ANTES de cualquier edición)
+El flujo completo vive en skills dedicadas para no llenar este archivo:
 
-**Este paso es BLOQUEANTE. No se puede editar ningún archivo sin haber creado el branch primero.**
+- **`create-pr`** — branch + dev + test + version bump + CONTEXT.md + abrir PR
+- **`release`** — tag + push + verify workflow (después del squash merge)
 
-```bash
-git checkout personal
-git pull origin personal
-git checkout -b feature/nombre-feature
-```
+Claude debe invocar la skill `create-pr` al empezar cualquier cambio, y `release` tras el squash merge si hubo version bump.
 
-#### 2. Desarrollar
+Razones del PR flow:
 
-- Analizar código existente antes de modificar
-- Proponer approach y validar con el usuario antes de implementar
+- Historial trazable en GitHub (diff viewer, comments, code review)
+- CI corre antes del merge (safety net)
+- `personal` queda limpio con squash merges (1 commit por feature)
+- PRs pueden cerrarse sin merge si algo está mal
 
-#### 3. Probar antes de commit
+**Pre-commit hook:** husky + lint-staged corre prettier + eslint --fix automáticamente. No hace falta `npm run format` manual.
 
-```bash
-npm run build          # Verificar que compila sin errores
-npm run lint           # Verificar linting
-npm run test           # Correr tests
-```
-
-- **Formato:** no es necesario ejecutar `npm run format` manualmente — el **pre-commit hook** (husky + lint-staged) corre prettier + eslint --fix automáticamente sobre los archivos staged en cada `git commit`.
-- Iniciar dev server para que el usuario pruebe: `npm run electron:dev` (desktop) o `npm run dev` (web)
-- Esperar confirmación del usuario de que funciona correctamente
-
-#### 4. Commit y merge a personal
+**Electron local** (solo para testing rápido de cambios en `electron/main.ts` o `preload.ts`):
 
 ```bash
-git add <archivos-específicos>
-git commit -m "feat: descripción"
-git checkout personal
-git merge feature/nombre-feature --no-edit
+npm run electron:build-main
+npm run electron:pack
 ```
 
-#### 5. Confirmar y push
-
-- **SIEMPRE pedir confirmación al usuario antes de push**
-- Mostrar resumen de cambios (archivos modificados, descripción)
-
-```bash
-git push origin personal
-```
-
-#### 6. Actualizar CONTEXT.md (OBLIGATORIO)
-
-**SIEMPRE** actualizar `CONTEXT.md` después del merge, ANTES del push:
-
-- Estado actual del branch y último commit
-- Archivos nuevos/modificados en la tabla
-- Entrada en el historial de cambios con fecha
-- Pendientes para futuras sesiones
-
-#### 7. Compilar Electron (si aplica)
-
-Solo si los cambios requieren recompilación del main process (cambios que no llegan via web refresh):
-
-- Cambios en `electron/main.ts` o `electron/preload.ts`
-- Cambios en `electron-builder.yml`
-
-```bash
-npm run electron:build-main  # Recompilar main process
-npm run electron:pack        # Build completo para testing
-```
-
-**Nota:** Cambios en React/TypeScript/CSS se reciben automáticamente via GitHub Pages (web) o hot reload (dev). Solo cambios al main process de Electron requieren rebuild.
+Cambios React/TypeScript/CSS: hot reload en dev, GitHub Pages en prod — no requieren rebuild del main process.
 
 ### Sincronización con Upstream (Automatizada)
 
@@ -311,15 +268,16 @@ git push origin personal
 
 1. **Siempre trabajar desde `personal`** - Es la rama con todas las features
 2. **NUNCA EDITAR ARCHIVOS DIRECTAMENTE EN `personal`** - Esto incluye TODO tipo de cambio: features, fixes, config, docs, vercel.json, CONTEXT.md updates, CUALQUIER archivo. No hay excepciones. No importa si es "solo un fix pequeño" o "solo un cambio de config". SIEMPRE crear feature branch primero: `git checkout -b feature/nombre`. Si se aprueba un plan, lo primero es crear el branch. Si hay que hacer un hotfix, crear branch. Si hay que actualizar docs, crear branch. SIEMPRE.
-3. **Validar approach** con el usuario antes de implementar cambios significativos
-4. **Probar con electron:dev** antes de hacer build final
-5. **Merge a personal** después de completar cada feature
+3. **NUNCA hacer merge local a `personal`** - Todos los merges van por Pull Request en GitHub. El flujo es: push branch + `gh pr create --base personal` + review + squash merge en GitHub UI. Después tag si corresponde.
+4. **Validar approach** con el usuario antes de implementar cambios significativos
+5. **Probar con electron:dev** antes de hacer build final
 6. **Mantener compatibilidad** con upstream para facilitar merges futuros
 7. **No modificar .env.local** - contiene el GitHub OAuth Client ID del usuario
-8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features. Para releases: `npm run electron:build`
-9. **OBLIGATORIO: Actualizar CONTEXT.md** después de cada feature nueva o fix de errores importantes - SIEMPRE actualizar antes de terminar la sesión. Sin excepciones.
-10. **Confirmar antes de hacer push** - SIEMPRE pedir confirmación al usuario antes de ejecutar `git push`
-11. **OBLIGATORIO: Bumpear versión antes de merge a personal** - Ver sección "Versionado". El workflow FALLA si la versión no sube.
+8. **Compilar siempre desde `personal`** - Garantiza que la app tenga TODAS las features. Para releases: el tag dispara el GitHub Action automático
+9. **OBLIGATORIO: Actualizar CONTEXT.md** después de cada feature nueva o fix de errores importantes - ANTES de abrir el PR. Sin excepciones.
+10. **Confirmar antes de abrir el PR** - SIEMPRE pedir confirmación al usuario antes de ejecutar `gh pr create`. Mostrar resumen de cambios, title propuesto y body.
+11. **OBLIGATORIO: Bumpear versión antes del PR** (si toca `electron/**`, `electron-builder.yml`, o `package.json`) - Ver sección "Versionado". El workflow FALLA si la versión no sube.
+12. **Tag solo tras el squash merge en GitHub** - No taguear antes del merge; el hash del commit en `personal` no existe hasta que GitHub cree el squash commit.
 
 ---
 
@@ -358,23 +316,27 @@ En el último commit del feature branch (antes de merge):
 git log personal..HEAD --oneline
 
 # 2. Editar package.json — campo "version"
-# 3. Commit el bump
+# 3. Commit el bump EN EL FEATURE BRANCH (antes de abrir el PR)
 git add package.json
 git commit -m "chore: bump version to 0.3.0"
 
-# 4. Merge a personal (flujo normal)
+# 4. Push branch + abrir PR (flujo normal)
+git push -u origin feature/nombre-feature
+gh pr create --base personal --head feature/nombre-feature \
+  --title "..." --body "..."
+
+# 5. Usuario revisa y hace Squash and merge en GitHub UI
+
+# 6. Tag DESPUÉS del merge (sobre el squash commit de personal)
 git checkout personal
-git merge feature/nombre-feature --no-edit
-
-# 5. Tag del release ANTES de pushear
+git pull origin personal
 git tag v0.3.0
-
-# 6. Push (incluyendo el tag)
-git push origin personal
 git push origin v0.3.0
 ```
 
 **El workflow `electron-release.yml` verifica que `v<VERSION>` no exista ya como release — si existe, falla con error claro.** Esto es el safety net que garantiza que nunca olvidemos el bump.
+
+**Por qué tag después del merge:** El squash merge de GitHub crea un commit NUEVO en `personal`. Si tagueás el commit del feature branch, el tag apunta a un commit que no está en `personal` → el release apunta a nada útil.
 
 ### Changelog
 
@@ -389,11 +351,11 @@ Cada bump debe agregar una entrada a `CONTEXT.md` en el historial, formato:
 
 ### Reglas para Claude
 
-1. **Verificar versión antes de proponer merge**: leer `package.json.version` y comparar con el último tag (`git describe --tags --abbrev=0`). Si son iguales y el branch toca archivos de Electron, proponer bump.
+1. **Verificar versión antes del PR**: leer `package.json.version` y comparar con el último tag (`git describe --tags --abbrev=0`). Si son iguales y el branch toca archivos de Electron, proponer bump.
 2. **Proponer el bump correcto**: leer los commits del branch con `git log personal..HEAD --oneline` y sugerir PATCH/MINOR/MAJOR según la tabla.
-3. **Nunca mergear sin bump** si el branch dispara release — el workflow va a fallar igual, mejor evitarlo de raíz.
-4. **Crear el tag después del merge** y pushearlo junto con `personal`.
-5. **Actualizar CONTEXT.md** con la entrada de la nueva versión.
+3. **Nunca abrir PR sin bump** si el branch dispara release — el workflow va a fallar igual, mejor evitarlo de raíz.
+4. **Crear el tag DESPUÉS del squash merge** (sobre `personal` actualizado, no sobre el branch). Pushearlo con `git push origin v<VERSION>`.
+5. **Actualizar CONTEXT.md** con la entrada de la nueva versión antes de abrir el PR.
 
 ---
 
