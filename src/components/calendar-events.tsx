@@ -20,10 +20,14 @@ function formatStartTime(event: CalendarEvent): string {
 
 /**
  * Build a stable, human-readable note ID from an event.
- * Format: event-YYYY-MM-DD-slugified-title (max ~80 chars)
+ * Format: event-YYYY-MM-DD-HHMM-slug (timed) or event-YYYY-MM-DD-allday-slug (all-day)
+ *
+ * Including the time disambiguates multiple events with the same title on the
+ * same day (e.g., two feeds both have "Standup" at different times).
  */
 function getEventNoteId(event: CalendarEvent): string {
   const date = event.start.slice(0, 10)
+  const timePart = event.isAllDay ? "allday" : event.start.slice(11, 16).replace(":", "") // "09:30" → "0930"
   const slug = event.title
     .toLowerCase()
     .normalize("NFD")
@@ -31,7 +35,7 @@ function getEventNoteId(event: CalendarEvent): string {
     .replace(/[^a-z0-9]+/g, "-")
     .replace(/^-+|-+$/g, "")
     .slice(0, 40)
-  return `event-${date}-${slug || "untitled"}`
+  return `event-${date}-${timePart}-${slug || "untitled"}`
 }
 
 function buildEventNoteContent(event: CalendarEvent): string {

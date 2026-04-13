@@ -71,12 +71,19 @@ export function parseIcsForDate(icsText: string, dateString: string): CalendarEv
 
   const results: CalendarEvent[] = []
 
+  // Safety cap: prevent pathological RRULEs (e.g. DAILY since 2000 with no UNTIL)
+  // from freezing the UI. 1000 is way more than any sane day should have.
+  const MAX_OCCURRENCES_PER_EVENT = 1000
+
   for (const vevent of vevents) {
     const event = new ICAL.Event(vevent)
     if (event.isRecurring()) {
-      const iterator = event.iterator()
+      // Seed iterator at startIcal so ical.js can fast-forward past historical
+      // occurrences instead of iterating from DTSTART year-by-year.
+      const iterator = event.iterator(startIcal)
       let next = iterator.next()
-      while (next) {
+      let iterations = 0
+      while (next && iterations++ < MAX_OCCURRENCES_PER_EVENT) {
         if (next.compare(endIcal) >= 0) break
         const occurrence = event.getOccurrenceDetails(next)
         if (occurrence.endDate.compare(startIcal) > 0) {

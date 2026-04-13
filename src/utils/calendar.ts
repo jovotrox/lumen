@@ -38,11 +38,14 @@ export const FEED_COLORS = [
 ] as const
 
 // In-memory cache per URL+date
-const cache = new Map<string, { result: FeedFetchResult; timestamp: number }>()
-const CACHE_TTL = 5 * 60_000 // 5 minutes
+const cache = new Map<string, { result: FeedFetchResult; timestamp: number; ttl: number }>()
+const SUCCESS_TTL = 5 * 60_000 // 5 minutes
+const ERROR_TTL = 30_000 // 30 seconds — short so transient network issues self-heal
 
 /**
  * Fetch events for a single feed. Uses cache to avoid repeated fetches.
+ * Error responses use a shorter TTL so the user doesn't wait 5 minutes
+ * for a recovery after a brief network blip.
  */
 export async function fetchFeedEvents(
   feed: CalendarFeed,
@@ -54,7 +57,7 @@ export async function fetchFeedEvents(
 
   const cacheKey = `${feed.url}::${dateString}`
   const cached = cache.get(cacheKey)
-  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+  if (cached && Date.now() - cached.timestamp < cached.ttl) {
     // Re-tag cached events with current feed metadata (user may have renamed/recolored)
     return {
       ...cached.result,
@@ -76,12 +79,12 @@ export async function fetchFeedEvents(
       color: feed.color,
     }))
     const result: FeedFetchResult = { feedId: feed.id, feedName: feed.name, events }
-    cache.set(cacheKey, { result, timestamp: Date.now() })
+    cache.set(cacheKey, { result, timestamp: Date.now(), ttl: SUCCESS_TTL })
     return result
   } catch (e) {
     const error = (e as Error).message || "Failed to fetch calendar"
     const result: FeedFetchResult = { feedId: feed.id, feedName: feed.name, events: [], error }
-    cache.set(cacheKey, { result, timestamp: Date.now() })
+    cache.set(cacheKey, { result, timestamp: Date.now(), ttl: ERROR_TTL })
     return result
   }
 }
