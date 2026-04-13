@@ -13,6 +13,7 @@ import useResizeObserver from "use-resize-observer"
 import { z } from "zod/v3"
 import { Button } from "../components/button"
 import { Calendar } from "../components/calendar"
+import { CalendarEvents } from "../components/calendar-events"
 import { CalendarHeader } from "../components/calendar-header"
 import { DaysOfWeek } from "../components/days-of-week"
 import { Details } from "../components/details"
@@ -905,6 +906,8 @@ function NotePage() {
                 <CalendarHeader activeNoteId={noteId ?? ""} />
               </div>
             ) : null}
+
+            {isDailyNote ? <CalendarEvents dateString={noteId ?? ""} /> : null}
 
             {mode === "read" && (
               <div className="min-h-[240px]">

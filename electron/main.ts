@@ -10,6 +10,7 @@ import {
   Tray,
 } from "electron"
 import { autoUpdater } from "electron-updater"
+import { execSync } from "child_process"
 import fs from "fs"
 import path from "path"
 
@@ -258,6 +259,49 @@ function registerIpcHandlers(): void {
       },
     })
     win.loadURL(noteUrl)
+  })
+
+  ipcMain.handle("electron:get-calendar-events", async (_event, dateString: string) => {
+    if (process.platform !== "darwin") return []
+
+    try {
+      // JXA script to get calendar events for a given date
+      const script = `
+        const app = Application("Calendar");
+        const start = new Date("${dateString}T00:00:00");
+        const end = new Date("${dateString}T23:59:59");
+        const events = [];
+        app.calendars().forEach(cal => {
+          try {
+            cal.events.whose({
+              _and: [
+                { startDate: { _greaterThanEquals: start } },
+                { startDate: { _lessThanEquals: end } }
+              ]
+            })().forEach(ev => {
+              events.push({
+                title: ev.summary(),
+                start: ev.startDate().toISOString(),
+                end: ev.endDate().toISOString(),
+                calendar: cal.name(),
+                color: cal.color() || "#888888",
+                isAllDay: ev.alldayEvent(),
+                location: ev.location() || ""
+              });
+            });
+          } catch(e) {}
+        });
+        JSON.stringify(events);
+      `
+      const result = execSync(`osascript -l JavaScript -e '${script.replace(/'/g, "'\\''")}'`, {
+        timeout: 5000,
+        encoding: "utf-8",
+      })
+      return JSON.parse(result.trim() || "[]")
+    } catch (error) {
+      console.error("Failed to fetch calendar events:", error)
+      return []
+    }
   })
 
   ipcMain.handle(
