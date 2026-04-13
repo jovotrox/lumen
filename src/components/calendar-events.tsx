@@ -1,5 +1,5 @@
 import { useAtomValue, useSetAtom } from "jotai"
-import { Calendar } from "lucide-react"
+import { Calendar, FileText } from "lucide-react"
 import React from "react"
 import { useNavigate } from "@tanstack/react-router"
 import {
@@ -10,7 +10,6 @@ import {
   notesAtom,
 } from "../global-state"
 import { CalendarEvent, fetchAllFeedsEvents, invalidateCalendarCache } from "../utils/calendar"
-import { Button } from "./button"
 
 /** Format an event's start time as HH:MM (24h), or "All day" for all-day events. */
 function formatStartTime(event: CalendarEvent): string {
@@ -134,10 +133,16 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
         const noteId = getEventNoteId(event)
         const hasNote = notes.has(noteId)
         return (
-          <div
+          <button
             key={`${noteId}-${i}`}
-            className="group flex items-center gap-2 rounded-lg px-2.5 py-1.5 transition hover:bg-bg-tertiary"
-            title={event.calendar || undefined}
+            type="button"
+            onClick={() => openEventNote(event)}
+            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none"
+            title={
+              event.calendar
+                ? `${event.calendar} — ${hasNote ? "open linked note" : "create linked note"}`
+                : undefined
+            }
           >
             <span
               className="shrink-0 text-sm font-medium tabular-nums"
@@ -146,14 +151,13 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
               {formatStartTime(event)}
             </span>
             <span className="flex-1 truncate text-sm text-text">{event.title}</span>
-            <Button
-              size="small"
-              className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-              onClick={() => openEventNote(event)}
-            >
-              {hasNote ? "Open note" : "Create note"}
-            </Button>
-          </div>
+            {hasNote ? (
+              <FileText
+                className="size-3 shrink-0 text-text-tertiary"
+                aria-label="Has linked note"
+              />
+            ) : null}
+          </button>
         )
       })}
       {errors.length > 0 ? (
