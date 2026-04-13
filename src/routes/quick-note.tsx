@@ -196,7 +196,7 @@ function QuickNoteComponent() {
       </div>
 
       {/* Editor */}
-      <div className="flex-1 overflow-auto px-4 pb-3">
+      <div className="flex-1 overflow-auto px-4 pt-2 pb-3">
         <NoteEditor
           ref={editorRef}
           defaultValue={content}
