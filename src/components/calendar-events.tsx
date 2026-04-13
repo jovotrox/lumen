@@ -136,7 +136,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
         return (
           <div
             key={`${noteId}-${i}`}
-            className="group flex items-center gap-3 rounded-lg px-2.5 py-1.5 transition hover:bg-bg-tertiary"
+            className="group flex items-center gap-2 rounded-lg px-2.5 py-1.5 transition hover:bg-bg-tertiary"
             title={event.calendar || undefined}
           >
             <span
