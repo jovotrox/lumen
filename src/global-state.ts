@@ -1050,6 +1050,8 @@ export const isHelpPanelOpenAtom = atomWithStorage<boolean>("help-panel", false)
 
 export const calendarLayoutAtom = atomWithStorage<"week" | "month">("calendar-layout", "week")
 
+export const calendarIntegrationAtom = atomWithStorage<boolean>("calendar-integration", false)
+
 export const hideCompletedTasksAtom = atomWithStorage<boolean>("hide-completed-tasks", false)
 
 // -----------------------------------------------------------------------------

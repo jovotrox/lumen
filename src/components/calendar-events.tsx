@@ -1,31 +1,56 @@
+import { useAtomValue } from "jotai"
+import { Calendar, Clock } from "lucide-react"
 import React from "react"
+import { calendarIntegrationAtom } from "../global-state"
 import { CalendarEvent, fetchCalendarEvents, formatEventTime } from "../utils/calendar"
 import { isElectron } from "../utils/electron"
-import { Clock } from "lucide-react"
 
 export function CalendarEvents({ dateString }: { dateString: string }) {
+  const enabled = useAtomValue(calendarIntegrationAtom)
   const [events, setEvents] = React.useState<CalendarEvent[]>([])
-  const [loading, setLoading] = React.useState(true)
+  const [loading, setLoading] = React.useState(false)
+  const [permissionDenied, setPermissionDenied] = React.useState(false)
 
   React.useEffect(() => {
-    if (!isElectron()) {
+    if (!isElectron() || !enabled) {
+      setEvents([])
       setLoading(false)
       return
     }
 
     setLoading(true)
+    setPermissionDenied(false)
     fetchCalendarEvents(dateString)
-      .then(setEvents)
-      .catch(() => setEvents([]))
+      .then((result) => {
+        setEvents(result)
+        setPermissionDenied(false)
+      })
+      .catch(() => {
+        setEvents([])
+        setPermissionDenied(true)
+      })
       .finally(() => setLoading(false))
-  }, [dateString])
+  }, [dateString, enabled])
 
-  // Don't render anything in browser or when no events
-  if (!isElectron() || (!loading && events.length === 0)) return null
+  if (!isElectron() || !enabled) return null
+  if (loading) return null
 
-  if (loading) return null // Silent loading, no spinner
+  if (permissionDenied) {
+    return (
+      <div className="flex items-center gap-2 px-4 py-2 text-xs text-text-tertiary">
+        <Calendar className="size-3 opacity-60" />
+        <span>
+          Calendar access denied. Enable in{" "}
+          <span className="text-text-secondary">
+            System Settings &gt; Privacy &amp; Security &gt; Calendars
+          </span>
+        </span>
+      </div>
+    )
+  }
 
-  // Sort: all-day first, then by start time
+  if (events.length === 0) return null
+
   const sorted = [...events].sort((a, b) => {
     if (a.isAllDay && !b.isAllDay) return -1
     if (!a.isAllDay && b.isAllDay) return 1

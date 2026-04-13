@@ -26,6 +26,7 @@ import {
   githubRepoAtom,
   githubUserAtom,
   hasOpenAIKeyAtom,
+  calendarIntegrationAtom,
   hideCompletedTasksAtom,
   isCloningRepoAtom,
   nicknameAtom,
@@ -78,6 +79,7 @@ function RouteComponent() {
           <AppearanceSection />
           <EditorSection />
           <NotesSection />
+          <CalendarSection />
           <AISection />
           <div className="p-5 text-text-tertiary self-center flex flex-col gap-3 items-center">
             <span className="text-sm">
@@ -633,6 +635,32 @@ function NotesSection() {
         <label htmlFor="hide-completed-tasks" className="select-none">
           Hide completed tasks in read mode
         </label>
+      </div>
+    </SettingsSection>
+  )
+}
+
+function CalendarSection() {
+  const [enabled, setEnabled] = useAtom(calendarIntegrationAtom)
+  const isDesktop = typeof window !== "undefined" && "electronAPI" in window
+
+  if (!isDesktop) return null
+
+  return (
+    <SettingsSection title="Calendar">
+      <div className="flex flex-col gap-3">
+        <div className="flex items-center gap-2.5 leading-4">
+          <Switch id="calendar-integration" checked={enabled} onCheckedChange={setEnabled} />
+          <label htmlFor="calendar-integration" className="select-none">
+            Show Calendar.app events in daily notes
+          </label>
+        </div>
+        {enabled ? (
+          <p className="text-xs text-text-tertiary">
+            macOS will ask for calendar access permission the first time. You can manage this in
+            System Settings &gt; Privacy &amp; Security &gt; Calendars.
+          </p>
+        ) : null}
       </div>
     </SettingsSection>
   )
