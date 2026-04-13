@@ -1102,9 +1102,35 @@ export interface Tab {
     | "tags"
     | "settings"
     | "people"
+  /**
+   * Navigation history for this tab, used by the breadcrumb.
+   * Optional for back-compat with tabs persisted before this feature.
+   * Always terminates with the current segment when non-empty.
+   */
+  trail?: TrailSegment[]
+}
+
+/**
+ * A single segment in a tab's breadcrumb trail.
+ * `iconKind` discriminates how `iconRef` should be interpreted:
+ * - "route" → iconRef matches Tab["icon"] (e.g., "project", "tags")
+ * - "note"  → iconRef is a note id (resolved via NoteFavicon)
+ * - "tag"   → iconRef is a tag name
+ */
+export interface TrailSegment {
+  path: string
+  title: string
+  iconKind: "route" | "note" | "tag"
+  iconRef: string
 }
 
 export const openTabsAtom = atomWithStorage<Tab[]>("open-tabs-v2", [])
+
+/**
+ * Breadcrumb trail for the "default view" when no tabs are open.
+ * When tabs exist, the active tab's own `trail` is used instead.
+ */
+export const defaultTrailAtom = atomWithStorage<TrailSegment[]>("default-trail", [])
 
 // -----------------------------------------------------------------------------
 // AI

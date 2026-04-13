@@ -74,12 +74,17 @@ function RouteComponent() {
   const { online } = useNetworkState()
   const rootRef = React.useRef<HTMLDivElement>(null)
 
-  // Cmd+T to open a new tab (desktop-style shortcut)
+  // Cmd+T — create a new note in a NEW tab (desktop-style shortcut).
+  // `openTab` is imported in the block below; we call both (open + navigate)
+  // so the new note always gets its own tab with a fresh breadcrumb trail.
+  const { openTab: openTabForHotkey } = useTabs()
   useHotkeys(
     "mod+t",
     (e) => {
       e.preventDefault()
       const newId = generateNoteId()
+      const path = `/notes/${newId}`
+      openTabForHotkey(path, newId, "note")
       navigate({
         to: "/notes/$",
         params: { _splat: newId },
