@@ -26,6 +26,10 @@ function QuickNoteComponent() {
   // accurate active-state highlights.
   const [, setSelTick] = React.useState(0)
   const editorRef = React.useRef<ReactCodeMirrorRef>(null)
+  // Cache of the last traffic-lights visibility we sent to the main process.
+  // Shared between the mousemove/keydown effect and the reset handler so both
+  // stay in sync when the window is re-invoked (main resets to hidden there).
+  const trafficLightsVisibleRef = React.useRef<boolean | null>(null)
   const escTimeoutRef = React.useRef<number | null>(null)
 
   // Reset state when Quick Note window is re-invoked (Electron reuses persisted window)
@@ -37,6 +41,10 @@ function QuickNoteComponent() {
       setHasUnsavedChanges(false)
       setSaved(false)
       setEscPressedOnce(false)
+      // Main process hides traffic lights on re-invoke (setWindowButtonVisibility(false)).
+      // Sync our cache so the next mousemove actually fires a show IPC instead of
+      // thinking the lights are already visible from a previous session.
+      trafficLightsVisibleRef.current = false
       // Clear editor content and refocus
       const view = editorRef.current?.view
       if (view) {
@@ -132,10 +140,9 @@ function QuickNoteComponent() {
   React.useEffect(() => {
     if (!isElectron() || !window.electronAPI?.setTrafficLightsVisible) return
     const api = window.electronAPI
-    let lastVisible: boolean | null = null
     const set = (visible: boolean) => {
-      if (lastVisible === visible) return
-      lastVisible = visible
+      if (trafficLightsVisibleRef.current === visible) return
+      trafficLightsVisibleRef.current = visible
       api.setTrafficLightsVisible(visible)
     }
     const show = () => set(true)
