@@ -1,6 +1,19 @@
 import { useRouter } from "@tanstack/react-router"
 import { useAtom, useAtomValue } from "jotai"
-import { FolderOpen, Home, Inbox, Link as LinkIcon, Plus, Settings, User, X } from "lucide-react"
+import {
+  Calendar,
+  FileText,
+  FolderOpen,
+  Home,
+  Inbox,
+  Link as LinkIcon,
+  ListChecks,
+  Plus,
+  Settings,
+  Tag,
+  User,
+  X,
+} from "lucide-react"
 import React from "react"
 import { openTabsAtom, sidebarAtom, Tab } from "../global-state"
 import { useTabs } from "../hooks/use-tabs"
@@ -8,53 +21,36 @@ import { isElectron } from "../utils/electron"
 import { isTauri } from "../utils/tauri"
 import { cx } from "../utils/cx"
 import { IconButton } from "./icon-button"
-import {
-  ArrowLeftIcon16,
-  ArrowRightIcon16,
-  CalendarDateIcon16,
-  CalendarIcon16,
-  NoteIcon16,
-  SidebarCollapsedIcon16,
-  SidebarIcon16,
-  TagIcon16,
-  TaskListIcon16,
-} from "./icons"
+import { ArrowLeftIcon16, ArrowRightIcon16, SidebarCollapsedIcon16, SidebarIcon16 } from "./icons"
 import { generateNoteId } from "../utils/note-id"
 
-// Custom 16x16 SVG icons scale well at 14px
-const icon16 = "size-3.5 shrink-0 opacity-70"
-// Lucide 24x24 icons need to be smaller to visually match
-const iconLucide = "size-3 shrink-0 opacity-70"
+const ic = "size-3.5 shrink-0 opacity-60"
 
 function TabIcon({ tab }: { tab: Tab }) {
   switch (tab.icon) {
-    case "daily": {
-      const match = tab.path.match(/\/notes\/\d{4}-\d{2}-(\d{2})/)
-      const day = match ? parseInt(match[1], 10) : undefined
-      return <CalendarDateIcon16 date={day} className={icon16} />
-    }
+    case "daily":
     case "weekly":
     case "calendar":
-      return <CalendarIcon16 className={icon16} />
+      return <Calendar className={ic} />
     case "home":
-      return <Home className={iconLucide} />
+      return <Home className={ic} />
     case "inbox":
-      return <Inbox className={iconLucide} />
+      return <Inbox className={ic} />
     case "project":
-      return <FolderOpen className={iconLucide} />
+      return <FolderOpen className={ic} />
     case "tasks":
-      return <TaskListIcon16 className={icon16} />
+      return <ListChecks className={ic} />
     case "links":
-      return <LinkIcon className={iconLucide} />
+      return <LinkIcon className={ic} />
     case "people":
     case "person":
-      return <User className={iconLucide} />
+      return <User className={ic} />
     case "tags":
-      return <TagIcon16 className={icon16} />
+      return <Tag className={ic} />
     case "settings":
-      return <Settings className={iconLucide} />
+      return <Settings className={ic} />
     default:
-      return <NoteIcon16 className={icon16} />
+      return <FileText className={ic} />
   }
 }
 
