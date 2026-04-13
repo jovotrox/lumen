@@ -249,7 +249,7 @@ function QuickNoteComponent() {
       }
       style={
         isMacElectron
-          ? { backgroundColor: "color-mix(in srgb, var(--color-bg) 40%, transparent)" }
+          ? { backgroundColor: "color-mix(in srgb, var(--color-bg) 30%, transparent)" }
           : undefined
       }
     >
