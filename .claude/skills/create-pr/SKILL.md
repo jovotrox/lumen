@@ -18,7 +18,9 @@ You MUST create a task for each of these items and complete them in order:
 3. Test (build / lint / tests)
 4. Version bump (only if the branch touches `electron/**`, `electron-builder.yml`, or `package.json`)
 5. Update `CONTEXT.md`
-6. Push branch + open PR (after user confirmation)
+6. **Code review** (mandatory — use `superpowers:code-reviewer` agent)
+7. Address review findings (if any)
+8. Push branch + open PR (after user confirmation)
 
 ## 1. Branch from personal
 
@@ -101,7 +103,42 @@ Before opening the PR, always update `/CONTEXT.md`:
 
 Without this, the next session starts without context of what was just added.
 
-## 6. Open the PR
+## 6. Code review (MANDATORY)
+
+Before opening the PR, dispatch the `superpowers:code-reviewer` agent. This catches issues early — it's cheaper to fix them in the branch than after a PR review cycle.
+
+**Invocation pattern:**
+
+```
+Agent(
+  description: "Code review feature/<name>",
+  subagent_type: "superpowers:code-reviewer",
+  prompt: "..."
+)
+```
+
+The prompt must include:
+
+- **Branch and base**: `feature/<name>` vs `personal`
+- **Scope summary**: 5-10 bullets of what changes and why
+- **How to get the diff**: `git diff personal..HEAD`, `git log personal..HEAD --oneline`
+- **Focus areas**: correctness risks, security (especially for IPC / user-controlled input), UX corners (empty states, errors, accessibility), scope discipline (did anything sneak in?), dead code, codebase consistency
+- **Output format**: Blockers / Important / Nits / Strengths — under 800 words, no preamble
+
+**The reviewer must read actual files**, not just the diff — tell it to.
+
+## 7. Address review findings
+
+Triage the report:
+
+- **Blockers** (correctness bugs, security holes, broken features) → fix in the same branch, commit
+- **Important** (real bugs that aren't blockers, design concerns) → fix unless you have a concrete reason not to. Document the reasoning in the PR body.
+- **Nits** (style, naming, minor polish) → fix if cheap, otherwise defer as follow-up
+- **Strengths** → note in the PR body under "Code review fixes applied" so reviewer context is preserved
+
+If the reviewer returns zero blockers on first pass, that is normal and expected for small changes. Do not invent issues to "show work".
+
+## 8. Open the PR
 
 **Get explicit user confirmation before running `gh pr create`.** Show the user:
 
@@ -145,6 +182,7 @@ EOF
 - [ ] CONTEXT.md committed in the branch
 - [ ] Version bumped if any electron/package.json files changed
 - [ ] Tests + lint + build all green locally
+- [ ] Code review completed; blockers fixed; remaining concerns documented in PR body
 - [ ] Waiting on user review
 
 ## What NOT to do
@@ -154,6 +192,7 @@ EOF
 - ❌ Never bump version on `personal` (always in the feature branch)
 - ❌ Never tag before the squash merge — the squash creates a new commit on `personal`; tagging the feature branch HEAD points to a commit that isn't on `personal`
 - ❌ Never skip `CONTEXT.md` update because "it's a small change"
+- ❌ Never skip the code review step — even for "trivial" changes. Trivial-looking PRs are exactly where quiet bugs slip in.
 
 ## After the PR is open
 
