@@ -58,7 +58,9 @@ async function fetchAndCacheIfStale(feed: CalendarFeed, dateString: string) {
   // Only used by prefetch — for the visible day we always revalidate.
   const cached = await getCachedEntry(feed.url, dateString)
   if (cached && Date.now() - cached.fetchedAt < PREFETCH_FRESH_MS) return
-  await fetchAndCache(feed, dateString)
+  const result = await fetchAndCache(feed, dateString)
+  // Re-throw so prefetchSurrounding can bail on first failure
+  if (result.error) throw new Error(result.error)
 }
 
 function surroundingDates(centerDate: string, radius: number): string[] {
