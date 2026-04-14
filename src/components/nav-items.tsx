@@ -46,12 +46,16 @@ import {
   OfflineIcon16,
   SettingsFillIcon16,
   SettingsIcon16,
+  FolderOpenFillIcon16,
+  HomeFillIcon16,
+  InboxFillIcon16,
   LinkFillIcon16,
   LinkIcon16,
   TagFillIcon16,
   TagIcon16,
   TaskListFillIcon16,
   TaskListIcon16,
+  UserFillIcon16,
 } from "./icons"
 import { NoteFavicon } from "./note-favicon"
 import { SyncStatusIcon, useSyncStatus } from "./sync-status"
@@ -140,7 +144,7 @@ export function NavItems({
             <li>
               <NavLink
                 to="/"
-                activeIcon={<Home size={16} fill="currentColor" />}
+                activeIcon={<HomeFillIcon16 />}
                 icon={<Home size={16} />}
                 onNavigate={onNavigate}
               >
@@ -151,7 +155,7 @@ export function NavItems({
               <NavLink
                 to="/inbox"
                 search={{ query: undefined }}
-                activeIcon={<Inbox size={16} fill="currentColor" />}
+                activeIcon={<InboxFillIcon16 />}
                 icon={<Inbox size={16} />}
                 onNavigate={onNavigate}
               >
@@ -197,7 +201,7 @@ export function NavItems({
               <NavLink
                 to="/projects"
                 search={{ query: undefined, view: "list" }}
-                activeIcon={<FolderOpen size={16} fill="currentColor" />}
+                activeIcon={<FolderOpenFillIcon16 />}
                 icon={<FolderOpen size={16} />}
                 onNavigate={onNavigate}
               >
@@ -230,7 +234,7 @@ export function NavItems({
               <NavLink
                 to="/people"
                 search={{ query: undefined, view: "list" }}
-                activeIcon={<User size={16} fill="currentColor" />}
+                activeIcon={<UserFillIcon16 />}
                 icon={<User size={16} />}
                 onNavigate={onNavigate}
               >
