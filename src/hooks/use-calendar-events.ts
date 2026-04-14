@@ -1,9 +1,17 @@
 import { atom, useAtomValue, useSetAtom } from "jotai"
 import { useEffect, useState } from "react"
 import { calendarFeedsAtom, calendarIntegrationAtom } from "../global-state"
-import { getCachedEntry, setCachedEntry, type CachedEntry } from "../utils/calendar-cache"
+import {
+  evictOutsideRange,
+  getCachedEntry,
+  setCachedEntry,
+  type CachedEntry,
+} from "../utils/calendar-cache"
 import type { CalendarEvent, CalendarFeed } from "../utils/calendar"
 import { fetchIcsEvents } from "../utils/calendar-ics"
+
+const PREFETCH_RADIUS_DAYS = 3
+const PREFETCH_FRESH_MS = 5 * 60_000
 
 export interface UseCalendarEventsResult {
   events: CalendarEvent[]
@@ -44,6 +52,37 @@ async function fetchAndCache(feed: CalendarFeed, dateString: string) {
     })
     return { feed, events: [], error: message }
   }
+}
+
+async function fetchAndCacheIfStale(feed: CalendarFeed, dateString: string) {
+  // Only used by prefetch — for the visible day we always revalidate.
+  const cached = await getCachedEntry(feed.url, dateString)
+  if (cached && Date.now() - cached.fetchedAt < PREFETCH_FRESH_MS) return
+  await fetchAndCache(feed, dateString)
+}
+
+function surroundingDates(centerDate: string, radius: number): string[] {
+  const result: string[] = []
+  const [y, m, d] = centerDate.split("-").map(Number)
+  for (let offset = -radius; offset <= radius; offset++) {
+    const dt = new Date(y, m - 1, d + offset) // local time, respects DST
+    const yyyy = dt.getFullYear()
+    const mm = String(dt.getMonth() + 1).padStart(2, "0")
+    const dd = String(dt.getDate()).padStart(2, "0")
+    result.push(`${yyyy}-${mm}-${dd}`)
+  }
+  return result
+}
+
+async function prefetchSurrounding(feeds: CalendarFeed[], centerDate: string) {
+  const dates = surroundingDates(centerDate, PREFETCH_RADIUS_DAYS) // 7 days total
+  // Day-by-day (not all in parallel) to avoid hammering the feed with 21 concurrent
+  // requests. Within a day, all feeds fetch in parallel (typically 3 feeds).
+  for (const date of dates) {
+    await Promise.all(feeds.map((f) => fetchAndCacheIfStale(f, date)))
+  }
+  const validUrls = new Set(feeds.map((f) => f.url))
+  await evictOutsideRange(validUrls, dates[0], dates[dates.length - 1])
 }
 
 function sortEvents(events: CalendarEvent[]): CalendarEvent[] {
@@ -130,6 +169,9 @@ export function useCalendarEvents(dateString: string): UseCalendarEventsResult {
       setErrors(merged.errors)
       setIsLoading(false)
       setIsRevalidating(false)
+
+      // 3. Prefetch ±3 days (fire-and-forget, doesn't touch component state).
+      void prefetchSurrounding(activeFeeds, dateString)
     }
 
     void load()
