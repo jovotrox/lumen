@@ -3,9 +3,11 @@ import { useAtom } from "jotai"
 import { useHotkeys } from "react-hotkeys-hook"
 import { sidebarAtom } from "../global-state"
 import { useCreateNewNote } from "../hooks/create-new-note"
+import { isBreadcrumbBlacklisted, useTabs } from "../hooks/use-tabs"
 import { cx } from "../utils/cx"
 import { isElectron } from "../utils/electron"
 import { isTauri } from "../utils/tauri"
+import { Breadcrumb } from "./breadcrumb"
 import { IconButton } from "./icon-button"
 import { ArrowLeftIcon16, ArrowRightIcon16, SidebarCollapsedIcon16 } from "./icons"
 import { NewNoteButton } from "./new-note-button"
@@ -21,6 +23,15 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
   const router = useRouter()
   const [sidebar, setSidebar] = useAtom(sidebarAtom)
   const createNewNote = useCreateNewNote()
+  const { activeTrail, currentPath } = useTabs()
+  // Show the breadcrumb on any non-blacklisted route that has a trail.
+  // We intentionally do NOT require the last segment's path to match
+  // `currentPath` — that check introduces a one-tick flash during
+  // navigation, where the route changes before `updateActiveTab` has
+  // applied the new trail segment. The stale-trail concern it was
+  // guarding against is already covered by the blacklist check, which
+  // catches the Home / Settings / Quick-Note cases.
+  const showBreadcrumb = !isBreadcrumbBlacklisted(currentPath) && activeTrail.length > 0
   const isDesktop = isElectron() || isTauri()
 
   // Toggle sidebar with Cmd/Ctrl + Shift + S
@@ -84,8 +95,16 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
           <div role="separator" className="h-5 w-px bg-border hidden sm:block" />
         ) : null}
         <div className="flex w-0 grow items-center gap-3 px-2">
-          {icon ? <div className="flex size-icon shrink-0 text-text-secondary">{icon}</div> : null}
-          <div className="truncate">{title}</div>
+          {showBreadcrumb ? (
+            <Breadcrumb trail={activeTrail} />
+          ) : (
+            <>
+              {icon ? (
+                <div className="flex size-icon shrink-0 text-text-secondary">{icon}</div>
+              ) : null}
+              <div className="truncate">{title}</div>
+            </>
+          )}
         </div>
         <div className="flex items-center gap-2 justify-self-end">
           {actions ? <div className="flex items-center">{actions}</div> : null}

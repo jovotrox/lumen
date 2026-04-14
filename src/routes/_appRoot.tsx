@@ -74,12 +74,20 @@ function RouteComponent() {
   const { online } = useNetworkState()
   const rootRef = React.useRef<HTMLDivElement>(null)
 
-  // Cmd+T to open a new tab (desktop-style shortcut)
+  // Single useTabs() for the whole component — avoids multiple hook instances
+  // each creating their own atom subscriptions.
+  const { openTab, updateActiveTab } = useTabs()
+
+  // Cmd+T — create a new note in a NEW tab (desktop-style shortcut).
+  // We call openTab + navigate so the new note always gets its own tab
+  // with a fresh breadcrumb trail.
   useHotkeys(
     "mod+t",
     (e) => {
       e.preventDefault()
       const newId = generateNoteId()
+      const path = `/notes/${newId}`
+      openTab(path, newId, "note")
       navigate({
         to: "/notes/$",
         params: { _splat: newId },
@@ -108,7 +116,6 @@ function RouteComponent() {
   )
 
   // Update active tab when navigating to non-note routes
-  const { updateActiveTab } = useTabs()
   React.useEffect(() => {
     const unsubscribe = router.subscribe("onResolved", ({ toLocation }) => {
       const path = toLocation.pathname.replace(/^\/lumen/, "").replace(/\/$/, "") || "/"
@@ -266,7 +273,6 @@ function RouteComponent() {
 
   // Listen for Cmd+click internal navigation from Electron main process
   // This opens the link in a NEW tab (explicit new tab action)
-  const { openTab } = useTabs()
   React.useEffect(() => {
     if (!isElectron()) return
 
