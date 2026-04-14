@@ -56,10 +56,10 @@ export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
     onAuth: () => ({ username: user.login, password: user.token }),
   }
 
-  // Wipe file system
+  // Wipe file system and wait for deletion to complete before cloning
   // TODO: Only remove the repo directory instead of wiping the entire file system
   // Blocked by https://github.com/isomorphic-git/lightning-fs/issues/71
-  fsWipe()
+  await fsWipe()
 
   // Clone repo
   let stopTimer = startTimer(`git clone ${options.url} ${options.dir}`)
