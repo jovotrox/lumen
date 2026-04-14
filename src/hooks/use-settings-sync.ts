@@ -57,8 +57,13 @@ export function useSettingsSync(isRepoCloned: boolean) {
           // Validate theme ID — if it references a custom theme that doesn't exist
           // on this device, fall back to "default" to prevent broken UI.
           if (repoSettings.theme?.startsWith("custom-")) {
-            const customThemes = localStorage.getItem("custom-themes")
-            const themes = customThemes ? (JSON.parse(customThemes) as Array<{ id: string }>) : []
+            let themes: Array<{ id: string }> = []
+            try {
+              const raw = localStorage.getItem("custom-themes")
+              if (raw) themes = JSON.parse(raw) as Array<{ id: string }>
+            } catch {
+              // Malformed localStorage — treat as empty
+            }
             if (!themes.some((t) => t.id === repoSettings.theme)) {
               repoSettings.theme = "default"
             }
