@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-13 (v0.5.0)
+**Ultima actualizacion:** 2026-04-13 (v0.6.0)
 
 ---
 
@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `personal` (fork personal, rama de compilación)
-- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, native-feel polish v0.5.0
-- **Version:** 0.5.0
+- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, breadcrumb navigation v0.6.0
+- **Version:** 0.6.0
 
 ### Migracion Tauri → Electron
 
@@ -269,6 +269,23 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.6.0 — 2026-04-13
+
+- **feat(breadcrumbs): Notion-style navigation trail per tab**
+  - Cada tab (y el default-trail para cuando no hay tabs) mantiene un `TrailSegment[]` que refleja el path de navegación del usuario dentro de la app.
+  - **Reglas de composición** (en `applyTrailRules`):
+    - Ruta blacklisted (`/`, `/settings/...`, `/quick-note`) → trail se preserva intacto, pero el renderer oculta el breadcrumb mientras estás ahí.
+    - Ruta root (`/notes`, `/projects`, `/people`, `/tasks`, `/links`, `/inbox`, `/tags`, y daily/weekly notes como `/notes/2026-04-13`) → RESETEA el trail a `[segmento]`. Entrar a una sección siempre es el inicio de un trail nuevo.
+    - Ruta ya en el trail → trunca al segmento revisitado (click en breadcrumb, browser back, wikilink revisita).
+    - Ruta nueva → push al final.
+  - **Componentes nuevos**:
+    - `src/components/breadcrumb.tsx` — renderiza el trail con `/` separators, segmento actual en bold no-clickeable, hover states en los pasados, truncation `[first] / … / [last 3]` con dropdown para los ocultos cuando hay más de 5 segmentos.
+    - `src/components/breadcrumb-icon.tsx` — resolver de icono según `iconKind` (route/note/tag). Usa `NoteFavicon` para notes, lucide `Hash` para tags, mapping de route keys a lucide icons para roots.
+  - **Integración**: `PageHeader` ahora renderiza el breadcrumb cuando la ruta NO es blacklist y el trail tiene segmentos. Caso contrario (Home, Settings, sin trail) → fallback al title/icon original.
+  - **Cmd+T** ahora crea un tab nuevo vía `openTab` además de navegar, así la nueva nota tiene su propio trail en lugar de extender el actual.
+  - **Persistencia**: `trail` está en el Tab (ya persistido en `openTabsAtom` via atomWithStorage) + nuevo `defaultTrailAtom` para sesiones sin tabs abiertos. Ambos sobreviven al reinicio.
+  - **Fix anti-flash**: condición `showBreadcrumb` basada en "path no-blacklisted + trail no-vacío" en lugar de "último segmento === current path". Esto elimina el flash de 1-tick que aparecía durante la navegación porque el path cambia antes que el setTabs/setDefaultTrail se apliquen.
 
 ### v0.5.0 — 2026-04-13
 
