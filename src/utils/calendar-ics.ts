@@ -19,7 +19,7 @@ export async function fetchIcsEvents(url: string, dateString: string): Promise<C
  * Fetch raw ICS text from a URL. Uses Electron's CORS-free IPC in desktop,
  * browser fetch otherwise.
  */
-export async function fetchIcsRaw(url: string): Promise<string> {
+export async function fetchIcsRaw(url: string, signal?: AbortSignal): Promise<string> {
   // Validate URL
   const parsed = new URL(url)
   if (
@@ -32,6 +32,7 @@ export async function fetchIcsRaw(url: string): Promise<string> {
   // Normalize webcal:// to https://
   const httpUrl = parsed.protocol === "webcal:" ? url.replace(/^webcal:\/\//, "https://") : url
 
+  // Electron: CORS-free IPC
   if (isElectron() && window.electronAPI?.fetch) {
     const response = await window.electronAPI.fetch({
       url: httpUrl,
@@ -44,8 +45,26 @@ export async function fetchIcsRaw(url: string): Promise<string> {
     return new TextDecoder().decode(response.body)
   }
 
-  // Browser fallback
-  const response = await fetch(httpUrl, { headers: { Accept: "text/calendar, */*" } })
+  // Browser/PWA: route through CORS proxy if available
+  const apiBase = import.meta.env.VITE_API_BASE_URL
+  if (apiBase) {
+    const target = new URL(httpUrl)
+    const proxyUrl = `${apiBase}/cors-proxy?path=${encodeURIComponent(target.host + target.pathname + target.search)}`
+    const response = await fetch(proxyUrl, {
+      headers: { Accept: "text/calendar, */*" },
+      signal,
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+    }
+    return response.text()
+  }
+
+  // Direct fetch fallback (localhost dev without Vercel proxy)
+  const response = await fetch(httpUrl, {
+    headers: { Accept: "text/calendar, */*" },
+    signal,
+  })
   if (!response.ok) {
     throw new Error(`HTTP ${response.status}: ${response.statusText}`)
   }
