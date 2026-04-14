@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router"
+import React from "react"
 import { DropdownMenu } from "../components/dropdown-menu"
 import { IconButton } from "../components/icon-button"
 import { EditIcon16, MoreIcon16, TagIcon16, TrashIcon16 } from "../components/icons"
@@ -6,6 +7,7 @@ import { LinkHighlightProvider } from "../components/link-highlight-provider"
 import { NoteList } from "../components/note-list"
 import { PageLayout } from "../components/page-layout"
 import { useDeleteTag, useRenameTag } from "../hooks/tag"
+import { useTabs } from "../hooks/use-tabs"
 
 type RouteSearch = {
   query: string | undefined
@@ -31,6 +33,14 @@ function RouteComponent() {
   const navigate = Route.useNavigate()
   const renameTag = useRenameTag()
   const deleteTag = useDeleteTag()
+
+  // Feed the breadcrumb — the top-level onResolved listener only handles
+  // exact root paths, so tag-specific pages need to register themselves.
+  const { updateActiveTab } = useTabs()
+  React.useEffect(() => {
+    if (!tag) return
+    updateActiveTab(`/tags/${tag}`, `#${tag}`, "tags")
+  }, [tag, updateActiveTab])
 
   return (
     <PageLayout

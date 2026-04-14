@@ -25,13 +25,11 @@ type Props = { segment: TrailSegment; size?: number }
  * PageHeader's icon stay visually identical (no jump when toggling).
  */
 export function BreadcrumbIcon({ segment, size = 16 }: Props) {
-  const notes = useAtomValue(notesAtom)
-
+  // Delegate to a dedicated sub-component when the segment is a note so we
+  // only subscribe to `notesAtom` (a large Map that updates on every sync)
+  // when actually rendering a note icon.
   if (segment.iconKind === "note") {
-    const note = notes.get(segment.iconRef)
-    if (note) return <NoteFavicon note={note} />
-    // Fallback when the note hasn't loaded yet (e.g., fresh app start, persisted tab).
-    return <NoteIcon16 />
+    return <NoteBreadcrumbIcon noteId={segment.iconRef} />
   }
 
   if (segment.iconKind === "tag") {
@@ -66,4 +64,12 @@ export function BreadcrumbIcon({ segment, size = 16 }: Props) {
     default:
       return <NoteIcon16 />
   }
+}
+
+function NoteBreadcrumbIcon({ noteId }: { noteId: string }) {
+  const notes = useAtomValue(notesAtom)
+  const note = notes.get(noteId)
+  if (note) return <NoteFavicon note={note} />
+  // Fallback when the note hasn't loaded yet (e.g., fresh app start, persisted tab).
+  return <NoteIcon16 />
 }
