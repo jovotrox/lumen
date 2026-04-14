@@ -44,11 +44,66 @@ describe("calendar-cache: clearCalendarCache", () => {
   })
 })
 
-describe("calendar-cache: evictOutsideRange (stub)", () => {
-  test("evictOutsideRange resolves without error", async () => {
-    await expect(
-      evictOutsideRange(new Set(["https://a.com/feed.ics"]), "2026-04-01", "2026-04-30"),
-    ).resolves.toBeUndefined()
+describe("calendar-cache: evictOutsideRange", () => {
+  test("removes entries from feeds no longer in validFeedUrls", async () => {
+    await setCachedEntry("https://kept.com/feed.ics", "2026-04-13", {
+      events: [],
+      fetchedAt: 0,
+    })
+    await setCachedEntry("https://removed.com/feed.ics", "2026-04-13", {
+      events: [],
+      fetchedAt: 0,
+    })
+
+    await evictOutsideRange(new Set(["https://kept.com/feed.ics"]), "2026-04-10", "2026-04-16")
+
+    expect(await getCachedEntry("https://kept.com/feed.ics", "2026-04-13")).toBeDefined()
+    expect(await getCachedEntry("https://removed.com/feed.ics", "2026-04-13")).toBeUndefined()
+  })
+
+  test("removes entries with dates outside [minDate, maxDate]", async () => {
+    const url = "https://feed.com/x.ics"
+    await setCachedEntry(url, "2026-04-09", { events: [], fetchedAt: 0 }) // before minDate
+    await setCachedEntry(url, "2026-04-10", { events: [], fetchedAt: 0 }) // boundary in
+    await setCachedEntry(url, "2026-04-13", { events: [], fetchedAt: 0 }) // in range
+    await setCachedEntry(url, "2026-04-16", { events: [], fetchedAt: 0 }) // boundary in
+    await setCachedEntry(url, "2026-04-17", { events: [], fetchedAt: 0 }) // after maxDate
+
+    await evictOutsideRange(new Set([url]), "2026-04-10", "2026-04-16")
+
+    expect(await getCachedEntry(url, "2026-04-09")).toBeUndefined()
+    expect(await getCachedEntry(url, "2026-04-10")).toBeDefined()
+    expect(await getCachedEntry(url, "2026-04-13")).toBeDefined()
+    expect(await getCachedEntry(url, "2026-04-16")).toBeDefined()
+    expect(await getCachedEntry(url, "2026-04-17")).toBeUndefined()
+  })
+
+  test("removes entries with mismatched CACHE_VERSION", async () => {
+    const url = "https://feed.com/x.ics"
+    // Inject an old-version key directly into the mock store
+    memStore.set(`v0::${url}::2026-04-13`, { events: [], fetchedAt: 0 })
+    await setCachedEntry(url, "2026-04-13", { events: [], fetchedAt: 0 })
+
+    await evictOutsideRange(new Set([url]), "2026-04-10", "2026-04-16")
+
+    // Old version should be gone
+    expect(memStore.has(`v0::${url}::2026-04-13`)).toBe(false)
+    // Current version should remain
+    expect(await getCachedEntry(url, "2026-04-13")).toBeDefined()
+  })
+
+  test("does not touch unrelated valid keys", async () => {
+    await setCachedEntry("https://a.com/x.ics", "2026-04-13", { events: [], fetchedAt: 0 })
+    await setCachedEntry("https://b.com/x.ics", "2026-04-14", { events: [], fetchedAt: 0 })
+
+    await evictOutsideRange(
+      new Set(["https://a.com/x.ics", "https://b.com/x.ics"]),
+      "2026-04-10",
+      "2026-04-16",
+    )
+
+    expect(await getCachedEntry("https://a.com/x.ics", "2026-04-13")).toBeDefined()
+    expect(await getCachedEntry("https://b.com/x.ics", "2026-04-14")).toBeDefined()
   })
 })
 

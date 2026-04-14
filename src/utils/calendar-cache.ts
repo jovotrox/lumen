@@ -42,8 +42,13 @@ export async function evictOutsideRange(
   minDate: string,
   maxDate: string,
 ): Promise<void> {
-  // Stub for Task 2 — exists so the test file compiles.
-  void validFeedUrls
-  void minDate
-  void maxDate
+  const allKeys = (await keys(store)) as string[]
+  const toDelete = allKeys.filter((key) => {
+    const [version, feedUrl, date] = key.split("::")
+    if (version !== CACHE_VERSION) return true // old shape
+    if (!validFeedUrls.has(feedUrl)) return true // feed was removed
+    if (date < minDate || date > maxDate) return true // outside window
+    return false
+  })
+  await Promise.all(toDelete.map((k) => del(k, store)))
 }
