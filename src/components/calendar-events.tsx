@@ -118,7 +118,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
 
   return (
     <motion.div layout className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
-      <AnimatePresence mode="popLayout" initial={false}>
+      <AnimatePresence mode="popLayout">
         {events.map((event) => {
           const noteId = getEventNoteId(event)
           const hasNote = notes.has(noteId)
