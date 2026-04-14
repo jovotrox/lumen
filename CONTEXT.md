@@ -258,6 +258,32 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 
 **Requisito previo para todas:** code signing (si no, TCC puede seguir comportándose raro aunque bundleID esté ok).
 
+### Electron 37 + Squircle corners (prioridad: baja)
+
+Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convierte `border-radius` estándar en squircles (esquinas suavizadas estilo Apple). Electron 37 lo estabiliza.
+
+**Upgrade path:**
+
+1. Actualizar Electron de 35 → 37 (`package.json`, verificar compat con electron-builder)
+2. Agregar CSS global:
+   ```css
+   *,
+   *::before,
+   *::after {
+     -electron-corner-smoothing: system-ui; /* 60% en macOS, 0% en otros */
+   }
+   ```
+3. Verificar visualmente: cards, inputs, buttons, modals, dropdowns, tooltips
+4. El radius de la ventana principal NO se puede personalizar (limitacion del OS) — el squircle aplica solo a elementos internos
+
+**Refs:**
+
+- Docs: https://www.electronjs.org/docs/latest/api/corner-smoothing-css
+- Release notes: https://www.electronjs.org/blog/electron-37-0
+- RFC: https://github.com/electron/rfcs/blob/main/text/0012-corner-smoothing.md
+
+**Nota:** CSS `corner-shape: squircle` (estandar web, Chrome 138+) eventualmente reemplazara esta propiedad. Cuando Chromium lo soporte nativamente, el prefijo `-electron-` dejara de ser necesario.
+
 ### Otras ideas futuras
 
 - Code signing + notarizacion para macOS (requiere Apple Developer Program)
