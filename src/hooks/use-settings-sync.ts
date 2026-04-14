@@ -1,5 +1,6 @@
 import { useEffect } from "react"
-import { gitAdd, gitCommit } from "../utils/git"
+import { getDefaultStore } from "jotai"
+import { globalStateMachineAtom } from "../global-state"
 import {
   applySettingsToLocalStorage,
   collectSettingsFromLocalStorage,
@@ -7,7 +8,6 @@ import {
   SETTINGS_FILE_REL_PATH,
   settingsKeyMap,
   SyncedSettings,
-  writeSettingsToRepo,
 } from "../utils/settings-sync"
 
 /**
@@ -33,9 +33,10 @@ function applyWouldChangeLocalStorage(repoSettings: SyncedSettings): boolean {
  *
  * Runs when `isRepoCloned` becomes true:
  * - If `.lumen/settings.json` exists in repo, apply to localStorage (repo wins)
- * - Otherwise, create `.lumen/settings.json` from localStorage
+ * - Otherwise, create `.lumen/settings.json` from localStorage via WRITE_FILES
  *
- * Call this once in the app root component.
+ * All git operations (add/commit) go through the state machine's WRITE_FILES
+ * event to avoid racing with pull/push. Never call gitAdd/gitCommit directly.
  */
 export function useSettingsSync(isRepoCloned: boolean) {
   useEffect(() => {
@@ -49,20 +50,21 @@ export function useSettingsSync(isRepoCloned: boolean) {
 
         if (repoSettings && mounted) {
           // Repo has settings — apply to localStorage (repo is source of truth).
-          // Only reload if the apply will actually change a value; otherwise we'd
-          // loop forever on repos that have fewer keys than localStorage.
+          // Jotai's atomWithStorage picks up the new values on next render;
+          // no reload needed.
           const willChange = applyWouldChangeLocalStorage(repoSettings)
           applySettingsToLocalStorage(repoSettings)
           if (willChange) {
-            window.location.reload()
+            // Nudge Jotai atoms that use atomWithStorage — the storage event
+            // only fires for cross-tab changes, so dispatch one for same-tab.
+            window.dispatchEvent(new StorageEvent("storage"))
           }
-        } else {
-          // No settings in repo — save current localStorage settings to repo
+        } else if (mounted) {
+          // No settings in repo — save current localStorage settings via state machine
           const current = collectSettingsFromLocalStorage()
           if (Object.keys(current).length > 0) {
-            await writeSettingsToRepo(current)
-            await gitAdd([SETTINGS_FILE_REL_PATH])
-            await gitCommit("Initialize settings from localStorage")
+            const content = JSON.stringify(current, null, 2)
+            sendWriteFiles({ [SETTINGS_FILE_REL_PATH]: content }, "Initialize settings")
           }
         }
       } catch (error) {
@@ -78,49 +80,43 @@ export function useSettingsSync(isRepoCloned: boolean) {
   }, [isRepoCloned])
 }
 
-async function saveSettingsToRepoNow(): Promise<void> {
-  try {
-    const settings = collectSettingsFromLocalStorage()
-    const existing = await readSettingsFromRepo()
-    if (existing && JSON.stringify(existing) === JSON.stringify(settings)) {
-      return // Nothing changed
-    }
-    await writeSettingsToRepo(settings)
-    await gitAdd([SETTINGS_FILE_REL_PATH])
-    await gitCommit("Update settings")
-  } catch (error) {
-    console.error("Failed to save settings to repo:", error)
-  }
+/**
+ * Send a WRITE_FILES event to the state machine via the Jotai store.
+ * This serializes git operations (add/commit) with pull/push.
+ */
+function sendWriteFiles(files: Record<string, string | null>, commitMessage?: string): void {
+  const store = getDefaultStore()
+  store.set(globalStateMachineAtom, {
+    type: "WRITE_FILES",
+    markdownFiles: files,
+    commitMessage,
+  })
 }
 
-// Trailing-edge debounce (500ms) so rapid successive changes — e.g. drag-
-// reordering pinned notes a few times in a row — collapse into one git
-// commit instead of racing with isomorphic-git's file lock. `flush` forces
-// an immediate save when the caller needs it (settings page unmount).
-let saveTimeout: ReturnType<typeof setTimeout> | null = null
-let inFlight: Promise<void> | null = null
-
 /**
- * Save current settings to the repo. Debounced by 500ms. Safe to call rapidly.
+ * Save current settings to the repo via the state machine. Debounced 500ms.
  */
 export function saveSettingsToRepo(): void {
   if (saveTimeout) clearTimeout(saveTimeout)
   saveTimeout = setTimeout(() => {
     saveTimeout = null
-    // Chain onto any in-flight save so we never have two concurrent git writes.
-    inFlight = (inFlight ?? Promise.resolve()).then(saveSettingsToRepoNow)
+    const settings = collectSettingsFromLocalStorage()
+    const content = JSON.stringify(settings, null, 2)
+    sendWriteFiles({ [SETTINGS_FILE_REL_PATH]: content }, "Update settings")
   }, 500)
 }
 
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
+
 /**
- * Force an immediate save, awaiting any pending debounce + in-flight write.
- * Use before unmount / navigation when the caller needs persistence completed.
+ * Force an immediate save. Use before unmount / navigation.
  */
 export async function flushSettingsToRepo(): Promise<void> {
   if (saveTimeout) {
     clearTimeout(saveTimeout)
     saveTimeout = null
   }
-  inFlight = (inFlight ?? Promise.resolve()).then(saveSettingsToRepoNow)
-  await inFlight
+  const settings = collectSettingsFromLocalStorage()
+  const content = JSON.stringify(settings, null, 2)
+  sendWriteFiles({ [SETTINGS_FILE_REL_PATH]: content }, "Update settings")
 }
