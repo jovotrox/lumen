@@ -1,4 +1,4 @@
-import { createStore, del, get, keys, set } from "idb-keyval"
+import { clear, createStore, del, get, keys, set } from "idb-keyval"
 import type { CalendarEvent } from "./calendar"
 
 const CACHE_VERSION = "v1"
@@ -33,8 +33,7 @@ export async function setCachedEntry(
 }
 
 export async function clearCalendarCache(): Promise<void> {
-  const allKeys = await keys(store)
-  await Promise.all(allKeys.map((k) => del(k, store)))
+  return clear(store)
 }
 
 export async function evictOutsideRange(
@@ -44,7 +43,12 @@ export async function evictOutsideRange(
 ): Promise<void> {
   const allKeys = (await keys(store)) as string[]
   const toDelete = allKeys.filter((key) => {
-    const [version, feedUrl, date] = key.split("::")
+    const firstSep = key.indexOf("::")
+    const lastSep = key.lastIndexOf("::")
+    if (firstSep === -1 || firstSep === lastSep) return true // malformed key
+    const version = key.slice(0, firstSep)
+    const feedUrl = key.slice(firstSep + 2, lastSep)
+    const date = key.slice(lastSep + 2)
     if (version !== CACHE_VERSION) return true // old shape
     if (!validFeedUrls.has(feedUrl)) return true // feed was removed
     if (date < minDate || date > maxDate) return true // outside window
