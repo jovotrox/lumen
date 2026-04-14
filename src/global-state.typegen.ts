@@ -19,6 +19,7 @@
 "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]": { type: "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]"; data: unknown };
 "error.platform.global.signedIn.cloningRepo:invocation[0]": { type: "error.platform.global.signedIn.cloningRepo:invocation[0]"; data: unknown };
 "xstate.after(1000)#global.signedIn.cloned.sync.debouncing": { type: "xstate.after(1000)#global.signedIn.cloned.sync.debouncing" };
+"xstate.after(SYNC_RETRY_DELAY)#global.signedIn.cloned.sync.retrying": { type: "xstate.after(SYNC_RETRY_DELAY)#global.signedIn.cloned.sync.retrying" };
 "xstate.init": { type: "xstate.init" };
 "xstate.stop": { type: "xstate.stop" };
         };
@@ -51,7 +52,10 @@
 "logUser": "done.invoke.global.signedIn.cloningRepo:invocation[0]" | "done.invoke.global.signedIn.resolvingRepo:invocation[0]";
 "mergeMarkdownFiles": "WRITE_FILES";
 "mergeMarkdownFilesLocalStorage": "WRITE_FILES";
-"setError": "error.platform.global.signedIn.cloned.change.deletingFile:invocation[0]" | "error.platform.global.signedIn.cloned.change.writingFiles:invocation[0]" | "error.platform.global.signedIn.cloningRepo:invocation[0]";
+"clearError": "SYNC" | "done.invoke.global.signedIn.cloned.sync.pulling:invocation[0]" | "done.invoke.global.signedIn.cloningRepo:invocation[0]" | "done.invoke.global.signedIn.resolvingRepo:invocation[0]";
+"incrementSyncRetryCount": "error.platform.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]" | "error.platform.global.signedIn.cloned.sync.checkingStatus:invocation[0]";
+"resetSyncRetryCount": "SYNC" | "done.invoke.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]" | "error.platform.global.signedIn.cloned.sync.checkingStatus:invocation[0]";
+"setError": "error.platform.global.signedIn.cloned.change.deletingFile:invocation[0]" | "error.platform.global.signedIn.cloned.change.writingFiles:invocation[0]" | "error.platform.global.signedIn.cloningRepo:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]" | "error.platform.global.signedIn.cloned.sync.checkingStatus:invocation[0]";
 "setGitHubRepo": "SELECT_REPO" | "done.invoke.global.signedIn.resolvingRepo:invocation[0]";
 "setGitHubUser": "SIGN_IN" | "done.invoke.global.resolvingUser:invocation[0]";
 "setGitHubUserLocalStorage": "SIGN_IN" | "done.invoke.global.resolvingUser:invocation[0]";
@@ -60,24 +64,26 @@
 "setSampleMarkdownFiles": "SIGN_OUT" | "error.platform.global.resolvingUser:invocation[0]";
         };
         eventsCausingDelays: {
-          
+          "SYNC_RETRY_DELAY": "error.platform.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]" | "error.platform.global.signedIn.cloned.sync.checkingStatus:invocation[0]";
         };
         eventsCausingGuards: {
-          "isOffline": "";
+          "canRetrySync": "error.platform.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]" | "error.platform.global.signedIn.cloned.sync.checkingStatus:invocation[0]";
+"hasGitHubRepo": "error.platform.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]" | "error.platform.global.signedIn.cloned.sync.checkingStatus:invocation[0]";
+"isOffline": "";
 "isSynced": "done.invoke.global.signedIn.cloned.sync.checkingStatus:invocation[0]";
         };
         eventsCausingServices: {
           "checkStatus": "done.invoke.global.signedIn.cloned.sync.pushing:invocation[0]";
 "cloneRepo": "SELECT_REPO";
 "deleteFile": "DELETE_FILE";
-"pull": "SYNC" | "done.invoke.global.signedIn.cloned.sync.checkingStatus:invocation[0]" | "done.invoke.global.signedIn.cloningRepo:invocation[0]" | "done.invoke.global.signedIn.resolvingRepo:invocation[0]" | "xstate.after(1000)#global.signedIn.cloned.sync.debouncing";
+"pull": "SYNC" | "SYNC_DEBOUNCED" | "done.invoke.global.signedIn.cloned.sync.checkingStatus:invocation[0]" | "done.invoke.global.signedIn.cloningRepo:invocation[0]" | "done.invoke.global.signedIn.resolvingRepo:invocation[0]" | "xstate.after(1000)#global.signedIn.cloned.sync.debouncing" | "xstate.after(SYNC_RETRY_DELAY)#global.signedIn.cloned.sync.retrying";
 "push": "done.invoke.global.signedIn.cloned.sync.pulling:invocation[0]";
 "resolveRepo": "SIGN_IN" | "done.invoke.global.resolvingUser:invocation[0]";
 "resolveUser": "xstate.init";
 "writeFiles": "WRITE_FILES";
         };
-        matchesStates: "resolvingUser" | "signedIn" | "signedIn.cloned" | "signedIn.cloned.change" | "signedIn.cloned.change.deletingFile" | "signedIn.cloned.change.idle" | "signedIn.cloned.change.writingFiles" | "signedIn.cloned.sync" | "signedIn.cloned.sync.checkingStatus" | "signedIn.cloned.sync.debouncing" | "signedIn.cloned.sync.error" | "signedIn.cloned.sync.pulling" | "signedIn.cloned.sync.pushing" | "signedIn.cloned.sync.success" | "signedIn.cloningRepo" | "signedIn.notCloned" | "signedIn.resolvingRepo" | "signedOut" | { "signedIn"?: "cloned" | "cloningRepo" | "notCloned" | "resolvingRepo" | { "cloned"?: "change" | "sync" | { "change"?: "deletingFile" | "idle" | "writingFiles";
-"sync"?: "checkingStatus" | "debouncing" | "error" | "pulling" | "pushing" | "success"; }; }; };
+        matchesStates: "resolvingUser" | "signedIn" | "signedIn.cloned" | "signedIn.cloned.change" | "signedIn.cloned.change.deletingFile" | "signedIn.cloned.change.idle" | "signedIn.cloned.change.writingFiles" | "signedIn.cloned.sync" | "signedIn.cloned.sync.checkingStatus" | "signedIn.cloned.sync.debouncing" | "signedIn.cloned.sync.error" | "signedIn.cloned.sync.pulling" | "signedIn.cloned.sync.pushing" | "signedIn.cloned.sync.retrying" | "signedIn.cloned.sync.success" | "signedIn.cloningRepo" | "signedIn.notCloned" | "signedIn.resolvingRepo" | "signedOut" | { "signedIn"?: "cloned" | "cloningRepo" | "notCloned" | "resolvingRepo" | { "cloned"?: "change" | "sync" | { "change"?: "deletingFile" | "idle" | "writingFiles";
+"sync"?: "checkingStatus" | "debouncing" | "error" | "pulling" | "pushing" | "retrying" | "success"; }; }; };
         tags: never;
       }
   
