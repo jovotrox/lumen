@@ -11,17 +11,8 @@ import { formatNumber, pluralize } from "../utils/pluralize"
 import { scheduleTask } from "../utils/task"
 import { Button } from "./button"
 import { DropdownMenu } from "./dropdown-menu"
-import { IconButton } from "./icon-button"
-import {
-  GlobeIcon16,
-  GridIcon16,
-  ListIcon16,
-  PinFillIcon12,
-  TagFillIcon12,
-  TagIcon12,
-  TagIcon16,
-  XIcon12,
-} from "./icons"
+import { ChevronDown, Grid3x3, List } from "lucide-react"
+import { GlobeIcon16, PinFillIcon12, TagFillIcon12, TagIcon12, TagIcon16, XIcon12 } from "./icons"
 import { LinkHighlightProvider } from "./link-highlight-provider"
 import { NoteFavicon } from "./note-favicon"
 import { NotePreviewCard } from "./note-preview-card"
@@ -30,11 +21,6 @@ import { SearchInput } from "./search-input"
 import { TaskListItemWrapper } from "./task-list-item-wrapper"
 
 type View = "grid" | "list"
-
-const viewIcons: Record<View, React.ReactNode> = {
-  grid: <GridIcon16 />,
-  list: <ListIcon16 />,
-}
 
 type TasksViewProps = {
   query: string
@@ -192,37 +178,6 @@ export function TasksView({ query, view, onQueryChange, onViewChange }: TasksVie
                 setNumVisibleNotes(initialVisibleNotes)
               }}
             />
-            <DropdownMenu>
-              <DropdownMenu.Trigger
-                render={
-                  <IconButton
-                    aria-label="View"
-                    className="h-10 w-10 shrink-0 rounded-lg bg-bg-secondary hover:bg-bg-secondary-hover! data-[popup-open]:bg-bg-secondary-hover! active:bg-bg-secondary-active! epaper:ring-1 epaper:ring-inset epaper:ring-border epaper:focus-visible:ring-2 coarse:h-12 coarse:w-12"
-                  >
-                    {viewIcons[view]}
-                  </IconButton>
-                }
-              />
-              <DropdownMenu.Content align="end" width={160}>
-                <DropdownMenu.Group>
-                  <DropdownMenu.GroupLabel>Notes view</DropdownMenu.GroupLabel>
-                  <DropdownMenu.Item
-                    icon={<GridIcon16 />}
-                    onClick={() => onViewChange("grid")}
-                    selected={view === "grid"}
-                  >
-                    Grid
-                  </DropdownMenu.Item>
-                  <DropdownMenu.Item
-                    icon={<ListIcon16 />}
-                    onClick={() => onViewChange("list")}
-                    selected={view === "list"}
-                  >
-                    List
-                  </DropdownMenu.Item>
-                </DropdownMenu.Group>
-              </DropdownMenu.Content>
-            </DropdownMenu>
           </div>
           {sortedTagFrequencies.length > 0 || tagFilters.length > 0 || deferredQuery ? (
             <div className="flex flex-col gap-3">
@@ -363,58 +318,126 @@ export function TasksView({ query, view, onQueryChange, onViewChange }: TasksVie
           ) : null}
         </div>
 
-        {/* Notes section */}
+        {/* Notes section — collapsible */}
         {notesWithTasks.length > 0 ? (
-          <div className="flex flex-col gap-3">
-            <h2 className="text-sm font-medium text-text-secondary">
-              Notes ({formatNumber(notesWithTasks.length)})
-            </h2>
-            {view === "grid" ? (
-              <div className="grid grid-cols-[repeat(auto-fill,minmax(300px,1fr))] gap-4">
-                {notesWithTasks.slice(0, numVisibleNotes).map((note) => (
-                  <NotePreviewCard key={note.id} id={note.id} />
-                ))}
-              </div>
-            ) : null}
-            {view === "list" ? (
-              <ul className="flex flex-col gap-0.5">
-                {notesWithTasks.slice(0, numVisibleNotes).map((note) => {
-                  return (
-                    <li key={note.id}>
-                      <Link
-                        to="/notes/$"
-                        params={{ _splat: note.id }}
-                        search={{
-                          mode: "read",
-                          query: undefined,
-                          view: "grid",
-                        }}
-                        className="focus-ring flex h-10 items-center rounded-lg px-3 hover:bg-bg-hover coarse:h-12 coarse:p-4"
-                      >
-                        <NoteFavicon note={note} className="mr-3 coarse:mr-4" />
-                        {note.pinned ? (
-                          <PinFillIcon12 className="mr-2 coarse:mr-3 shrink-0 text-text-pinned" />
-                        ) : null}
-                        {note?.frontmatter?.gist_id ? (
-                          <GlobeIcon16 className="mr-2 coarse:mr-3 shrink-0 text-border-focus" />
-                        ) : null}
-                        <span className="truncate text-text-secondary">
-                          <span className="text-text">{note.displayName}</span>
-                        </span>
-                      </Link>
-                    </li>
-                  )
-                })}
-              </ul>
-            ) : null}
-            {notesWithTasks.length > numVisibleNotes ? (
-              <Button ref={notesBottomRef} className="w-full" onClick={loadMoreNotes}>
-                Load more notes
-              </Button>
-            ) : null}
-          </div>
+          <CollapsibleNotesSection
+            notes={notesWithTasks}
+            view={view}
+            onViewChange={onViewChange}
+            numVisible={numVisibleNotes}
+            total={notesWithTasks.length}
+            loadMoreRef={notesBottomRef}
+            onLoadMore={loadMoreNotes}
+          />
         ) : null}
       </div>
     </LinkHighlightProvider>
+  )
+}
+
+function CollapsibleNotesSection({
+  notes,
+  view,
+  onViewChange,
+  numVisible,
+  total,
+  loadMoreRef,
+  onLoadMore,
+}: {
+  notes: Note[]
+  view: View
+  onViewChange: (v: View) => void
+  numVisible: number
+  total: number
+  loadMoreRef: React.Ref<HTMLButtonElement>
+  onLoadMore: () => void
+}) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  return (
+    <div className="flex flex-col">
+      {/* Header: collapsible title + view toggle */}
+      <div className="flex h-8 items-center justify-between">
+        <button
+          className="flex items-center gap-1.5 text-sm font-medium text-text-secondary hover:text-text"
+          onClick={() => setCollapsed((c) => !c)}
+        >
+          <ChevronDown
+            size={14}
+            className={`transition-transform ${collapsed ? "-rotate-90" : ""}`}
+          />
+          Notes ({formatNumber(total)})
+        </button>
+        {!collapsed ? (
+          <DropdownMenu>
+            <DropdownMenu.Trigger
+              render={
+                <button className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-text-tertiary transition-colors hover:bg-bg-hover hover:text-text-secondary">
+                  {view === "grid" ? <Grid3x3 size={12} /> : <List size={12} />}
+                  {view === "grid" ? "Grid" : "List"}
+                </button>
+              }
+            />
+            <DropdownMenu.Content align="end" width={120}>
+              <DropdownMenu.Item
+                icon={<Grid3x3 size={16} />}
+                selected={view === "grid"}
+                onClick={() => onViewChange("grid")}
+              >
+                Grid
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                icon={<List size={16} />}
+                selected={view === "list"}
+                onClick={() => onViewChange("list")}
+              >
+                List
+              </DropdownMenu.Item>
+            </DropdownMenu.Content>
+          </DropdownMenu>
+        ) : null}
+      </div>
+      {/* Content */}
+      {!collapsed ? (
+        <div className="flex flex-col gap-3 pt-3">
+          {view === "grid" ? (
+            <div className="grid grid-cols-[repeat(auto-fill,minmax(200px,1fr))] gap-4">
+              {notes.slice(0, numVisible).map((note) => (
+                <NotePreviewCard key={note.id} id={note.id} />
+              ))}
+            </div>
+          ) : (
+            <ul className="flex flex-col gap-0.5">
+              {notes.slice(0, numVisible).map((note) => (
+                <li key={note.id}>
+                  <Link
+                    to="/notes/$"
+                    params={{ _splat: note.id }}
+                    search={{ mode: "read", query: undefined, view: "grid" }}
+                    className="focus-ring flex h-10 items-center rounded-lg px-3 hover:bg-bg-hover coarse:h-12 coarse:p-4"
+                  >
+                    <NoteFavicon note={note} className="mr-3 coarse:mr-4" />
+                    {note.pinned ? (
+                      <PinFillIcon12 className="mr-2 coarse:mr-3 shrink-0 text-text-pinned" />
+                    ) : null}
+                    {note?.frontmatter?.gist_id ? (
+                      <GlobeIcon16 className="mr-2 coarse:mr-3 shrink-0 text-border-focus" />
+                    ) : null}
+                    <span className="truncate text-text-secondary">
+                      <span className="text-text">{note.displayName}</span>
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {total > numVisible ? (
+            <Button ref={loadMoreRef} className="w-full" onClick={onLoadMore}>
+              Load more notes
+            </Button>
+          ) : null}
+        </div>
+      ) : null}
+    </div>
   )
 }

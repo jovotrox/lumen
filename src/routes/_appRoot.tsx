@@ -20,7 +20,9 @@ import {
   defaultFontAtom,
   epaperAtom,
   globalStateMachineAtom,
+  isRepoClonedAtom,
   notesAtom,
+  openTabsAtom,
   nudgeNotificationsAtom,
   nudgesAtom,
   tagsAtom,
@@ -57,9 +59,11 @@ function RouteComponent() {
   // Open external links in system browser when running in Tauri
   useExternalLinks()
 
+  const isRepoCloned = useAtomValue(isRepoClonedAtom)
+
   // Sync custom themes and settings between localStorage and GitHub repo
   useThemeSync()
-  useSettingsSync()
+  useSettingsSync(isRepoCloned)
 
   const error = useAtomValue(errorAtom)
   const send = useSetAtom(globalStateMachineAtom)
@@ -76,7 +80,8 @@ function RouteComponent() {
 
   // Single useTabs() for the whole component — avoids multiple hook instances
   // each creating their own atom subscriptions.
-  const { openTab, updateActiveTab } = useTabs()
+  const { openTab, updateActiveTab, closeTab, activeTabIndex } = useTabs()
+  const tabs = useAtomValue(openTabsAtom)
 
   // Cmd+T — create a new note in a NEW tab (desktop-style shortcut).
   // We call openTab + navigate so the new note always gets its own tab
@@ -99,6 +104,44 @@ function RouteComponent() {
       enableOnFormTags: true,
       enableOnContentEditable: true,
     },
+  )
+
+  // Cmd+W — close active tab. Only close the window when no tabs are open.
+  useHotkeys(
+    "mod+w",
+    (e) => {
+      if (tabs.length > 1 && activeTabIndex >= 0) {
+        e.preventDefault()
+        closeTab(activeTabIndex)
+      }
+      // When only 1 tab left, let Electron handle it (close/hide window)
+    },
+    {
+      enableOnFormTags: true,
+      enableOnContentEditable: true,
+    },
+  )
+
+  // Ctrl+Tab / Ctrl+Shift+Tab — cycle between tabs
+  useHotkeys(
+    "ctrl+tab",
+    (e) => {
+      if (tabs.length < 2) return
+      e.preventDefault()
+      const next = (activeTabIndex + 1) % tabs.length
+      router.navigate({ to: tabs[next].path })
+    },
+    { enableOnFormTags: true, enableOnContentEditable: true },
+  )
+  useHotkeys(
+    "ctrl+shift+tab",
+    (e) => {
+      if (tabs.length < 2) return
+      e.preventDefault()
+      const prev = (activeTabIndex - 1 + tabs.length) % tabs.length
+      router.navigate({ to: tabs[prev].path })
+    },
+    { enableOnFormTags: true, enableOnContentEditable: true },
   )
 
   // Cmd+, to open Settings (native macOS convention)

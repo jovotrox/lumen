@@ -270,6 +270,58 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 
 ## Historial de Cambios Importantes
 
+### Native Polish — 2026-04-14
+
+- **feat: Notion-style sidebar with dedicated background color**
+  - New `bgSidebar` theme token in `ThemeColors` with values for all 6 built-in themes
+  - Sidebar extends full height (top to bottom), no longer nested under titlebar
+  - `--color-bg-sidebar` CSS variable + `bg-bg-sidebar` Tailwind utility
+  - Traffic light padding (macOS) handled by sidebar, not titlebar
+  - "New note" button with label in sidebar top area (desktop)
+  - Titlebar and sidebar share the same background color for visual consistency
+- **feat: Notion-style tabs with always-at-least-1-tab model**
+  - Tabs are always visible — app bootstraps first tab from current route
+  - Tabs are independent (Notion-style): duplicate paths allowed, no deduplication
+  - `+` button opens Command Menu → selection creates new tab
+  - `Cmd+W` closes active tab; last tab closes window
+  - `Ctrl+Tab` / `Ctrl+Shift+Tab` cycles between tabs
+  - `closeTab` by index (not path) to support duplicate tabs
+  - Tab emoji detection: leading emoji in title replaces default icon
+  - Consistent icons between tabs and page headers (custom SVG icons)
+- **feat: Dashboard home polish**
+  - Card titles outside cards (Notion-style, Settings pattern)
+  - Recently visited: horizontal carousel with NotePreview cards (sm: 200px)
+  - Projects: horizontal carousel with ProjectCard (md: 280px), StatusBadge, progress bar, deadline
+  - Carousel grid system documented: sm (200px) / md (280px) / lg (360px)
+  - `RecentCarousel` component with scroll-aware gradient fades
+  - More spacing between sections (gap-10)
+- **feat: Projects & People grid views with size options**
+  - `ViewMode` type: `"sm" | "md" | "lg" | "list"` replaces `"grid" | "list"`
+  - Dropdown with Grid group (Small/Medium/Large) + List option
+  - `ProjectGridCard` with NotePreview + status badge + progress + deadline
+  - `PersonGridCard` with NotePreview + stacked role/team metadata
+  - `StatusBadge` pill component with semantic colors (active/paused/completed/cancelled)
+  - Priority icon colored by actual priority level
+- **feat: Tasks & Links collapsible notes section**
+  - Notes section header with chevron toggle (collapsible)
+  - View toggle (Grid/List) moved from search bar to notes section header
+  - Grid uses sm (200px) card size consistent with dashboard
+  - No pixel shift on collapse (fixed-height header + pt-3 content spacing)
+- **fix: Mobile nav bar floating on empty pages**
+  - Added `h-full` to PageLayout so it fills the grid cell
+- **fix: Settings sync race condition**
+  - `useSettingsSync` now receives `isRepoCloned` and only runs after repo is cloned
+  - Previously ran on mount before clone completed, failing silently
+- **fix: Breadcrumb trail for pinned notes**
+  - New Rule 3 in `applyTrailRules`: notes/tags accessed from non-notes root routes reset trail
+  - Emoji stripped from breadcrumb segment titles (was duplicating icon + text)
+- **chore: Increased page padding on desktop**
+  - `sm:px-8` horizontal padding on all list views
+  - `sm:pt-2` vertical spacing below page header
+- **chore: Command Menu blur + new tab flow**
+  - `backdrop-blur-md` on dialog (not overlay)
+  - `handleSelect` receives explicit `path` param (no rAF race condition)
+
 ### v0.7.0 — 2026-04-13
 
 - **feat(calendar): persistent IndexedDB cache + stale-while-revalidate + prefetch + animations**

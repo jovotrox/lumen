@@ -42,7 +42,7 @@ export function PageLayout({
 
   return (
     <HoverCard.Provider>
-      <div className={cx("grid grid-rows-[auto_1fr] overflow-hidden", className)}>
+      <div className={cx("grid h-full grid-rows-[auto_1fr] overflow-hidden", className)}>
         <PageHeader
           {...props}
           actions={isRepoCloned || isSignedOut || disableGuard ? actions : undefined}

@@ -3,6 +3,7 @@ import React, { useEffect, useMemo, useState } from "react"
 import { Link, useNavigate } from "@tanstack/react-router"
 import {
   AlertTriangle,
+  Calendar,
   CalendarPlus,
   CheckSquare,
   Clock,
@@ -38,12 +39,14 @@ import {
   todayTasksAtom,
   urgentTasksAtom,
 } from "../global-state"
+import { cx } from "../utils/cx"
 import { generateAISummary } from "../utils/dashboard-ai"
 import { getGreeting } from "../utils/dashboard-templates"
 import { generateNoteId } from "../utils/note-id"
 import { dismissNudge } from "../utils/nudges"
 import { updateTaskCompletion } from "../utils/task"
 import { Checkbox } from "./checkbox"
+import { NotePreview } from "./note-preview"
 import type { Note, Task } from "../schema"
 
 export function DashboardView() {
@@ -220,7 +223,7 @@ export function DashboardView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-6 p-4">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4">
       {/* Date + weather */}
       <div className="flex items-center justify-between text-sm text-text-secondary">
         <span>
@@ -500,92 +503,198 @@ export function DashboardView() {
         </section>
       ) : null}
 
-      {/* Active projects */}
+      {/* Active projects — carousel */}
       {activeProjects.length > 0 ? (
-        <DashboardSection
-          icon={<FolderOpen size={16} />}
-          title="Projects"
-          count={activeProjects.length}
-        >
-          <ul className="flex flex-col gap-2">
-            {activeProjects.map((project) => {
-              const total = project.tasks.length
-              const completed = project.tasks.filter((t) => t.completed).length
-              const pct = total > 0 ? Math.round((completed / total) * 100) : 0
-              const owner = project.frontmatter.owner as string | undefined
-              return (
-                <li key={project.id} className="flex items-center gap-3">
-                  <Link
-                    to="/notes/$"
-                    params={{ _splat: project.id }}
-                    search={{ mode: "read", query: undefined, view: "grid" }}
-                    className="link flex-1 truncate text-sm font-medium"
-                  >
-                    {project.displayName}
-                  </Link>
-                  {total > 0 ? (
-                    <div className="flex items-center gap-2">
-                      <div className="h-1.5 w-16 rounded-full bg-bg-tertiary">
-                        <div
-                          className="h-full rounded-full bg-text-success"
-                          style={{ width: `${pct}%` }}
-                        />
-                      </div>
-                      <span className="text-xs text-text-tertiary">
-                        {completed}/{total}
-                      </span>
-                    </div>
-                  ) : null}
-                  {owner ? (
-                    <span className="text-xs text-text-tertiary">
-                      {owner.replace(/\[\[|\]\]/g, "")}
-                    </span>
-                  ) : null}
-                </li>
-              )
-            })}
-          </ul>
-        </DashboardSection>
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="flex select-none items-center gap-2 text-sm font-bold">
+              <FolderOpen size={16} />
+              Projects
+              <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-bg-tertiary px-1 text-xs font-medium text-text-secondary">
+                {activeProjects.length}
+              </span>
+            </h2>
+            <Link
+              to="/projects"
+              search={{ query: undefined, view: "list" }}
+              className="link text-sm"
+            >
+              View all →
+            </Link>
+          </div>
+          <RecentCarousel>
+            {activeProjects.map((project) => (
+              <ProjectCard key={project.id} project={project} />
+            ))}
+          </RecentCarousel>
+        </section>
       ) : null}
 
-      {/* Recent notes */}
-      <DashboardSection icon={<Clock size={16} />} title="Recent">
-        {recent.length > 0 ? (
-          <ul className="flex flex-col gap-1">
+      {/* Recently visited — horizontal carousel */}
+      {recent.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <div className="flex items-center justify-between">
+            <h2 className="flex select-none items-center gap-2 text-sm font-bold">
+              <Clock size={16} />
+              Recently visited
+            </h2>
+            <Link to="/notes" search={{ query: undefined, view: "grid" }} className="link text-sm">
+              View all →
+            </Link>
+          </div>
+          <RecentCarousel>
             {recent.map((note) => (
-              <li key={note.id} className="flex items-center justify-between gap-2">
-                <Link
-                  to="/notes/$"
-                  params={{ _splat: note.id }}
-                  search={{ mode: "read", query: undefined, view: "grid" }}
-                  className="link truncate text-sm"
-                >
-                  {note.displayName}
-                </Link>
-                {note.updatedAt ? (
-                  <span className="shrink-0 text-xs text-text-tertiary">
-                    {formatRelativeTime(note.updatedAt)}
-                  </span>
-                ) : null}
-              </li>
+              <Link
+                key={note.id}
+                to="/notes/$"
+                params={{ _splat: note.id }}
+                search={{ mode: "read", query: undefined, view: "grid" }}
+                className="card-1 block w-[200px] shrink-0 snap-start overflow-hidden rounded-lg"
+              >
+                <NotePreview note={note} hideProperties />
+              </Link>
             ))}
-          </ul>
-        ) : (
-          <p className="text-sm text-text-tertiary">No recent notes yet.</p>
-        )}
-      </DashboardSection>
+          </RecentCarousel>
+        </section>
+      ) : null}
 
-      {/* Link to all notes */}
-      <div className="pb-4 text-center">
-        <Link to="/notes" search={{ query: undefined, view: "grid" }} className="link text-sm">
-          View all notes →
-        </Link>
-      </div>
+      <div className="pb-4" />
     </div>
   )
 }
 
 // --- Helpers ---
+
+function RecentCarousel({ children }: { children: React.ReactNode }) {
+  const scrollRef = React.useRef<HTMLDivElement>(null)
+  const [canScrollLeft, setCanScrollLeft] = useState(false)
+  const [canScrollRight, setCanScrollRight] = useState(false)
+
+  const updateScrollState = React.useCallback(() => {
+    const el = scrollRef.current
+    if (!el) return
+    setCanScrollLeft(el.scrollLeft > 1)
+    setCanScrollRight(el.scrollLeft + el.clientWidth < el.scrollWidth - 1)
+  }, [])
+
+  useEffect(() => {
+    const el = scrollRef.current
+    if (!el) return
+    // Reset scroll to 0 on mount to avoid snap-induced offset
+    el.scrollLeft = 0
+    updateScrollState()
+    el.addEventListener("scroll", updateScrollState, { passive: true })
+    return () => el.removeEventListener("scroll", updateScrollState)
+  }, [updateScrollState])
+
+  return (
+    <div className="relative">
+      {canScrollLeft ? (
+        <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-[var(--color-bg)] to-transparent" />
+      ) : null}
+      {canScrollRight ? (
+        <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-[var(--color-bg)] to-transparent" />
+      ) : null}
+      <div ref={scrollRef} className="flex gap-3 overflow-x-auto py-1 scrollbar-hide snap-x">
+        {children}
+      </div>
+    </div>
+  )
+}
+
+function ProjectCard({ project }: { project: Note }) {
+  const total = project.tasks.length
+  const completed = project.tasks.filter((t) => t.completed).length
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+  const status = (project.frontmatter.status as string) ?? "active"
+  const rawDeadline = project.frontmatter.deadline
+  const deadline =
+    rawDeadline instanceof Date
+      ? rawDeadline.toISOString().slice(0, 10)
+      : typeof rawDeadline === "string"
+        ? rawDeadline
+        : undefined
+  const isOverdue =
+    deadline && new Date(deadline + "T23:59:59").getTime() < Date.now() && status === "active"
+  const hasContent = project.content.replace(/^---[\s\S]*?---\n*/, "").trim().length > 0
+
+  return (
+    <Link
+      to="/notes/$"
+      params={{ _splat: project.id }}
+      search={{ mode: "read", query: undefined, view: "grid" }}
+      className="card-1 flex w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-lg"
+    >
+      {/* Content preview or spacer */}
+      {hasContent ? (
+        <div className="grow overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_60%,transparent_100%)]">
+          <NotePreview note={project} hideProperties />
+        </div>
+      ) : (
+        <div className="p-4 pb-0" />
+      )}
+      {/* Footer */}
+      <div className="flex flex-col gap-2 px-3 pb-3">
+        {/* Progress */}
+        {total > 0 ? (
+          <div className="flex items-center gap-2">
+            <div className="h-1 flex-1 rounded-full bg-bg-tertiary">
+              <div
+                className="h-full rounded-full bg-text-success transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-[11px] text-text-tertiary">
+              {completed}/{total}
+            </span>
+          </div>
+        ) : null}
+        {/* Status + Deadline */}
+        <div className="flex items-center gap-2">
+          <StatusBadge status={status} />
+          {deadline ? (
+            <span
+              className={cx(
+                "flex items-center gap-1 text-[11px] text-text-tertiary",
+                isOverdue && "text-text-danger",
+              )}
+            >
+              <Calendar size={11} />
+              {formatShortDate(deadline)}
+              {isOverdue ? " (overdue)" : ""}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </Link>
+  )
+}
+
+function StatusBadge({ status }: { status: string }) {
+  const styles: Record<string, string> = {
+    active: "bg-text-success/15 text-text-success",
+    paused: "bg-text-pending/15 text-text-pending",
+    completed: "bg-bg-tertiary text-text-secondary",
+    cancelled: "bg-text-danger/15 text-text-danger",
+  }
+  return (
+    <span
+      className={cx(
+        "inline-flex shrink-0 items-center gap-1 rounded-full px-1.5 py-px text-[11px] font-medium capitalize",
+        styles[status] ?? "bg-bg-tertiary text-text-secondary",
+      )}
+    >
+      <span className="text-[7px]">●</span>
+      {status}
+    </span>
+  )
+}
+
+/** Format YYYY-MM-DD as "Apr 14" */
+function formatShortDate(date: string): string {
+  const d = new Date(date + "T00:00:00")
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
+}
 
 function DashboardSection({
   icon,
@@ -601,7 +710,7 @@ function DashboardSection({
   children: React.ReactNode
 }) {
   return (
-    <section className="card-1 flex flex-col gap-3 rounded-lg p-4">
+    <section className="flex flex-col gap-3">
       <h2
         className={`flex select-none items-center gap-2 text-sm font-bold ${titleClassName ?? ""}`}
       >
@@ -613,7 +722,7 @@ function DashboardSection({
           </span>
         ) : null}
       </h2>
-      {children}
+      <div className="card-1 flex flex-col gap-3 rounded-lg p-4">{children}</div>
     </section>
   )
 }
@@ -669,20 +778,6 @@ function renderPreview(text: string): string {
       .replace(/\s+\d{4}-\d{2}-\d{2}\s*$/, "")
       .trim()
   )
-}
-
-function formatRelativeTime(timestamp: number): string {
-  const now = Date.now()
-  const diff = now - timestamp
-  const minutes = Math.floor(diff / 60000)
-  if (minutes < 1) return "now"
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  const days = Math.floor(hours / 24)
-  if (days === 1) return "yesterday"
-  if (days < 7) return `${days}d ago`
-  return `${Math.floor(days / 7)}w ago`
 }
 
 // --- Weather ---

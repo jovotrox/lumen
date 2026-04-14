@@ -71,7 +71,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="Tags" icon={<TagIcon16 />}>
-      <div className="flex flex-col gap-4 px-4 pt-0 pb-[50vh]">
+      <div className="flex flex-col gap-4 px-4 pt-0 pb-[50vh] sm:px-8 sm:pt-2">
         <div className="flex flex-col gap-3">
           <div className="flex gap-2">
             <SearchInput

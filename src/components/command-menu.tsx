@@ -3,19 +3,18 @@ import { parseDate } from "chrono-node"
 import { Command } from "cmdk"
 import copy from "copy-to-clipboard"
 import { atom, useAtom, useAtomValue } from "jotai"
-import { selectAtom, useAtomCallback } from "jotai/utils"
 import { useCallback, useMemo, useRef, useState } from "react"
 import { useHotkeys } from "react-hotkeys-hook"
 import { useDebounce } from "use-debounce"
 import {
   githubRepoAtom,
-  notesAtom,
   pinnedNotesAtom,
   tagSearcherAtom,
   unprocessedInboxCountAtom,
 } from "../global-state"
 import { useNoteById, useSaveNote } from "../hooks/note"
 import { useSearchNotes } from "../hooks/search-notes"
+import { useTabs } from "../hooks/use-tabs"
 import { Note } from "../schema"
 import { formatDate, formatDateDistance, toDateString } from "../utils/date"
 import { generateNoteId } from "../utils/note-id"
@@ -39,8 +38,8 @@ import {
 import { NoteFavicon } from "./note-favicon"
 
 export const isCommandMenuOpenAtom = atom(false)
-
-const hasDailyNoteAtom = selectAtom(notesAtom, (notes) => notes.has(toDateString(new Date())))
+/** When true, the next Command Menu selection opens in a new tab instead of replacing the current one. */
+export const commandMenuNewTabAtom = atom(false)
 
 export function CommandMenu() {
   const navigate = useNavigate()
@@ -50,8 +49,9 @@ export function CommandMenu() {
   const saveNote = useSaveNote()
   const pinnedNotes = useAtomValue(pinnedNotesAtom)
   const inboxCount = useAtomValue(unprocessedInboxCountAtom)
-  const getHasDailyNote = useAtomCallback(useCallback((get) => get(hasDailyNoteAtom), []))
   const [isOpen, setIsOpen] = useAtom(isCommandMenuOpenAtom)
+  const [isNewTab, setIsNewTab] = useAtom(commandMenuNewTabAtom)
+  const { openTab } = useTabs()
 
   // Get the current note if we're on a note page.
   // This is used to show note actions in the command menu.
@@ -73,10 +73,11 @@ export function CommandMenu() {
 
   const closeMenu = useCallback(() => {
     setIsOpen(false)
+    setIsNewTab(false)
     setTimeout(() => {
       prevActiveElement.current?.focus()
     })
-  }, [setIsOpen])
+  }, [setIsOpen, setIsNewTab])
 
   const toggleMenu = useCallback(() => {
     if (isOpen) {
@@ -86,15 +87,29 @@ export function CommandMenu() {
     }
   }, [isOpen, openMenu, closeMenu])
 
+  // Capture isNewTab at selection time so the flag is read before being reset
+  const isNewTabRef = useRef(false)
+  isNewTabRef.current = isNewTab
+
+  /**
+   * Wrap a command menu item callback. When triggered from the + button
+   * (isNewTab), pass the destination `path` so a new tab is created
+   * without relying on async URL reads.
+   */
   const handleSelect = useCallback(
-    (callback: () => void) => {
+    (callback: () => void, path?: string) => {
       return () => {
+        const shouldOpenTab = isNewTabRef.current
         setIsOpen(false)
+        setIsNewTab(false)
         setQuery("")
         callback()
+        if (shouldOpenTab && path) {
+          openTab(path, path)
+        }
       }
     },
-    [setIsOpen],
+    [setIsOpen, setIsNewTab, openTab],
   )
 
   useHotkeys("mod+k", toggleMenu, {
@@ -105,15 +120,10 @@ export function CommandMenu() {
 
   const navItems = useMemo(() => {
     return [
-      {
-        label: "Home",
-        icon: <Home size={16} />,
-        onSelect: () => {
-          navigate({ to: "/" })
-        },
-      },
+      { label: "Home", path: "/", icon: <Home size={16} /> },
       {
         label: "Inbox",
+        path: "/inbox",
         icon: <Inbox size={16} />,
         badge:
           inboxCount > 0 ? (
@@ -121,76 +131,21 @@ export function CommandMenu() {
               {inboxCount}
             </span>
           ) : null,
-        onSelect: () => {
-          navigate({ to: "/inbox", search: { query: undefined } })
-        },
       },
       {
         label: "Calendar",
+        path: `/notes/${toDateString(new Date())}`,
         icon: <CalendarDateIcon16 date={new Date().getDate()} />,
-        onSelect: () => {
-          navigate({
-            to: "/notes/$",
-            params: { _splat: toDateString(new Date()) },
-            search: {
-              mode: getHasDailyNote() ? "read" : "write",
-              query: undefined,
-              view: "grid",
-            },
-          })
-        },
       },
-      {
-        label: "Notes",
-        icon: <NoteIcon16 />,
-        onSelect: () => {
-          navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
-        },
-      },
-      {
-        label: "Projects",
-        icon: <FolderOpen size={16} />,
-        onSelect: () => {
-          navigate({ to: "/projects", search: { query: undefined, view: "list" } })
-        },
-      },
-      {
-        label: "Tasks",
-        icon: <TaskListIcon16 />,
-        onSelect: () => {
-          navigate({ to: "/tasks", search: { query: undefined, view: "grid" } })
-        },
-      },
-      {
-        label: "Links",
-        icon: <LinkIcon16 />,
-        onSelect: () => {
-          navigate({ to: "/links", search: { query: undefined, view: "grid" } })
-        },
-      },
-      {
-        label: "People",
-        icon: <User size={16} />,
-        onSelect: () => {
-          navigate({ to: "/people", search: { query: undefined, view: "list" } })
-        },
-      },
-      {
-        label: "Tags",
-        icon: <TagIcon16 />,
-        onSelect: () => {
-          navigate({ to: "/tags", search: { query: undefined, sort: "name", view: "list" } })
-        },
-      },
-      {
-        label: "Settings",
-        icon: <SettingsIcon16 />,
-        onSelect: () => {
-          navigate({ to: "/settings" })
-        },
-      },
+      { label: "Notes", path: "/notes", icon: <NoteIcon16 /> },
+      { label: "Projects", path: "/projects", icon: <FolderOpen size={16} /> },
+      { label: "Tasks", path: "/tasks", icon: <TaskListIcon16 /> },
+      { label: "Links", path: "/links", icon: <LinkIcon16 /> },
+      { label: "People", path: "/people", icon: <User size={16} /> },
+      { label: "Tags", path: "/tags", icon: <TagIcon16 /> },
+      { label: "Settings", path: "/settings", icon: <SettingsIcon16 /> },
     ]
-  }, [navigate, getHasDailyNote, inboxCount])
+  }, [inboxCount])
 
   const filteredNavItems = useMemo(() => {
     return navItems.filter((item) => {
@@ -326,7 +281,7 @@ export function CommandMenu() {
                   key={item.label}
                   icon={item.icon}
                   badge={item.badge}
-                  onSelect={handleSelect(item.onSelect)}
+                  onSelect={handleSelect(() => navigate({ to: item.path }), item.path)}
                 >
                   {item.label}
                 </CommandItem>
@@ -341,18 +296,14 @@ export function CommandMenu() {
                   note={note}
                   // Since they're all pinned, we don't need to show the pin icon
                   hidePinIcon
-                  onSelect={handleSelect(() =>
-                    navigate({
-                      to: "/notes/$",
-                      params: {
-                        _splat: note.id,
-                      },
-                      search: {
-                        mode: "read",
-                        query: undefined,
-                        view: "grid",
-                      },
-                    }),
+                  onSelect={handleSelect(
+                    () =>
+                      navigate({
+                        to: "/notes/$",
+                        params: { _splat: note.id },
+                        search: { mode: "read", query: undefined, view: "grid" },
+                      }),
+                    `/notes/${note.id}`,
                   )}
                 />
               ))}
@@ -364,19 +315,15 @@ export function CommandMenu() {
                 key={dateString}
                 icon={<CalendarDateIcon16 date={new Date(dateString).getUTCDate()} />}
                 description={formatDateDistance(dateString)}
-                onSelect={handleSelect(() => {
-                  navigate({
-                    to: "/notes/$",
-                    params: {
-                      _splat: dateString,
-                    },
-                    search: {
-                      mode: "read",
-                      query: undefined,
-                      view: "grid",
-                    },
-                  })
-                })}
+                onSelect={handleSelect(
+                  () =>
+                    navigate({
+                      to: "/notes/$",
+                      params: { _splat: dateString },
+                      search: { mode: "read", query: undefined, view: "grid" },
+                    }),
+                  `/notes/${dateString}`,
+                )}
               >
                 {formatDate(dateString)}
               </CommandItem>
@@ -389,12 +336,14 @@ export function CommandMenu() {
                   key={name}
                   icon={<TagIcon16 />}
                   description={pluralize(noteIds.length, "note")}
-                  onSelect={handleSelect(() =>
-                    navigate({
-                      to: "/tags/$",
-                      params: { _splat: name },
-                      search: { query: undefined, view: "grid" },
-                    }),
+                  onSelect={handleSelect(
+                    () =>
+                      navigate({
+                        to: "/tags/$",
+                        params: { _splat: name },
+                        search: { query: undefined, view: "grid" },
+                      }),
+                    `/tags/${name}`,
                   )}
                 >
                   {name}
@@ -404,15 +353,13 @@ export function CommandMenu() {
                 <CommandItem
                   key={`Show all tags matching "${deferredQuery}"`}
                   icon={<SearchIcon16 />}
-                  onSelect={handleSelect(() =>
-                    navigate({
-                      to: "/tags",
-                      search: {
-                        query: deferredQuery,
-                        sort: "name",
-                        view: "list",
-                      },
-                    }),
+                  onSelect={handleSelect(
+                    () =>
+                      navigate({
+                        to: "/tags",
+                        search: { query: deferredQuery, sort: "name", view: "list" },
+                      }),
+                    "/tags",
                   )}
                 >
                   Show all {pluralize(tagResults.length, "tag")} matching "{deferredQuery}"
@@ -426,18 +373,14 @@ export function CommandMenu() {
                 <NoteItem
                   key={note.id}
                   note={note}
-                  onSelect={handleSelect(() =>
-                    navigate({
-                      to: "/notes/$",
-                      params: {
-                        _splat: note.id,
-                      },
-                      search: {
-                        mode: "read",
-                        query: undefined,
-                        view: "grid",
-                      },
-                    }),
+                  onSelect={handleSelect(
+                    () =>
+                      navigate({
+                        to: "/notes/$",
+                        params: { _splat: note.id },
+                        search: { mode: "read", query: undefined, view: "grid" },
+                      }),
+                    `/notes/${note.id}`,
                   )}
                 />
               ))}
@@ -445,14 +388,9 @@ export function CommandMenu() {
                 <CommandItem
                   key={`Show all notes matching "${deferredQuery}"`}
                   icon={<SearchIcon16 />}
-                  onSelect={handleSelect(() =>
-                    navigate({
-                      to: "/",
-                      search: {
-                        query: deferredQuery,
-                        view: "grid",
-                      },
-                    }),
+                  onSelect={handleSelect(
+                    () => navigate({ to: "/", search: { query: deferredQuery, view: "grid" } }),
+                    "/",
                   )}
                 >
                   Show all {pluralize(noteResults.length, "note")} matching "{deferredQuery}"
@@ -461,28 +399,20 @@ export function CommandMenu() {
               <CommandItem
                 key={`Create new note "${deferredQuery}"`}
                 icon={<PlusIcon16 />}
-                onSelect={handleSelect(() => {
-                  const note = {
-                    id: generateNoteId(),
-                    content: `# ${deferredQuery}`,
-                  }
-
-                  // Create new note
-                  saveNote(note)
-
-                  // Navigate to new note
+                onSelect={() => {
+                  const shouldOpen = isNewTabRef.current
+                  setIsOpen(false)
+                  setIsNewTab(false)
+                  setQuery("")
+                  const id = generateNoteId()
+                  saveNote({ id, content: `# ${deferredQuery}` })
                   navigate({
                     to: "/notes/$",
-                    params: {
-                      _splat: note.id,
-                    },
-                    search: {
-                      mode: "write",
-                      query: undefined,
-                      view: "grid",
-                    },
+                    params: { _splat: id },
+                    search: { mode: "write", query: undefined, view: "grid" },
                   })
-                })}
+                  if (shouldOpen) openTab(`/notes/${id}`, id)
+                }}
               >
                 Create new note "{deferredQuery}"
               </CommandItem>

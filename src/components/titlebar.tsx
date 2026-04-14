@@ -1,19 +1,6 @@
 import { useRouter } from "@tanstack/react-router"
-import { useAtom, useAtomValue } from "jotai"
-import {
-  Calendar,
-  FileText,
-  FolderOpen,
-  Home,
-  Inbox,
-  Link as LinkIcon,
-  ListChecks,
-  Plus,
-  Settings,
-  Tag,
-  User,
-  X,
-} from "lucide-react"
+import { useAtom, useAtomValue, useSetAtom } from "jotai"
+import { Calendar, FolderOpen, Home, Inbox, Plus, Settings, User, X } from "lucide-react"
 import React from "react"
 import { openTabsAtom, sidebarAtom, Tab } from "../global-state"
 import { useTabs } from "../hooks/use-tabs"
@@ -25,10 +12,15 @@ import {
   ArrowLeftIcon16,
   ArrowRightIcon16,
   CalendarDateIcon16,
+  LinkIcon16,
+  NoteIcon16,
   SidebarCollapsedIcon16,
   SidebarIcon16,
+  TagIcon16,
+  TaskListIcon16,
 } from "./icons"
-import { generateNoteId } from "../utils/note-id"
+import { commandMenuNewTabAtom, isCommandMenuOpenAtom } from "./command-menu"
+import { getLeadingEmoji, removeLeadingEmoji } from "../utils/emoji"
 
 // Lucide icons: size-3 (12px) with thinner strokes to feel subtle
 const lucide = { className: "shrink-0 opacity-60", size: 12, strokeWidth: 1.75 }
@@ -36,6 +28,12 @@ const lucide = { className: "shrink-0 opacity-60", size: 12, strokeWidth: 1.75 }
 const custom = "size-[11px] shrink-0 opacity-60"
 
 function TabIcon({ tab }: { tab: Tab }) {
+  // If the tab title starts with an emoji, show it instead of the default icon
+  const emoji = getLeadingEmoji(tab.title)
+  if (emoji) {
+    return <span className="shrink-0 text-xs leading-none">{emoji}</span>
+  }
+
   switch (tab.icon) {
     case "daily": {
       const match = tab.path.match(/\/notes\/\d{4}-\d{2}-(\d{2})/)
@@ -52,18 +50,18 @@ function TabIcon({ tab }: { tab: Tab }) {
     case "project":
       return <FolderOpen {...lucide} />
     case "tasks":
-      return <ListChecks {...lucide} />
+      return <TaskListIcon16 className={custom} />
     case "links":
-      return <LinkIcon {...lucide} />
+      return <LinkIcon16 className={custom} />
     case "people":
     case "person":
       return <User {...lucide} />
     case "tags":
-      return <Tag {...lucide} />
+      return <TagIcon16 className={custom} />
     case "settings":
       return <Settings {...lucide} />
     default:
-      return <FileText {...lucide} />
+      return <NoteIcon16 className={custom} />
   }
 }
 
@@ -72,24 +70,34 @@ export function Titlebar() {
   const [sidebar, setSidebar] = useAtom(sidebarAtom)
   const tabs = useAtomValue(openTabsAtom)
   const { activeTabIndex, closeTab } = useTabs()
+  const setCommandMenuOpen = useSetAtom(isCommandMenuOpenAtom)
+  const setCommandMenuNewTab = useSetAtom(commandMenuNewTabAtom)
   const isDesktop = isElectron() || isTauri()
 
   if (!isDesktop) return null
 
   const isMac = navigator.platform.startsWith("Mac")
+  // Traffic light spacer only when sidebar is collapsed (when expanded, sidebar handles it)
+  const needsTrafficLightSpacer = isMac && sidebar === "collapsed"
+
+  const handleCloseTab = (index: number) => {
+    if (tabs.length <= 1) {
+      // Last tab — close the window
+      window.electronAPI?.closeWindow()
+    } else {
+      closeTab(index)
+    }
+  }
 
   return (
     <div
-      className={cx(
-        "flex h-[38px] shrink-0 select-none items-center print:hidden",
-        tabs.length > 0 ? "bg-bg-secondary" : "bg-bg",
-      )}
+      className={cx("flex h-[38px] shrink-0 select-none items-center bg-bg-sidebar print:hidden")}
       style={{ WebkitAppRegion: "drag" } as React.CSSProperties}
     >
-      {isMac ? <div className="w-[76px] shrink-0" /> : null}
+      {needsTrafficLightSpacer ? <div className="w-[76px] shrink-0" /> : null}
 
       <div
-        className="flex items-center gap-0.5 px-1"
+        className="flex items-center gap-0.5 px-1 sm:px-2"
         style={{ WebkitAppRegion: "no-drag" } as React.CSSProperties}
       >
         <IconButton
@@ -125,10 +133,10 @@ export function Titlebar() {
           const isActive = i === activeTabIndex
           const isLast = i === tabs.length - 1
           return (
-            <React.Fragment key={tab.path}>
+            <React.Fragment key={`${tab.path}-${i}`}>
               <button
                 className={cx(
-                  "group relative flex h-[37px] w-[160px] shrink-0 items-center gap-1.5 pl-3 pr-2 text-xs transition-colors",
+                  "group relative flex h-[38px] w-[160px] shrink-0 items-center gap-1.5 pl-3 pr-2 text-xs transition-colors",
                   isActive ? "bg-bg text-text" : "text-text-secondary hover:text-text",
                 )}
                 onClick={() => {
@@ -137,19 +145,21 @@ export function Titlebar() {
                 onAuxClick={(e) => {
                   if (e.button === 1) {
                     e.preventDefault()
-                    closeTab(tab.path)
+                    handleCloseTab(i)
                   }
                 }}
               >
                 <TabIcon tab={tab} />
-                <span className="min-w-0 flex-1 truncate text-left">{tab.title}</span>
+                <span className="min-w-0 flex-1 truncate text-left">
+                  {getLeadingEmoji(tab.title) ? removeLeadingEmoji(tab.title) : tab.title}
+                </span>
                 {/* Close button with gradient fade — hidden until hover */}
                 <span
                   className={cx(
                     "absolute right-0 top-0 flex h-full items-center pr-2 pl-4 opacity-0 transition-opacity group-hover:opacity-100",
                     isActive
                       ? "bg-gradient-to-l from-[var(--color-bg)] from-50% to-transparent"
-                      : "bg-gradient-to-l from-[var(--color-bg-secondary)] from-50% to-transparent",
+                      : "bg-gradient-to-l from-[var(--color-bg-sidebar)] from-50% to-transparent",
                   )}
                   onMouseDown={(e) => {
                     e.preventDefault()
@@ -157,12 +167,12 @@ export function Titlebar() {
                   }}
                   onClick={(e) => {
                     e.stopPropagation()
-                    closeTab(tab.path)
+                    handleCloseTab(i)
                   }}
                   onKeyDown={(e) => {
                     if (e.key === "Enter" || e.key === " ") {
                       e.stopPropagation()
-                      closeTab(tab.path)
+                      handleCloseTab(i)
                     }
                   }}
                   role="button"
@@ -179,20 +189,17 @@ export function Titlebar() {
 
         {tabs.length > 0 ? <div className="h-4 w-px shrink-0 bg-border-secondary" /> : null}
 
-        <button
-          className="mx-0.5 flex shrink-0 items-center justify-center rounded p-1 text-text-secondary hover:bg-bg hover:text-text"
-          onClick={() => {
-            const newId = generateNoteId()
-            router.navigate({
-              to: "/notes/$",
-              params: { _splat: newId },
-              search: { mode: "write", query: undefined, view: "grid" },
-            })
-          }}
+        <IconButton
           aria-label="New tab"
+          size="small"
+          className="mx-1"
+          onClick={() => {
+            setCommandMenuNewTab(true)
+            setCommandMenuOpen(true)
+          }}
         >
-          <Plus className="size-3.5" />
-        </button>
+          <Plus size={16} />
+        </IconButton>
       </div>
 
       <div className="flex-1 self-stretch" />

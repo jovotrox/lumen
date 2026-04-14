@@ -31,6 +31,7 @@ Definida en CSS variables (`src/styles/variables.css`). El sistema usa una escal
 | -------------------------- | ----------------------------------------------------- |
 | `--color-bg`               | Fondo principal del contenido                         |
 | `--color-bg-secondary`     | Fondo de areas secundarias (titlebar con tabs, cards) |
+| `--color-bg-sidebar`       | Fondo del sidebar (ligeramente mas claro que bg)      |
 | `--color-bg-overlay`       | Overlays y dropdowns                                  |
 | `--color-text`             | Texto principal                                       |
 | `--color-text-secondary`   | Texto secundario (labels, placeholders)               |
@@ -41,6 +42,20 @@ Definida en CSS variables (`src/styles/variables.css`). El sistema usa una escal
 ### Temas
 
 6 temas built-in + custom themes: Default (Radix), GitHub (Primer), Notion, VS Code, Obsidian, Craft. Los temas sobreescriben las CSS variables.
+
+### Convencion de clases Tailwind para colores
+
+Los colores de fondo estan definidos bajo `colors.bg` en `tailwind.config.cjs`. Esto significa que la clase Tailwind incluye el prefijo `bg-bg-`:
+
+| CSS Variable           | Clase Tailwind    | **NO** usar    |
+| ---------------------- | ----------------- | -------------- |
+| `--color-bg`           | `bg-bg`           |                |
+| `--color-bg-secondary` | `bg-bg-secondary` | `bg-secondary` |
+| `--color-bg-sidebar`   | `bg-bg-sidebar`   | `bg-sidebar`   |
+| `--color-bg-card`      | `bg-bg-card`      | `bg-card`      |
+| `--color-bg-overlay`   | `bg-bg-overlay`   | `bg-overlay`   |
+
+Esto ocurre porque Tailwind combina el prefijo de utilidad (`bg-`) con el path del color (`bg.sidebar`), resultando en `bg-bg-sidebar`. El mismo patron aplica para text (`text-text-secondary`) y border (`border-border-secondary`).
 
 ---
 
@@ -69,13 +84,22 @@ Definida en CSS variables (`src/styles/variables.css`). El sistema usa una escal
 - **Min:** 800x600
 - **Default:** 1200x800
 - **Titlebar:** `hiddenInset` (macOS) — 38px height
-- **Sidebar:** 224px (`w-56`), colapsable con `Cmd+Shift+S`
+- **Sidebar:** 224px (`w-56`), colapsable con `Cmd+Shift+S`, `bg-bg-sidebar`
+
+### Sidebar (Desktop)
+
+- **Background:** `bg-bg-sidebar` — ligeramente mas claro que `bg-bg` (Notion pattern)
+- **Posicion:** Full height (de arriba a abajo de la ventana, sibling del content column)
+- **Top area (macOS):** [70px traffic light space] [New note button con label]
+- **Borde:** `border-r border-border-secondary`
+- **Contenido:** NavItems con scroll
 
 ### Titlebar (Desktop)
 
 - **Sin tabs:** `bg-bg` (integrado con contenido)
 - **Con tabs:** `bg-bg-secondary` (zona diferenciada)
-- **Estructura:** [76px traffic light space] [sidebar toggle + nav] [tabs] [+ button] [drag space]
+- **Estructura:** [sidebar toggle] [back] [forward] [tabs] [+ button] [drag space]
+- **Traffic light spacer:** Solo cuando sidebar esta collapsed (76px). Cuando expanded, el sidebar maneja el espacio.
 - **Tab ancho:** 160px fijo
 - **Tab activo:** `bg-bg`, texto `text-text`
 - **Tab inactivo:** fondo transparente, texto `text-text-secondary`
@@ -94,6 +118,34 @@ Definida en CSS variables (`src/styles/variables.css`). El sistema usa una escal
 - **Header:** 40px (`--height-app-header`)
 - **Help panel:** Resizable 25-40%, default 30%
 - **Responsive:** Help panel oculto < 1024px
+
+---
+
+## Carousel Card Grid System
+
+El dashboard usa carruseles horizontales con scroll. Los anchos de las cards siguen un sistema de 3 tamanos basado en un modulo de 200px:
+
+| Size | Ancho | Relacion | Uso                                  | Clase Tailwind |
+| ---- | ----- | -------- | ------------------------------------ | -------------- |
+| `sm` | 200px | 1x       | Items compactos: notas recientes     | `w-[200px]`    |
+| `md` | 280px | 1.4x     | Items con metadata: proyectos        | `w-[280px]`    |
+| `lg` | 360px | 1.8x     | Items detallados: reservado a futuro | `w-[360px]`    |
+
+### Reglas
+
+- **Gap entre cards:** `gap-3` (12px)
+- **Snap behavior:** `snap-x` (suave, no mandatory) + `snap-start` en cada card
+- **Scroll indicator:** Gradientes laterales (`w-6`) que aparecen/desaparecen segun posicion de scroll. El gradiente izquierdo NO aparece en estado inicial.
+- **Cards:** `card-1 rounded-lg overflow-hidden` como base. Sin hover outline (el scroll lo hace innecesario).
+- **Aspect ratio:** Las cards `sm` usan `aspect-[5/3]` via NotePreview. Las cards `md` y `lg` usan alto flexible (contenido + footer).
+- **Section header:** Titulo con icono a la izquierda, link "View all →" alineado a la derecha en la misma linea.
+- **Componente compartido:** `RecentCarousel` maneja el scroll container, gradientes, y deteccion de posicion.
+
+### Cuando usar cada tamano
+
+- **`sm`** — El item se entiende con solo titulo/preview. No necesita metadata adicional visible (ej: notas, links).
+- **`md`** — El item necesita metadata: status badge, progress bar, deadline, owner (ej: proyectos, tareas agrupadas).
+- **`lg`** — El item necesita un preview extendido o multiples secciones de metadata (ej: dashboards embebidos, weekly summaries). Reservado a futuro.
 
 ---
 

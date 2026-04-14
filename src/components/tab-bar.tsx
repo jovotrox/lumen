@@ -24,7 +24,7 @@ export function TabBar() {
         const isActive = i === activeTabIndex
         return (
           <button
-            key={tab.path}
+            key={`${tab.path}-${i}`}
             className={cx(
               "group flex shrink-0 items-center gap-1.5 border-r border-border-secondary px-3 py-1.5 text-xs transition-colors",
               isActive
@@ -37,7 +37,7 @@ export function TabBar() {
             onAuxClick={(e) => {
               if (e.button === 1) {
                 e.preventDefault()
-                closeTab(tab.path)
+                closeTab(i)
               }
             }}
           >
@@ -49,12 +49,12 @@ export function TabBar() {
               )}
               onClick={(e) => {
                 e.stopPropagation()
-                closeTab(tab.path)
+                closeTab(i)
               }}
               onKeyDown={(e) => {
                 if (e.key === "Enter" || e.key === " ") {
                   e.stopPropagation()
-                  closeTab(tab.path)
+                  closeTab(i)
                 }
               }}
               role="button"

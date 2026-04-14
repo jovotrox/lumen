@@ -41,47 +41,51 @@ export function AppLayout({ className, children }: AppLayoutProps) {
   )
 
   return (
-    <div className={cx("flex grow flex-col overflow-hidden print:overflow-visible", className)}>
-      <Titlebar />
-      <div className="flex grow overflow-hidden">
-        {sidebar === "expanded" ? (
-          <div className="hidden w-56 shrink-0 sm:grid print:hidden">
-            <Sidebar />
-          </div>
-        ) : null}
-        <Group
-          orientation="horizontal"
-          className="grow overflow-hidden"
-          defaultLayout={defaultLayout}
-          onLayoutChanged={onLayoutChanged}
-        >
-          <Panel id="content" className="grid grid-rows-[auto_1fr_auto] overflow-hidden">
-            <TabBar />
-            {children}
-            <div className="sm:hidden print:hidden">
-              <NavBar />
-            </div>
-          </Panel>
-          {showHelpSidebar ? (
-            <>
-              <Separator className="relative w-px bg-border-secondary print:hidden outline-none">
-                <div className="absolute inset-y-0 -left-1.5 -right-1.5 z-10" />
-              </Separator>
-              <Panel
-                id="help"
-                className="print:hidden"
-                defaultSize="30%"
-                minSize="25%"
-                maxSize="40%"
-              >
-                <HelpSidebar />
-              </Panel>
-            </>
-          ) : null}
-        </Group>
-        {!isWideViewport ? <HelpDrawer /> : null}
+    <div className={cx("flex grow overflow-hidden print:overflow-visible", className)}>
+      {/* Sidebar — full height, shown at sm+ when expanded */}
+      {sidebar === "expanded" ? (
+        <div className="hidden w-56 shrink-0 sm:grid print:hidden">
+          <Sidebar />
+        </div>
+      ) : null}
+      {/* Content column */}
+      <div className="flex grow flex-col overflow-hidden">
+        <Titlebar />
+        <div className="flex grow overflow-hidden">
+          <Group
+            orientation="horizontal"
+            className="grow overflow-hidden"
+            defaultLayout={defaultLayout}
+            onLayoutChanged={onLayoutChanged}
+          >
+            <Panel id="content" className="grid grid-rows-[auto_1fr_auto] overflow-hidden">
+              <TabBar />
+              {children}
+              <div className="sm:hidden print:hidden">
+                <NavBar />
+              </div>
+            </Panel>
+            {showHelpSidebar ? (
+              <>
+                <Separator className="relative w-px bg-border-secondary print:hidden outline-none">
+                  <div className="absolute inset-y-0 -left-1.5 -right-1.5 z-10" />
+                </Separator>
+                <Panel
+                  id="help"
+                  className="print:hidden"
+                  defaultSize="30%"
+                  minSize="25%"
+                  maxSize="40%"
+                >
+                  <HelpSidebar />
+                </Panel>
+              </>
+            ) : null}
+          </Group>
+          {!isWideViewport ? <HelpDrawer /> : null}
+        </div>
+        <SignInBanner className="hidden sm:flex border-t border-border-secondary" />
       </div>
-      <SignInBanner className="hidden sm:flex border-t border-border-secondary" />
     </div>
   )
 }

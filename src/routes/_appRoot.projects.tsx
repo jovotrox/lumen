@@ -3,16 +3,20 @@ import { FolderOpen } from "lucide-react"
 import { PageLayout } from "../components/page-layout"
 import { ProjectsView } from "../components/projects-view"
 
+export type ViewMode = "sm" | "md" | "lg" | "list"
+
 type RouteSearch = {
   query: string | undefined
-  view: "grid" | "list"
+  view: ViewMode
 }
+
+const validViews = new Set<ViewMode>(["sm", "md", "lg", "list"])
 
 export const Route = createFileRoute("/_appRoot/projects")({
   validateSearch: (search: Record<string, unknown>): RouteSearch => {
     return {
       query: typeof search.query === "string" ? search.query : undefined,
-      view: search.view === "grid" ? "grid" : "list",
+      view: validViews.has(search.view as ViewMode) ? (search.view as ViewMode) : "list",
     }
   },
   component: RouteComponent,
@@ -27,7 +31,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="Projects" icon={<FolderOpen size={16} />}>
-      <div className="p-4 pt-0">
+      <div className="p-4 pt-0 sm:px-8 sm:pt-2">
         <ProjectsView
           query={query ?? ""}
           view={view}

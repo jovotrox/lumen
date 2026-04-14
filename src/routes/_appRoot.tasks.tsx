@@ -24,7 +24,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="Tasks" icon={<TaskListIcon16 />}>
-      <div className="p-4 pt-0">
+      <div className="p-4 pt-0 sm:px-8 sm:pt-2">
         <TasksView
           query={query ?? ""}
           view={view}

@@ -84,6 +84,7 @@
   --color-bg-code-block: var(--neutral-a3);
   --color-bg-highlight: var(--yellow-a3);
   --color-bg-selection: var(--accent-a3);
+  --color-bg-sidebar: var(--neutral-3);
 
   /* Border colors */
   --color-border: var(--neutral-a7);
@@ -216,6 +217,7 @@
   --color-bg-code-block: var(--color-bg);
   --color-bg-highlight: var(--color-text);
   --color-bg-selection: var(--color-text);
+  --color-bg-sidebar: var(--color-bg);
 
   /* Border colors */
   --color-border: var(--color-text);
@@ -267,6 +269,7 @@
     --color-bg-code-block: var(--color-bg);
     --color-bg-highlight: var(--color-text);
     --color-bg-selection: var(--color-text);
+    --color-bg-sidebar: var(--color-bg);
 
     /* Border colors */
     --color-border: var(--color-text);

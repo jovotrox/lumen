@@ -1,6 +1,7 @@
 export interface ThemeColors {
   bg: string
   bgSecondary: string
+  bgSidebar: string
   text: string
   textSecondary: string
   border: string
@@ -25,6 +26,7 @@ export const builtInThemes: Theme[] = [
     colors: {
       bg: "#111110",
       bgSecondary: "#1a1918",
+      bgSidebar: "#1c1b1a",
       text: "#eeeeec",
       textSecondary: "#a0a09b",
       border: "#3a3935",
@@ -42,6 +44,7 @@ export const builtInThemes: Theme[] = [
     colors: {
       bg: "#0d1117",
       bgSecondary: "#151b23",
+      bgSidebar: "#171e28",
       text: "#f0f6fc",
       textSecondary: "#9198a1",
       border: "#3d444d",
@@ -59,6 +62,7 @@ export const builtInThemes: Theme[] = [
     colors: {
       bg: "#191919",
       bgSecondary: "#252525",
+      bgSidebar: "#1f1f1f",
       text: "#d4d4d4",
       textSecondary: "#9b9b9b",
       border: "#2f2f2f",
@@ -76,6 +80,7 @@ export const builtInThemes: Theme[] = [
     colors: {
       bg: "#121314",
       bgSecondary: "#191a1b",
+      bgSidebar: "#1c1d1e",
       text: "#bbbebf",
       textSecondary: "#8c8c8c",
       border: "#2a2b2c",
@@ -93,6 +98,7 @@ export const builtInThemes: Theme[] = [
     colors: {
       bg: "#202020",
       bgSecondary: "#161616",
+      bgSidebar: "#282828",
       text: "#dcddde",
       textSecondary: "#999999",
       border: "#333333",
@@ -110,6 +116,7 @@ export const builtInThemes: Theme[] = [
     colors: {
       bg: "#111827",
       bgSecondary: "#1f2937",
+      bgSidebar: "#1c2439",
       text: "#f9fafb",
       textSecondary: "#9ca3af",
       border: "#374151",
@@ -149,6 +156,7 @@ function generateCssVariables(colors: ThemeColors): Record<string, string> {
 
   return {
     "--color-bg": colors.bg,
+    "--color-bg-sidebar": colors.bgSidebar ?? colors.bgSecondary,
     "--color-bg-inset": mixColor(colors.bg, black, 0.3),
     "--color-bg-card": colors.bgSecondary,
     "--color-bg-overlay": mixColor(colors.bgSecondary, white, 0.05),
@@ -196,6 +204,9 @@ export function applyTheme(theme: Theme | null): void {
     for (const key of Object.keys(allVars)) {
       root.style.removeProperty(key)
     }
+    // Sidebar color needs an explicit override since the CSS default
+    // (neutral-3) is a generic Radix step — set the theme-specific value.
+    root.style.setProperty("--color-bg-sidebar", builtInThemes[0].colors.bgSidebar)
     return
   }
 
