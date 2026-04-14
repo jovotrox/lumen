@@ -78,7 +78,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="Settings" icon={<SettingsIcon16 />} disableGuard>
-      <div className="p-4 pb-6">
+      <div className="overflow-x-hidden p-4 pb-6">
         <div className="mx-auto flex max-w-xl flex-col gap-6">
           <GitHubSection />
           <HomeSection />

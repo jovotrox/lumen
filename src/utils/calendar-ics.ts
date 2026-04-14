@@ -53,7 +53,7 @@ export async function fetchIcsRaw(url: string, signal?: AbortSignal): Promise<st
   const apiBase = import.meta.env.VITE_API_BASE_URL
   if (apiBase) {
     const target = new URL(httpUrl)
-    const proxyUrl = `${apiBase}/cors-proxy?path=${encodeURIComponent(target.host + target.pathname + target.search)}`
+    const proxyUrl = `${apiBase}/cors-proxy/${target.host}${target.pathname}${target.search}`
     const response = await fetch(proxyUrl, {
       headers: { Accept: "text/calendar, */*" },
       signal,

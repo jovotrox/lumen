@@ -304,6 +304,11 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 - **fix: forced settings reset for beta** — added `_version` field to settings.json (`SETTINGS_VERSION = 2`). Stale/missing version → repo settings overwritten with current localStorage (clean slate). Prevents corrupted settings from propagating across devices.
 - **fix: validate custom theme IDs** — when applying settings from repo, custom theme IDs are checked against local themes. Missing themes fall back to "default" to prevent broken UI from cross-device mismatch.
 
+### Calendar CORS + Layout Fix — 2026-04-14
+
+- **fix: calendar CORS proxy URL format** — proxy uses path segments (`/cors-proxy/host/path`) not query params. Calendar was getting HTTP 400 because the URL was malformed.
+- **fix: scrollbar-gutter on mobile** — `scrollbar-gutter: stable` on `<main>` reserved ~15px for a scrollbar that doesn't exist on iOS (overlay scrollbars). Added `coarse:[scrollbar-gutter:auto]` to disable on touch devices.
+
 ### PWA Mobile Fixes — 2026-04-14
 
 - **fix: horizontal overflow on iOS PWA** — `w-screen` (100vw) replaced with `w-full` (100%) on root container; 100vw can be wider than visible area in PWA standalone mode, causing content to overflow past the right edge
