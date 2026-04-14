@@ -5,6 +5,7 @@ import {
   collectSettingsFromLocalStorage,
   readSettingsFromRepo,
   SETTINGS_FILE_REL_PATH,
+  SETTINGS_VERSION,
   settingsKeyMap,
   SyncedSettings,
 } from "../utils/settings-sync"
@@ -50,11 +51,18 @@ export function useSettingsSync(isRepoCloned: boolean) {
       try {
         const repoSettings = await readSettingsFromRepo()
 
-        if (repoSettings && mounted) {
-          // Repo has settings — apply to localStorage (repo is source of truth).
-          // Jotai's atomWithStorage picks up the new values on next render;
-          // no reload needed.
-          // Collect changed keys before applying
+        if (repoSettings && repoSettings._version === SETTINGS_VERSION && mounted) {
+          // Repo has settings with matching version — apply to localStorage.
+          // Jotai's atomWithStorage picks up the new values on next render.
+          // Validate theme ID — if it references a custom theme that doesn't exist
+          // on this device, fall back to "default" to prevent broken UI.
+          if (repoSettings.theme?.startsWith("custom-")) {
+            const customThemes = localStorage.getItem("custom-themes")
+            const themes = customThemes ? (JSON.parse(customThemes) as Array<{ id: string }>) : []
+            if (!themes.some((t) => t.id === repoSettings.theme)) {
+              repoSettings.theme = "default"
+            }
+          }
           const changedKeys = getChangedKeys(repoSettings)
           applySettingsToLocalStorage(repoSettings)
           // Nudge Jotai atoms — storage events only fire for cross-tab changes,
@@ -68,6 +76,8 @@ export function useSettingsSync(isRepoCloned: boolean) {
             )
           }
         } else if (mounted) {
+          // No settings, or stale version — overwrite repo with current localStorage.
+          // This forces a clean reset (safe for beta).
           // No settings in repo — save current localStorage settings via state machine
           const current = collectSettingsFromLocalStorage()
           if (Object.keys(current).length > 0) {
