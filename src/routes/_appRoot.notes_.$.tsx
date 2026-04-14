@@ -54,7 +54,6 @@ import { Tool, voiceConversationMachineAtom } from "../components/voice-conversa
 import {
   Tab,
   calendarIntegrationAtom,
-  calendarRefreshTickAtom,
   dailyTemplateAtom,
   defaultFontAtom,
   githubRepoAtom,
@@ -72,7 +71,7 @@ import { useValueRef } from "../hooks/value-ref"
 import { Note, NoteId, Template, Width, fontSchema, widthSchema } from "../schema"
 import { cx } from "../utils/cx"
 import { formatDate, formatWeek, isValidDateString, isValidWeekString } from "../utils/date"
-import { invalidateCalendarCache } from "../utils/calendar"
+import { clearCalendarCache } from "../utils/calendar-cache"
 import { isElectron } from "../utils/electron"
 import { updateFrontmatterValue } from "../utils/frontmatter"
 import { clearNoteDraft, getNoteDraft, setNoteDraft } from "../utils/note-draft"
@@ -144,7 +143,6 @@ function NotePage() {
   const weeklyTemplate = useAtomValue(weeklyTemplateAtom)
   const defaultFont = useAtomValue(defaultFontAtom)
   const calendarEnabled = useAtomValue(calendarIntegrationAtom)
-  const setCalendarRefreshTick = useSetAtom(calendarRefreshTickAtom)
   const { online } = useNetworkState()
 
   // Note data
@@ -745,8 +743,9 @@ function NotePage() {
                     <DropdownMenu.Item
                       icon={<RefreshCw size={16} strokeWidth={1.75} />}
                       onClick={() => {
-                        invalidateCalendarCache()
-                        setCalendarRefreshTick((t) => t + 1)
+                        void clearCalendarCache().then(() =>
+                          window.dispatchEvent(new FocusEvent("focus")),
+                        )
                       }}
                     >
                       Refresh calendar

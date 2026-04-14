@@ -1,15 +1,15 @@
+import { useNavigate } from "@tanstack/react-router"
 import { useAtomValue, useSetAtom } from "jotai"
 import { Calendar, FileText } from "lucide-react"
 import React from "react"
-import { useNavigate } from "@tanstack/react-router"
 import {
   calendarFeedsAtom,
   calendarIntegrationAtom,
-  calendarRefreshTickAtom,
   globalStateMachineAtom,
   notesAtom,
 } from "../global-state"
-import { CalendarEvent, fetchAllFeedsEvents, invalidateCalendarCache } from "../utils/calendar"
+import { useCalendarEvents } from "../hooks/use-calendar-events"
+import { CalendarEvent } from "../utils/calendar"
 import { Skeleton } from "./skeleton"
 
 /** Format an event's start time as HH:MM (24h), or "All day" for all-day events. */
@@ -21,14 +21,14 @@ function formatStartTime(event: CalendarEvent): string {
 
 /**
  * Build a stable, human-readable note ID from an event.
- * Format: event-YYYY-MM-DD-HHMM-slug (timed) or event-YYYY-MM-DD-allday-slug (all-day)
+ * Format: event-YYYY-MM-DD-HHMM-slug (timed) or event-YYYY-MM-DD-allday-slug (all-day).
  *
  * Including the time disambiguates multiple events with the same title on the
  * same day (e.g., two feeds both have "Standup" at different times).
  */
 function getEventNoteId(event: CalendarEvent): string {
   const date = event.start.slice(0, 10)
-  const timePart = event.isAllDay ? "allday" : event.start.slice(11, 16).replace(":", "") // "09:30" → "0930"
+  const timePart = event.isAllDay ? "allday" : event.start.slice(11, 16).replace(":", "")
   const slug = event.title
     .toLowerCase()
     .normalize("NFD")
@@ -58,48 +58,19 @@ function buildEventNoteContent(event: CalendarEvent): string {
   return lines.join("\n")
 }
 
+// Module-level flag: animate only the very first calendar render per session.
+// Once the user has seen the cascade, subsequent day changes appear instant.
+let hasAnimatedOnce = false
+
 export function CalendarEvents({ dateString }: { dateString: string }) {
   const enabled = useAtomValue(calendarIntegrationAtom)
   const feeds = useAtomValue(calendarFeedsAtom)
-  const refreshTick = useAtomValue(calendarRefreshTickAtom)
-  const setRefreshTick = useSetAtom(calendarRefreshTickAtom)
   const notes = useAtomValue(notesAtom)
   const send = useSetAtom(globalStateMachineAtom)
   const navigate = useNavigate()
-  const [events, setEvents] = React.useState<CalendarEvent[]>([])
-  const [errors, setErrors] = React.useState<Array<{ feedName: string; message: string }>>([])
-  const [loading, setLoading] = React.useState(false)
+  const { events, errors, isLoading } = useCalendarEvents(dateString)
 
   const activeFeeds = feeds.filter((f) => f.enabled && f.url)
-  const feedKey = JSON.stringify(activeFeeds.map((f) => [f.id, f.url, f.color, f.name]))
-
-  // Re-fetch when the user brings the window back into focus.
-  React.useEffect(() => {
-    const onFocus = () => {
-      invalidateCalendarCache()
-      setRefreshTick((t) => t + 1)
-    }
-    window.addEventListener("focus", onFocus)
-    return () => window.removeEventListener("focus", onFocus)
-  }, [setRefreshTick])
-
-  React.useEffect(() => {
-    if (!enabled || activeFeeds.length === 0) {
-      setEvents([])
-      setErrors([])
-      setLoading(false)
-      return
-    }
-
-    setLoading(true)
-    fetchAllFeedsEvents(activeFeeds, dateString)
-      .then(({ events, errors }) => {
-        setEvents(events)
-        setErrors(errors)
-      })
-      .finally(() => setLoading(false))
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [dateString, enabled, feedKey, refreshTick])
 
   const openEventNote = (event: CalendarEvent) => {
     const noteId = getEventNoteId(event)
@@ -122,6 +93,7 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   }
 
   if (!enabled) return null
+
   if (activeFeeds.length === 0) {
     return (
       <div className="my-2 flex items-center gap-2 rounded-lg bg-bg-secondary px-3 py-2 text-sm text-text-tertiary">
@@ -130,9 +102,9 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
       </div>
     )
   }
-  // Initial load with no cached events yet: render skeleton rows so the
-  // daily note has stable vertical rhythm while the ICS fetch is in-flight.
-  if (loading && events.length === 0) {
+
+  // Cold start with no cache yet — render skeleton rows for stable rhythm.
+  if (isLoading && events.length === 0) {
     return (
       <div className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
         {[0, 1, 2].map((i) => (
@@ -144,7 +116,12 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
       </div>
     )
   }
+
   if (events.length === 0 && errors.length === 0) return null
+
+  // First time we render events in this session → animate, then flip the flag.
+  const shouldAnimate = !hasAnimatedOnce && events.length > 0
+  if (shouldAnimate) hasAnimatedOnce = true
 
   return (
     <div className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
@@ -153,10 +130,11 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
         const hasNote = notes.has(noteId)
         return (
           <button
-            key={`${noteId}-${i}`}
+            key={noteId}
             type="button"
             onClick={() => openEventNote(event)}
-            className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none"
+            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition-colors hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none${shouldAnimate ? " calendar-event-enter" : ""}`}
+            style={shouldAnimate ? { animationDelay: `${i * 50}ms` } : undefined}
             title={
               event.calendar
                 ? `${event.calendar} — ${hasNote ? "open linked note" : "create linked note"}`

@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-13 (v0.6.0)
+**Ultima actualizacion:** 2026-04-13 (v0.7.0)
 
 ---
 
@@ -11,8 +11,8 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 ### Branch Activo
 
 - **Branch:** `personal` (fork personal, rama de compilación)
-- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, breadcrumb navigation v0.6.0
-- **Version:** 0.6.0
+- **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, calendar caching v0.7.0
+- **Version:** 0.7.0
 
 ### Migracion Tauri → Electron
 
@@ -269,6 +269,18 @@ La integración actual es ICS-based (cross-platform, read-only, sin permisos). P
 ---
 
 ## Historial de Cambios Importantes
+
+### v0.7.0 — 2026-04-13
+
+- **feat(calendar): persistent IndexedDB cache + stale-while-revalidate + prefetch + animations**
+  - **Cache persistente**: los eventos de ICS se guardan en IndexedDB vía `idb-keyval` (store `lumen-calendar-cache`). Cada entry está keyed por `v1::feedUrl::dateString`. Al abrir un daily note, el cache se lee instant (~1-3ms) y los eventos se muestran de inmediato — adiós skeleton en cold starts frecuentes.
+  - **Stale-while-revalidate**: siempre se muestra el cache primero, y en background se re-fetchean los feeds. Si llegan cambios, el componente se actualiza con animación. Pattern: cache-first → show instant → revalidate → animate diffs.
+  - **Prefetch ±3 días**: después de cada revalidate, se pre-fetchean los 6 días alrededor del actual (sliding window). Navegar día a día es instant dentro de la ventana. `fetchAndCacheIfStale` respeta un TTL de 5min para no spamear feeds.
+  - **Eviction automática**: `evictOutsideRange` mantiene IndexedDB chico (~21 entries: 7 días × 3 feeds). Borra entries de feeds eliminados, fechas fuera de ventana, y versiones viejas del cache.
+  - **Animaciones sutiles**: `motion/react` con `AnimatePresence mode="popLayout"` + `motion.button layout`. Fade-in/out de 120ms con `easeOut`. `initial={false}` para no animar en el primer render con cache caliente. Cambios reales (revalidate trae diff) se ven con animación de layout.
+  - **Focus invalidation**: `focusTickAtom` compartido incrementa en `window` focus → todos los hooks de calendar revalidan. Reemplaza el viejo `calendarRefreshTickAtom`.
+  - **Cleanup**: eliminado cache in-memory (`Map` en `calendar.ts`), `fetchFeedEvents`, `fetchAllFeedsEvents`, `invalidateCalendarCache`, `FeedFetchResult`, `calendarRefreshTickAtom`. El menú "Refresh calendar" en daily notes ahora usa `clearCalendarCache()` + synthetic focus event.
+  - **Módulos nuevos**: `src/utils/calendar-cache.ts` (IndexedDB store), `src/hooks/use-calendar-events.ts` (hook SWR + prefetch + focus). 8 unit tests para el cache module.
 
 ### v0.6.0 — 2026-04-13
 
