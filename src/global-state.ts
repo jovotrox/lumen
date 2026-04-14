@@ -445,7 +445,12 @@ function createGlobalStateMachine() {
         cloneRepo: async (context, event) => {
           if (!context.githubUser) throw new Error("Not signed in")
 
-          await gitClone(event.githubRepo, context.githubUser)
+          // Use event.githubRepo (from SELECT_REPO) or fall back to context
+          // (from auto-reclone recovery where the repo is already in context)
+          const repo = ("githubRepo" in event ? event.githubRepo : null) ?? context.githubRepo
+          if (!repo) throw new Error("No repository selected")
+
+          await gitClone(repo, context.githubUser)
 
           return {
             markdownFiles: await getMarkdownFilesFromFs(REPO_DIR),
@@ -570,12 +575,15 @@ function createGlobalStateMachine() {
           localStorage.removeItem(GITHUB_USER_STORAGE_KEY)
         },
         setGitHubRepo: assign({
-          githubRepo: (_, event) => {
+          githubRepo: (context, event) => {
             switch (event.type) {
               case "SELECT_REPO":
                 return event.githubRepo
               case "done.invoke.global.signedIn.resolvingRepo:invocation[0]":
                 return event.data.githubRepo
+              default:
+                // Preserve existing repo (e.g., auto-reclone recovery)
+                return context.githubRepo
             }
           },
         }),

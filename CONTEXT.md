@@ -296,6 +296,13 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 
 ## Historial de Cambios Importantes
 
+### PWA Mobile Fixes — 2026-04-14
+
+- **fix: horizontal overflow on iOS PWA** — `w-screen` (100vw) replaced with `w-full` (100%) on root container; 100vw can be wider than visible area in PWA standalone mode, causing content to overflow past the right edge
+- **fix: calendar feeds CORS failure on PWA** — browser/PWA fetches now route through existing Vercel CORS proxy (`VITE_API_BASE_URL/cors-proxy`); calendar providers don't return CORS headers, so direct fetch from GitHub Pages was blocked
+- **fix: calendar performance on unreachable feeds** — prefetch skipped entirely when primary fetch fails; prefetch bails on first error instead of continuing all 7 days; 15s abort timeout on individual fetches prevents indefinite hangs
+- **fix: crash on auto-reclone (silent sync recovery)** — when sync failed 3 times and auto-reclone triggered, `setGitHubRepo` action read `event.githubRepo` which was undefined on error events, causing "Cannot read properties of undefined (reading 'owner')". Now falls back to `context.githubRepo` and `cloneRepo` service uses context as fallback
+
 ### Subtle Sync Status — 2026-04-14
 
 - **feat: subtle sync status indicator**
