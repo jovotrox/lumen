@@ -18,7 +18,7 @@ const isSyncErrorAtom = selectAtom(globalStateMachineAtom, (state) =>
   state.matches("signedIn.cloned.sync.error"),
 )
 
-type SyncState = "syncing" | "synced" | "error" | null
+export type SyncState = "syncing" | "synced" | "error" | null
 
 function useSyncState(): SyncState {
   const isSyncing = useAtomValue(isSyncingAtom)
