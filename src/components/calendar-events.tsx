@@ -119,17 +119,17 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   return (
     <motion.div layout className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
       <AnimatePresence mode="popLayout">
-        {events.map((event) => {
+        {events.map((event, i) => {
           const noteId = getEventNoteId(event)
           const hasNote = notes.has(noteId)
           return (
             <motion.button
               key={noteId}
               layout
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+              initial={{ opacity: 0, y: 4 }}
+              animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0 }}
-              transition={{ duration: 0.12, ease: "easeOut" }}
+              transition={{ duration: 0.2, ease: "easeOut", delay: i * 0.03 }}
               type="button"
               onClick={() => openEventNote(event)}
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition-colors hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none"
