@@ -46,6 +46,7 @@ type Context = {
   githubRepo: GitHubRepository | null
   markdownFiles: Record<string, string>
   error: Error | null
+  syncRetryCount: number
 }
 
 type Event =
@@ -107,6 +108,7 @@ function createGlobalStateMachine() {
         githubRepo: null,
         markdownFiles: {},
         error: null,
+        syncRetryCount: 0,
       },
       states: {
         resolvingUser: {
@@ -220,16 +222,31 @@ function createGlobalStateMachine() {
                   initial: "pulling",
                   states: {
                     success: {
+                      entry: ["clearError", "resetSyncRetryCount"],
                       on: {
                         SYNC: "pulling",
                         SYNC_DEBOUNCED: "debouncing",
                       },
                     },
                     error: {
-                      entry: "logError",
+                      entry: ["logError", "setError"],
                       on: {
-                        SYNC: "pulling",
+                        SYNC: {
+                          target: "pulling",
+                          actions: "resetSyncRetryCount",
+                        },
                         SYNC_DEBOUNCED: "debouncing",
+                      },
+                    },
+                    retrying: {
+                      after: {
+                        SYNC_RETRY_DELAY: "pulling",
+                      },
+                      on: {
+                        SYNC: {
+                          target: "pulling",
+                          actions: "resetSyncRetryCount",
+                        },
                       },
                     },
                     debouncing: {
@@ -250,9 +267,35 @@ function createGlobalStateMachine() {
                         src: "pull",
                         onDone: {
                           target: "pushing",
-                          actions: ["setMarkdownFiles", "setMarkdownFilesLocalStorage"],
+                          actions: [
+                            "setMarkdownFiles",
+                            "setMarkdownFilesLocalStorage",
+                            "resetSyncRetryCount",
+                          ],
                         },
-                        onError: "error",
+                        onError: [
+                          // Can retry? Back off and try again
+                          {
+                            target: "retrying",
+                            cond: "canRetrySync",
+                            actions: "incrementSyncRetryCount",
+                          },
+                          // Max retries reached — silent re-clone (same as sign out + sign in)
+                          {
+                            target: "#global.signedIn.cloningRepo",
+                            cond: "hasGitHubRepo",
+                            actions: [
+                              "resetSyncRetryCount",
+                              "clearMarkdownFiles",
+                              "clearMarkdownFilesLocalStorage",
+                            ],
+                          },
+                          // No repo in context (shouldn't happen) — show error
+                          {
+                            target: "error",
+                            actions: "resetSyncRetryCount",
+                          },
+                        ],
                       },
                     },
                     pushing: {
@@ -263,7 +306,26 @@ function createGlobalStateMachine() {
                       invoke: {
                         src: "push",
                         onDone: "checkingStatus",
-                        onError: "error",
+                        onError: [
+                          {
+                            target: "retrying",
+                            cond: "canRetrySync",
+                            actions: "incrementSyncRetryCount",
+                          },
+                          {
+                            target: "#global.signedIn.cloningRepo",
+                            cond: "hasGitHubRepo",
+                            actions: [
+                              "resetSyncRetryCount",
+                              "clearMarkdownFiles",
+                              "clearMarkdownFilesLocalStorage",
+                            ],
+                          },
+                          {
+                            target: "error",
+                            actions: "resetSyncRetryCount",
+                          },
+                        ],
                       },
                     },
                     checkingStatus: {
@@ -283,7 +345,26 @@ function createGlobalStateMachine() {
                             target: "pulling",
                           },
                         ],
-                        onError: "error",
+                        onError: [
+                          {
+                            target: "retrying",
+                            cond: "canRetrySync",
+                            actions: "incrementSyncRetryCount",
+                          },
+                          {
+                            target: "#global.signedIn.cloningRepo",
+                            cond: "hasGitHubRepo",
+                            actions: [
+                              "resetSyncRetryCount",
+                              "clearMarkdownFiles",
+                              "clearMarkdownFilesLocalStorage",
+                            ],
+                          },
+                          {
+                            target: "error",
+                            actions: "resetSyncRetryCount",
+                          },
+                        ],
                       },
                     },
                   },
@@ -298,6 +379,11 @@ function createGlobalStateMachine() {
       guards: {
         isOffline: () => !navigator.onLine,
         isSynced: (_, event) => event.data.isSynced,
+        canRetrySync: (context) => context.syncRetryCount < 3,
+        hasGitHubRepo: (context) => context.githubRepo !== null,
+      },
+      delays: {
+        SYNC_RETRY_DELAY: (context) => Math.min(1000 * Math.pow(2, context.syncRetryCount), 8000),
       },
       services: {
         resolveUser: async () => {
@@ -551,6 +637,15 @@ function createGlobalStateMachine() {
         setError: assign({
           // TODO: Remove `as Error`
           error: (_, event) => event.data as Error,
+        }),
+        clearError: assign({
+          error: () => null,
+        }),
+        incrementSyncRetryCount: assign({
+          syncRetryCount: (context) => context.syncRetryCount + 1,
+        }),
+        resetSyncRetryCount: assign({
+          syncRetryCount: () => 0,
         }),
         logError: (_, event) => {
           console.error(event.data)
