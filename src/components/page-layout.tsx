@@ -60,7 +60,7 @@ export function PageLayout({
           />
         ) : null}
         <div className="relative grid overflow-hidden">
-          <main className="relative isolate overflow-auto [scrollbar-gutter:stable] scroll-mask">
+          <main className="relative isolate overflow-auto [scrollbar-gutter:stable] coarse:[scrollbar-gutter:auto] scroll-mask">
             <div className="grid min-h-full">
               {isRepoNotCloned && !disableGuard ? (
                 <div className="flex h-full flex-col items-center">
