@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-13 (v0.7.0)
+**Ultima actualizacion:** 2026-04-14 (v0.7.0)
 
 ---
 
@@ -295,6 +295,26 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 ---
 
 ## Historial de Cambios Importantes
+
+### Raycast Theme Import + Mobile Layout Fixes — 2026-04-14
+
+- **feat(themes): Raycast theme import in custom theme editor**
+  - `parseRaycastTheme()` converts Raycast JSON → Lumen ThemeColors
+  - Textarea + Import button in Create Custom Theme dialog
+  - Optional semantic palette colors (red, orange, yellow, green, blue, purple)
+  - Semantic colors used in CSS variable generation with fallback defaults
+  - Imported themes sync to `.lumen/themes.json` via existing theme-sync
+- **fix(layout): mobile nav bar floating mid-screen on empty pages**
+  - Root cause: when `TabBar` returns null (single tab), CSS Grid auto-placement put content in `auto` row and NavBar in `1fr` row (reversed)
+  - Fix: explicit `row-start-2` / `row-start-3` on content and NavBar in `app-layout.tsx`
+- **fix(layout): empty states not filling viewport height**
+  - Added `grid min-h-full` wrapper in `page-layout.tsx` so children stretch to fill scroll area
+  - Route wrappers use `flex flex-col`, views use `flex-1`, EmptyState uses `flex-1`
+  - Affects Inbox, Projects, People, Notes, Tasks, Links routes
+- **fix(layout): Dashboard excessive top spacing**
+  - `hideHeader` prop on `PageLayout` removes blank PageHeader on Dashboard
+  - Date/weather + greeting grouped in single hero section (`gap-3` instead of `gap-10`)
+  - 32px top padding for comfortable spacing without wasted header space
 
 ### Native Polish — 2026-04-14
 

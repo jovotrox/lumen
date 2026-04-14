@@ -25,7 +25,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="Inbox" icon={<Inbox size={16} />}>
-      <div className="p-4 pt-0 sm:px-8 sm:pt-2">
+      <div className="flex flex-col p-4 pt-0 sm:px-8 sm:pt-2">
         <InboxView
           query={query ?? ""}
           onQueryChange={(query) =>

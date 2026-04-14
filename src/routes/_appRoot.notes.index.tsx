@@ -24,7 +24,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="Notes" icon={<NoteIcon16 />}>
-      <div className="p-4 pt-0 sm:px-8 sm:pt-2">
+      <div className="flex flex-col p-4 pt-0 sm:px-8 sm:pt-2">
         <NoteList
           query={query ?? ""}
           view={view}

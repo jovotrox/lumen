@@ -60,8 +60,8 @@ export function AppLayout({ className, children }: AppLayoutProps) {
           >
             <Panel id="content" className="grid grid-rows-[auto_1fr_auto] overflow-hidden">
               <TabBar />
-              {children}
-              <div className="sm:hidden print:hidden">
+              <div className="row-start-2 min-h-0 overflow-hidden">{children}</div>
+              <div className="row-start-3 sm:hidden print:hidden">
                 <NavBar />
               </div>
             </Panel>

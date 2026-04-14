@@ -82,7 +82,7 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
     )
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="flex items-center gap-2">
         <SearchInput
           placeholder={`Search ${filteredPeople.length} people…`}

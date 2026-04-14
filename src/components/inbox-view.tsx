@@ -63,7 +63,7 @@ export function InboxView({ query, onQueryChange }: InboxViewProps) {
   }, [unprocessed, deferredQuery])
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-1 flex-col gap-4">
       <div className="flex items-center gap-2">
         <SearchInput
           placeholder={`Search ${filtered.length} inbox items…`}
