@@ -39,7 +39,7 @@ function useFocusInvalidationTick(): number {
 
 async function fetchAndCache(feed: CalendarFeed, dateString: string) {
   try {
-    const rawEvents = await fetchIcsEvents(feed.url, dateString)
+    const rawEvents = await fetchIcsEvents(feed.url, dateString, AbortSignal.timeout(15_000))
     const events = rawEvents.map((e) => ({ ...e, calendar: feed.name, color: feed.color }))
     await setCachedEntry(feed.url, dateString, { events, fetchedAt: Date.now() })
     return { feed, events, error: undefined as string | undefined }
@@ -78,11 +78,16 @@ async function prefetchSurrounding(feeds: CalendarFeed[], centerDate: string) {
   const dates = surroundingDates(centerDate, PREFETCH_RADIUS_DAYS) // 7 days total
   // Day-by-day (not all in parallel) to avoid hammering the feed with 21 concurrent
   // requests. Within a day, all feeds fetch in parallel (typically 3 feeds).
-  for (const date of dates) {
-    await Promise.all(feeds.map((f) => fetchAndCacheIfStale(f, date)))
+  // Bail on first failure to avoid cascading timeouts on unreachable feeds.
+  try {
+    for (const date of dates) {
+      await Promise.all(feeds.map((f) => fetchAndCacheIfStale(f, date)))
+    }
+    const validUrls = new Set(feeds.map((f) => f.url))
+    await evictOutsideRange(validUrls, dates[0], dates[dates.length - 1])
+  } catch {
+    // Feed unreachable — stop prefetching to avoid freezing the UI
   }
-  const validUrls = new Set(feeds.map((f) => f.url))
-  await evictOutsideRange(validUrls, dates[0], dates[dates.length - 1])
 }
 
 function sortEvents(events: CalendarEvent[]): CalendarEvent[] {
@@ -171,7 +176,11 @@ export function useCalendarEvents(dateString: string): UseCalendarEventsResult {
       setIsRevalidating(false)
 
       // 3. Prefetch ±3 days (fire-and-forget, doesn't touch component state).
-      void prefetchSurrounding(activeFeeds, dateString)
+      // Skip if any feed failed — no point prefetching unreachable feeds.
+      const hasErrors = freshResults.some((r) => r.error)
+      if (!hasErrors) {
+        void prefetchSurrounding(activeFeeds, dateString)
+      }
     }
 
     void load()

@@ -10,8 +10,12 @@ import type { CalendarEvent } from "./calendar"
  * In browser/PWA, falls back to native fetch — users will need a CORS-enabled
  * provider or a proxy.
  */
-export async function fetchIcsEvents(url: string, dateString: string): Promise<CalendarEvent[]> {
-  const icsText = await fetchIcsRaw(url)
+export async function fetchIcsEvents(
+  url: string,
+  dateString: string,
+  signal?: AbortSignal,
+): Promise<CalendarEvent[]> {
+  const icsText = await fetchIcsRaw(url, signal)
   return parseIcsForDate(icsText, dateString)
 }
 
