@@ -46,9 +46,11 @@ import {
   OfflineIcon16,
   SettingsFillIcon16,
   SettingsIcon16,
+  LinkFillIcon16,
   LinkIcon16,
   TagFillIcon16,
   TagIcon16,
+  TaskListFillIcon16,
   TaskListIcon16,
 } from "./icons"
 import { NoteFavicon } from "./note-favicon"
@@ -136,7 +138,12 @@ export function NavItems({
         <div className="flex flex-col gap-2">
           <ul className="flex flex-col gap-1">
             <li>
-              <NavLink to="/" icon={<Home size={16} />} onNavigate={onNavigate}>
+              <NavLink
+                to="/"
+                activeIcon={<Home size={16} fill="currentColor" />}
+                icon={<Home size={16} />}
+                onNavigate={onNavigate}
+              >
                 Home
               </NavLink>
             </li>
@@ -144,6 +151,7 @@ export function NavItems({
               <NavLink
                 to="/inbox"
                 search={{ query: undefined }}
+                activeIcon={<Inbox size={16} fill="currentColor" />}
                 icon={<Inbox size={16} />}
                 onNavigate={onNavigate}
               >
@@ -189,6 +197,7 @@ export function NavItems({
               <NavLink
                 to="/projects"
                 search={{ query: undefined, view: "list" }}
+                activeIcon={<FolderOpen size={16} fill="currentColor" />}
                 icon={<FolderOpen size={16} />}
                 onNavigate={onNavigate}
               >
@@ -199,6 +208,7 @@ export function NavItems({
               <NavLink
                 to="/tasks"
                 search={{ query: undefined, view: "grid" }}
+                activeIcon={<TaskListFillIcon16 />}
                 icon={<TaskListIcon16 />}
                 onNavigate={onNavigate}
               >
@@ -209,6 +219,7 @@ export function NavItems({
               <NavLink
                 to="/links"
                 search={{ query: undefined, view: "grid" }}
+                activeIcon={<LinkFillIcon16 />}
                 icon={<LinkIcon16 />}
                 onNavigate={onNavigate}
               >
@@ -219,6 +230,7 @@ export function NavItems({
               <NavLink
                 to="/people"
                 search={{ query: undefined, view: "list" }}
+                activeIcon={<User size={16} fill="currentColor" />}
                 icon={<User size={16} />}
                 onNavigate={onNavigate}
               >
