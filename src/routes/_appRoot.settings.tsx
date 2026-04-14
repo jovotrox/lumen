@@ -52,6 +52,7 @@ import {
   applyTheme,
   builtInThemes,
   getAllThemes,
+  parseRaycastTheme,
   type Theme,
   type ThemeColors,
 } from "../utils/themes"
@@ -495,7 +496,7 @@ const defaultCustomColors: ThemeColors = {
   syntaxHighlight: "#3794ff",
 }
 
-const colorLabels: Record<keyof ThemeColors, string> = {
+const colorLabels: Partial<Record<keyof ThemeColors, string>> = {
   bg: "Background",
   bgSecondary: "Background secondary",
   bgSidebar: "Sidebar",
@@ -505,6 +506,12 @@ const colorLabels: Record<keyof ThemeColors, string> = {
   accent: "Accent",
   accentText: "Accent text",
   syntaxHighlight: "Syntax highlight",
+  red: "Red",
+  orange: "Orange",
+  yellow: "Yellow",
+  green: "Green",
+  blue: "Blue",
+  purple: "Purple",
 }
 
 function CustomThemeForm({
@@ -538,8 +545,42 @@ function CustomThemeForm({
     })
   }
 
+  const [importJson, setImportJson] = useState("")
+  const [importError, setImportError] = useState("")
+
+  const handleImport = () => {
+    const result = parseRaycastTheme(importJson)
+    if (!result) {
+      setImportError("Invalid Raycast theme JSON")
+      return
+    }
+    setImportError("")
+    setImportJson("")
+    setName(result.name)
+    setColors(result.colors)
+  }
+
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+      {/* Import from Raycast */}
+      <div className="flex flex-col gap-2">
+        <span className="text-xs font-medium text-text-secondary">Import from Raycast</span>
+        <div className="flex gap-2">
+          <textarea
+            value={importJson}
+            onChange={(e) => {
+              setImportJson(e.target.value)
+              setImportError("")
+            }}
+            placeholder="Paste Raycast theme JSON..."
+            className="h-16 flex-1 resize-none rounded border border-border bg-transparent px-2 py-1.5 font-mono text-xs placeholder:text-text-tertiary focus:border-border-focus focus:outline-none"
+          />
+          <Button type="button" size="small" disabled={!importJson.trim()} onClick={handleImport}>
+            Import
+          </Button>
+        </div>
+        {importError ? <span className="text-xs text-text-danger">{importError}</span> : null}
+      </div>
       <FormControl htmlFor="theme-name" label="Theme name" required>
         <TextInput
           id="theme-name"
@@ -563,6 +604,27 @@ function CustomThemeForm({
   )
 }
 
+const coreColorKeys: (keyof ThemeColors)[] = [
+  "bg",
+  "bgSecondary",
+  "bgSidebar",
+  "text",
+  "textSecondary",
+  "border",
+  "accent",
+  "accentText",
+  "syntaxHighlight",
+]
+
+const semanticColorKeys: (keyof ThemeColors)[] = [
+  "red",
+  "orange",
+  "yellow",
+  "green",
+  "blue",
+  "purple",
+]
+
 function ColorInputGrid({
   colors,
   onChange,
@@ -570,35 +632,71 @@ function ColorInputGrid({
   colors: ThemeColors
   onChange: (colors: ThemeColors) => void
 }) {
-  const keys = Object.keys(colorLabels) as (keyof ThemeColors)[]
-
   return (
-    <div className="grid grid-cols-2 gap-2">
-      {keys.map((key) => (
-        <div key={key} className="flex items-center gap-2">
-          <input
-            type="color"
-            value={colors[key]}
-            onChange={(e) => onChange({ ...colors, [key]: e.target.value })}
-            className="h-6 w-6 shrink-0 cursor-pointer rounded border border-border"
+    <div className="flex flex-col gap-3">
+      <div className="grid grid-cols-2 gap-2">
+        {coreColorKeys.map((key) => (
+          <ColorInput
+            key={key}
+            label={colorLabels[key] ?? key}
+            value={colors[key] ?? ""}
+            onChange={(val) => onChange({ ...colors, [key]: val })}
           />
-          <div className="flex flex-col">
-            <span className="text-xs text-text-secondary">{colorLabels[key]}</span>
-            <input
-              type="text"
-              value={colors[key]}
-              onChange={(e) => {
-                const val = e.target.value
-                if (/^#[0-9a-fA-F]{0,6}$/.test(val)) {
-                  onChange({ ...colors, [key]: val })
-                }
-              }}
-              className="w-20 bg-transparent text-xs"
-              pattern="^#[0-9a-fA-F]{6}$"
+        ))}
+      </div>
+      <div className="flex flex-col gap-1.5">
+        <span className="text-xs font-medium text-text-secondary">Palette</span>
+        <div className="grid grid-cols-3 gap-2">
+          {semanticColorKeys.map((key) => (
+            <ColorInput
+              key={key}
+              label={colorLabels[key] ?? key}
+              value={colors[key] ?? ""}
+              placeholder="#"
+              onChange={(val) => onChange({ ...colors, [key]: val || undefined })}
             />
-          </div>
+          ))}
         </div>
-      ))}
+      </div>
+    </div>
+  )
+}
+
+function ColorInput({
+  label,
+  value,
+  placeholder,
+  onChange,
+}: {
+  label: string
+  value: string
+  placeholder?: string
+  onChange: (val: string) => void
+}) {
+  return (
+    <div className="flex items-center gap-2">
+      <input
+        type="color"
+        value={value || "#000000"}
+        onChange={(e) => onChange(e.target.value)}
+        className="h-6 w-6 shrink-0 cursor-pointer rounded border border-border"
+      />
+      <div className="flex flex-col">
+        <span className="text-xs text-text-secondary">{label}</span>
+        <input
+          type="text"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => {
+            const val = e.target.value
+            if (val === "" || /^#[0-9a-fA-F]{0,6}$/.test(val)) {
+              onChange(val)
+            }
+          }}
+          className="w-20 bg-transparent text-xs placeholder:text-text-tertiary"
+          pattern="^#[0-9a-fA-F]{6}$"
+        />
+      </div>
     </div>
   )
 }

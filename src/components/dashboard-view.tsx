@@ -223,22 +223,21 @@ export function DashboardView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4">
-      {/* Date + weather */}
-      <div className="flex items-center justify-between text-sm text-text-secondary">
-        <span>
-          {dayName}, {fullDate}
-        </span>
-        {weather ? (
-          <span className="flex items-center gap-1.5">
-            {weather.icon}
-            {weather.temp}°{tempUnit} · {weather.description}
-          </span>
-        ) : null}
-      </div>
-
-      {/* Greeting */}
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4 pt-8">
+      {/* Hero: date + greeting + actions */}
       <section className="flex flex-col gap-3">
+        {/* Date + weather */}
+        <div className="flex items-center justify-between text-sm text-text-secondary">
+          <span>
+            {dayName}, {fullDate}
+          </span>
+          {weather ? (
+            <span className="flex items-center gap-1.5">
+              {weather.icon}
+              {weather.temp}°{tempUnit} · {weather.description}
+            </span>
+          ) : null}
+        </div>
         <h1
           className="select-none font-bold tracking-tight"
           style={{ fontSize: "2rem", lineHeight: 1.1 }}

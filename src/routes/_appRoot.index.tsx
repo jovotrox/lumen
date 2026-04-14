@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_appRoot/")({
 
 function RouteComponent() {
   return (
-    <PageLayout title="">
+    <PageLayout title="" hideHeader>
       <DashboardView />
     </PageLayout>
   )

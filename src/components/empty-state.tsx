@@ -30,7 +30,7 @@ export function EmptyState({ icon, title, description, action, className }: Empt
   return (
     <div
       className={cx(
-        "flex h-full min-h-[240px] select-none flex-col items-center justify-center gap-3 px-6 py-12 text-center",
+        "flex flex-1 min-h-[240px] select-none flex-col items-center justify-center gap-3 px-6 py-12 text-center",
         className,
       )}
     >

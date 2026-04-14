@@ -30,7 +30,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="People" icon={<User size={16} />}>
-      <div className="p-4 pt-0 sm:px-8 sm:pt-2">
+      <div className="flex flex-col p-4 pt-0 sm:px-8 sm:pt-2">
         <PeopleView
           query={query ?? ""}
           view={view}

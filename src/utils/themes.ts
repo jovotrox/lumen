@@ -8,6 +8,13 @@ export interface ThemeColors {
   accent: string
   accentText: string
   syntaxHighlight: string
+  // Semantic status colors (optional — fallback to hardcoded defaults)
+  red?: string
+  orange?: string
+  yellow?: string
+  green?: string
+  blue?: string
+  purple?: string
 }
 
 export interface Theme {
@@ -174,20 +181,20 @@ function generateCssVariables(colors: ThemeColors): Record<string, string> {
     "--color-text": colors.text,
     "--color-text-secondary": colors.textSecondary,
     "--color-text-tertiary": mixColor(colors.textSecondary, colors.bg, 0.2),
-    "--color-text-highlight": "#fde047",
+    "--color-text-highlight": colors.yellow ?? "#fde047",
     "--color-text-selection": colors.accentText,
-    "--color-text-success": "#4ade80",
-    "--color-text-danger": "#f87171",
-    "--color-text-pending": "#facc15",
-    "--color-text-pinned": "#fb923c",
+    "--color-text-success": colors.green ?? "#4ade80",
+    "--color-text-danger": colors.red ?? "#f87171",
+    "--color-text-pending": colors.yellow ?? "#facc15",
+    "--color-text-pinned": colors.orange ?? "#fb923c",
     "--color-border": colors.border,
     "--color-border-secondary": hexToRgba(white, 0.08),
     "--color-border-table": colors.border,
     "--color-border-focus": colors.accent,
     "--color-syntax-cyan": colors.syntaxHighlight,
-    "--color-syntax-red": "#f87171",
-    "--color-syntax-purple": "#c084fc",
-    "--color-syntax-green": "#4ade80",
+    "--color-syntax-red": colors.red ?? "#f87171",
+    "--color-syntax-purple": colors.purple ?? "#c084fc",
+    "--color-syntax-green": colors.green ?? "#4ade80",
   }
 }
 
@@ -223,4 +230,54 @@ export function applyTheme(theme: Theme | null): void {
  */
 export function getAllThemes(customThemes: Theme[]): Theme[] {
   return [...builtInThemes, ...customThemes]
+}
+
+/**
+ * Parse a Raycast theme JSON and convert it to Lumen ThemeColors.
+ * Returns the theme name and colors, or null if the JSON is invalid.
+ */
+export function parseRaycastTheme(
+  json: string,
+): { name: string; author: string; colors: ThemeColors } | null {
+  try {
+    const data = JSON.parse(json) as {
+      name?: string
+      author?: string
+      colors?: Record<string, string>
+    }
+    const rc = data.colors
+    if (!rc?.background || !rc?.text) return null
+
+    // Derive missing colors from Raycast palette
+    const bg = rc.background
+    const bgSecondary = rc.backgroundSecondary || bg
+    const text = rc.text
+    const accent = rc.selection || rc.loader || rc.blue || "#007AFF"
+
+    const colors: ThemeColors = {
+      bg,
+      bgSecondary,
+      bgSidebar: mixColor(bg, "#ffffff", 0.04),
+      text,
+      textSecondary: mixColor(text, bg, 0.35),
+      border: mixColor(bg, "#ffffff", 0.12),
+      accent,
+      accentText: accent,
+      syntaxHighlight: rc.blue || accent,
+      red: rc.red,
+      orange: rc.orange,
+      yellow: rc.yellow,
+      green: rc.green,
+      blue: rc.blue,
+      purple: rc.purple || rc.magenta,
+    }
+
+    return {
+      name: data.name || "Imported Theme",
+      author: data.author || "",
+      colors,
+    }
+  } catch {
+    return null
+  }
 }
