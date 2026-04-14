@@ -31,6 +31,7 @@ import {
   notesAtom,
   pinnedNotesAtom,
   pinnedOrderAtom,
+  showSyncStatusAtom,
   unprocessedInboxCountAtom,
 } from "../global-state"
 import { cx } from "../utils/cx"
@@ -51,7 +52,7 @@ import {
   TaskListIcon16,
 } from "./icons"
 import { NoteFavicon } from "./note-favicon"
-import { SyncStatusIcon, useSyncStatusText } from "./sync-status"
+import { SyncStatusIcon, useSyncStatus } from "./sync-status"
 
 const hasDailyNoteAtom = selectAtom(notesAtom, (notes) => notes.has(toDateString(new Date())))
 
@@ -68,7 +69,8 @@ export function NavItems({
   const setPinnedOrder = useSetAtom(pinnedOrderAtom)
   const hasDailyNote = useAtomValue(hasDailyNoteAtom)
   const inboxCount = useAtomValue(unprocessedInboxCountAtom)
-  const syncText = useSyncStatusText()
+  const showSyncSetting = useAtomValue(showSyncStatusAtom)
+  const { state: syncState, text: syncText, visible: syncVisible } = useSyncStatus()
   const send = useSetAtom(globalStateMachineAtom)
   const { online } = useNetworkState()
   const { pathname } = useLocation()
@@ -291,13 +293,16 @@ export function NavItems({
               Offline
             </div>
           ) : null}
-          {syncText ? (
+          {syncText && (showSyncSetting || syncState === "error") ? (
             <button
-              className="nav-item text-text-secondary"
+              className={cx(
+                "nav-item text-text-secondary transition-opacity duration-300 epaper:transition-none",
+                syncVisible ? "opacity-100" : "pointer-events-none opacity-0",
+              )}
               data-size={size}
               onClick={() => send({ type: "SYNC" })}
             >
-              <SyncStatusIcon />
+              <SyncStatusIcon state={syncState} />
               {syncText}
             </button>
           ) : null}

@@ -23,6 +23,7 @@ export type SyncedSettings = {
   theme?: string
   tempUnit?: "C" | "F"
   epaper?: boolean
+  showSyncStatus?: boolean
   vimMode?: boolean
   livePreview?: boolean
   hideCompletedTasks?: boolean
@@ -47,6 +48,7 @@ export const settingsKeyMap: { localStorageKey: string; settingsKey: keyof Synce
   { localStorageKey: "theme", settingsKey: "theme" },
   { localStorageKey: "temp_unit", settingsKey: "tempUnit" },
   { localStorageKey: "epaper", settingsKey: "epaper" },
+  { localStorageKey: "show-sync-status", settingsKey: "showSyncStatus" },
   { localStorageKey: "vim-mode", settingsKey: "vimMode" },
   { localStorageKey: "live-preview", settingsKey: "livePreview" },
   { localStorageKey: "hide-completed-tasks", settingsKey: "hideCompletedTasks" },

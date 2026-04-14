@@ -40,6 +40,7 @@ import {
   tempUnitAtom,
   isRepoClonedAtom,
   isRepoNotClonedAtom,
+  showSyncStatusAtom,
   themeAtom,
   vimModeAtom,
   livePreviewAtom,
@@ -133,6 +134,7 @@ function GitHubSection() {
   const isRepoNotCloned = useAtomValue(isRepoNotClonedAtom)
   const isCloningRepo = useAtomValue(isCloningRepoAtom)
   const isRepoCloned = useAtomValue(isRepoClonedAtom)
+  const [showSyncStatus, setShowSyncStatus] = useAtom(showSyncStatusAtom)
   const signOut = useSignOut()
   const { online } = useNetworkState()
   const [isEditingRepo, setIsEditingRepo] = useState(false)
@@ -196,6 +198,16 @@ function GitHubSection() {
             </Button>
           </div>
         ) : null}
+      </div>
+      <div className="mt-4 flex items-center gap-2.5 border-t border-border-secondary pt-4 leading-4">
+        <Switch
+          id="show-sync-status"
+          checked={showSyncStatus}
+          onCheckedChange={setShowSyncStatus}
+        />
+        <label htmlFor="show-sync-status" className="select-none">
+          Show sync status
+        </label>
       </div>
     </SettingsSection>
   )

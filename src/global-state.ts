@@ -1149,6 +1149,8 @@ export const externalLinkSearcherAtom = atom((get) => {
 
 export const epaperAtom = atomWithStorage<boolean>("epaper", false)
 
+export const showSyncStatusAtom = atomWithStorage<boolean>("show-sync-status", true)
+
 export const vimModeAtom = atomWithStorage<boolean>("vim-mode", false)
 
 export const livePreviewAtom = atomWithStorage<boolean>("live-preview", false)
