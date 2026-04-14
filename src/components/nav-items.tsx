@@ -31,6 +31,7 @@ import {
   notesAtom,
   pinnedNotesAtom,
   pinnedOrderAtom,
+  showSyncStatusAtom,
   unprocessedInboxCountAtom,
 } from "../global-state"
 import { cx } from "../utils/cx"
@@ -45,13 +46,19 @@ import {
   OfflineIcon16,
   SettingsFillIcon16,
   SettingsIcon16,
+  FolderOpenFillIcon16,
+  HomeFillIcon16,
+  InboxFillIcon16,
+  LinkFillIcon16,
   LinkIcon16,
   TagFillIcon16,
   TagIcon16,
+  TaskListFillIcon16,
   TaskListIcon16,
+  UserFillIcon16,
 } from "./icons"
 import { NoteFavicon } from "./note-favicon"
-import { SyncStatusIcon, useSyncStatusText } from "./sync-status"
+import { SyncStatusIcon, useSyncStatus } from "./sync-status"
 
 const hasDailyNoteAtom = selectAtom(notesAtom, (notes) => notes.has(toDateString(new Date())))
 
@@ -68,7 +75,8 @@ export function NavItems({
   const setPinnedOrder = useSetAtom(pinnedOrderAtom)
   const hasDailyNote = useAtomValue(hasDailyNoteAtom)
   const inboxCount = useAtomValue(unprocessedInboxCountAtom)
-  const syncText = useSyncStatusText()
+  const showSyncSetting = useAtomValue(showSyncStatusAtom)
+  const { state: syncState, text: syncText, visible: syncVisible } = useSyncStatus()
   const send = useSetAtom(globalStateMachineAtom)
   const { online } = useNetworkState()
   const { pathname } = useLocation()
@@ -134,7 +142,12 @@ export function NavItems({
         <div className="flex flex-col gap-2">
           <ul className="flex flex-col gap-1">
             <li>
-              <NavLink to="/" icon={<Home size={16} />} onNavigate={onNavigate}>
+              <NavLink
+                to="/"
+                activeIcon={<HomeFillIcon16 />}
+                icon={<Home size={16} />}
+                onNavigate={onNavigate}
+              >
                 Home
               </NavLink>
             </li>
@@ -142,6 +155,7 @@ export function NavItems({
               <NavLink
                 to="/inbox"
                 search={{ query: undefined }}
+                activeIcon={<InboxFillIcon16 />}
                 icon={<Inbox size={16} />}
                 onNavigate={onNavigate}
               >
@@ -187,6 +201,7 @@ export function NavItems({
               <NavLink
                 to="/projects"
                 search={{ query: undefined, view: "list" }}
+                activeIcon={<FolderOpenFillIcon16 />}
                 icon={<FolderOpen size={16} />}
                 onNavigate={onNavigate}
               >
@@ -197,6 +212,7 @@ export function NavItems({
               <NavLink
                 to="/tasks"
                 search={{ query: undefined, view: "grid" }}
+                activeIcon={<TaskListFillIcon16 />}
                 icon={<TaskListIcon16 />}
                 onNavigate={onNavigate}
               >
@@ -207,6 +223,7 @@ export function NavItems({
               <NavLink
                 to="/links"
                 search={{ query: undefined, view: "grid" }}
+                activeIcon={<LinkFillIcon16 />}
                 icon={<LinkIcon16 />}
                 onNavigate={onNavigate}
               >
@@ -217,6 +234,7 @@ export function NavItems({
               <NavLink
                 to="/people"
                 search={{ query: undefined, view: "list" }}
+                activeIcon={<UserFillIcon16 />}
                 icon={<User size={16} />}
                 onNavigate={onNavigate}
               >
@@ -291,13 +309,16 @@ export function NavItems({
               Offline
             </div>
           ) : null}
-          {syncText ? (
+          {syncText && (showSyncSetting || syncState === "error") ? (
             <button
-              className="nav-item text-text-secondary"
+              className={cx(
+                "nav-item text-text-secondary transition-opacity duration-300 epaper:transition-none",
+                syncVisible ? "opacity-100" : "pointer-events-none opacity-0",
+              )}
               data-size={size}
               onClick={() => send({ type: "SYNC" })}
             >
-              <SyncStatusIcon />
+              <SyncStatusIcon state={syncState} />
               {syncText}
             </button>
           ) : null}

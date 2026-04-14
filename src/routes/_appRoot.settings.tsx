@@ -12,6 +12,7 @@ import { ChevronDownIcon16, LoadingIcon16, SettingsIcon16 } from "../components/
 import { AIKeyInput } from "../components/ai-key-input"
 import { OpenAIKeyInput } from "../components/openai-key-input"
 import { PageLayout } from "../components/page-layout"
+import { SyncStatusIcon, useSyncStatus } from "../components/sync-status"
 import { RepoForm } from "../components/repo-form"
 import { Signature } from "../components/signature"
 import { SegmentedControl } from "../components/segmented-control"
@@ -40,6 +41,7 @@ import {
   tempUnitAtom,
   isRepoClonedAtom,
   isRepoNotClonedAtom,
+  showSyncStatusAtom,
   themeAtom,
   vimModeAtom,
   livePreviewAtom,
@@ -133,6 +135,7 @@ function GitHubSection() {
   const isRepoNotCloned = useAtomValue(isRepoNotClonedAtom)
   const isCloningRepo = useAtomValue(isCloningRepoAtom)
   const isRepoCloned = useAtomValue(isRepoClonedAtom)
+  const [showSyncStatus, setShowSyncStatus] = useAtom(showSyncStatusAtom)
   const signOut = useSignOut()
   const { online } = useNetworkState()
   const [isEditingRepo, setIsEditingRepo] = useState(false)
@@ -197,7 +200,29 @@ function GitHubSection() {
           </div>
         ) : null}
       </div>
+      <div className="mt-4 flex items-center gap-2.5 border-t border-border-secondary pt-4 leading-4">
+        <Switch
+          id="show-sync-status"
+          checked={showSyncStatus}
+          onCheckedChange={setShowSyncStatus}
+        />
+        <label htmlFor="show-sync-status" className="flex-1 select-none">
+          Show sync status on sidebar
+        </label>
+        <SettingsSyncStatus />
+      </div>
     </SettingsSection>
+  )
+}
+
+function SettingsSyncStatus() {
+  const { state, text } = useSyncStatus()
+  if (!text) return null
+  return (
+    <span className="flex items-center gap-1.5 text-sm text-text-secondary">
+      <SyncStatusIcon state={state} />
+      {text}
+    </span>
   )
 }
 
