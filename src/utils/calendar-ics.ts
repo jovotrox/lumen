@@ -55,6 +55,14 @@ export async function fetchIcsRaw(url: string): Promise<string> {
 /**
  * Parse ICS text and return events occurring on the given date (YYYY-MM-DD).
  * Handles recurring events (RRULE) by expanding them within the day.
+ *
+ * Two key correctness details:
+ * 1. `event.iterator()` must NOT receive a custom dtstart — ical.js uses it as the
+ *    base time for ALL occurrences, which would override the event's actual time.
+ *    Instead we iterate from the event's real DTSTART and fast-forward.
+ * 2. Exception VEVENTs (with RECURRENCE-ID) must be related to their master event
+ *    via `relateException()` so `getOccurrenceDetails()` returns the override.
+ *    They must NOT be processed as standalone events (would cause duplicates).
  */
 export function parseIcsForDate(icsText: string, dateString: string): CalendarEvent[] {
   const jcal = ICAL.parse(icsText)
@@ -72,32 +80,68 @@ export function parseIcsForDate(icsText: string, dateString: string): CalendarEv
   const results: CalendarEvent[] = []
 
   // Safety cap: prevent pathological RRULEs (e.g. DAILY since 2000 with no UNTIL)
-  // from freezing the UI. 1000 is way more than any sane day should have.
-  const MAX_OCCURRENCES_PER_EVENT = 1000
+  // from freezing the UI. 10000 covers ~27 years of daily events.
+  const MAX_ITERATIONS = 10000
+
+  // --- Phase 1: categorize VEVENTs ---
+  // Master events have RRULE; exceptions have RECURRENCE-ID; the rest are standalone.
+  const masterEvents: ICAL.Event[] = []
+  const standaloneEvents: ICAL.Event[] = []
+  const exceptionVevents: ICAL.Component[] = []
 
   for (const vevent of vevents) {
-    const event = new ICAL.Event(vevent)
-    if (event.isRecurring()) {
-      // Seed iterator at startIcal so ical.js can fast-forward past historical
-      // occurrences instead of iterating from DTSTART year-by-year.
-      const iterator = event.iterator(startIcal)
-      let next = iterator.next()
-      let iterations = 0
-      while (next && iterations++ < MAX_OCCURRENCES_PER_EVENT) {
-        if (next.compare(endIcal) >= 0) break
-        const occurrence = event.getOccurrenceDetails(next)
-        if (occurrence.endDate.compare(startIcal) > 0) {
-          results.push(toCalendarEvent(event, occurrence.startDate, occurrence.endDate))
-        }
-        next = iterator.next()
-      }
+    if (vevent.getFirstPropertyValue("recurrence-id")) {
+      exceptionVevents.push(vevent)
     } else {
-      const eventStart = event.startDate
-      const eventEnd = event.endDate
-      // Include if event overlaps with the day
-      if (eventEnd.compare(startIcal) > 0 && eventStart.compare(endIcal) < 0) {
-        results.push(toCalendarEvent(event, eventStart, eventEnd))
+      const event = new ICAL.Event(vevent)
+      if (event.isRecurring()) {
+        masterEvents.push(event)
+      } else {
+        standaloneEvents.push(event)
       }
+    }
+  }
+
+  // --- Phase 2: relate exceptions to their masters ---
+  for (const master of masterEvents) {
+    for (const exVevent of exceptionVevents) {
+      const uid = exVevent.getFirstPropertyValue("uid") as string
+      if (uid === master.uid) {
+        master.relateException(new ICAL.Event(exVevent))
+      }
+    }
+  }
+
+  // --- Phase 3: expand recurring events ---
+  for (const master of masterEvents) {
+    // Do NOT pass startIcal to iterator — it would replace the event's dtstart,
+    // making all occurrences use midnight instead of the real event time.
+    const iterator = master.iterator()
+    let next = iterator.next()
+    let iterations = 0
+
+    // Fast-forward past occurrences before our target day.
+    while (next && next.compare(startIcal) < 0 && iterations++ < MAX_ITERATIONS) {
+      next = iterator.next()
+    }
+
+    // Process occurrences in [startIcal, endIcal).
+    while (next && iterations++ < MAX_ITERATIONS) {
+      if (next.compare(endIcal) >= 0) break
+      const occurrence = master.getOccurrenceDetails(next)
+      if (occurrence.endDate.compare(startIcal) > 0) {
+        results.push(toCalendarEvent(master, occurrence.startDate, occurrence.endDate))
+      }
+      next = iterator.next()
+    }
+  }
+
+  // --- Phase 4: add standalone (non-recurring, non-exception) events ---
+  for (const event of standaloneEvents) {
+    const eventStart = event.startDate
+    const eventEnd = event.endDate
+    if (eventEnd.compare(startIcal) > 0 && eventStart.compare(endIcal) < 0) {
+      results.push(toCalendarEvent(event, eventStart, eventEnd))
     }
   }
 
