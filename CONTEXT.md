@@ -304,6 +304,10 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
   - Errors remain visible indefinitely (safety net)
   - New `useSyncStatus()` hook returns `{ state, text, visible }` with timer logic
   - `SyncStatusIcon` now receives `state` prop instead of reading atoms directly
+- **feat: filled icon variants for all sidebar nav items**
+  - Home, Inbox, Projects, People: lucide `fill="currentColor"` as activeIcon
+  - Tasks, Links: new custom `TaskListFillIcon16`, `LinkFillIcon16` in icons.tsx
+  - Matches existing pattern for Calendar, Notes, Tags, Settings
 - **feat: "Show sync status" setting**
   - Toggle in Settings > GitHub section, synced via `.lumen/settings.json`
   - `showSyncStatusAtom` (`show-sync-status` localStorage key)
