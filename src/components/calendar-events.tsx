@@ -58,6 +58,10 @@ function buildEventNoteContent(event: CalendarEvent): string {
   return lines.join("\n")
 }
 
+// Module-level flag: animate only the very first calendar render per session.
+// Once the user has seen the cascade, subsequent day changes appear instant.
+let hasAnimatedOnce = false
+
 export function CalendarEvents({ dateString }: { dateString: string }) {
   const enabled = useAtomValue(calendarIntegrationAtom)
   const feeds = useAtomValue(calendarFeedsAtom)
@@ -115,6 +119,10 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
 
   if (events.length === 0 && errors.length === 0) return null
 
+  // First time we render events in this session → animate, then flip the flag.
+  const shouldAnimate = !hasAnimatedOnce && events.length > 0
+  if (shouldAnimate) hasAnimatedOnce = true
+
   return (
     <div className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
       {events.map((event, i) => {
@@ -125,8 +133,8 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
             key={noteId}
             type="button"
             onClick={() => openEventNote(event)}
-            className="calendar-event-enter flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition-colors hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none"
-            style={{ animationDelay: `${i * 30}ms` }}
+            className={`flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition-colors hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none${shouldAnimate ? " calendar-event-enter" : ""}`}
+            style={shouldAnimate ? { animationDelay: `${i * 50}ms` } : undefined}
             title={
               event.calendar
                 ? `${event.calendar} — ${hasNote ? "open linked note" : "create linked note"}`
