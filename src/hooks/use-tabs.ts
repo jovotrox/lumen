@@ -1,3 +1,4 @@
+import React from "react"
 import { useAtom } from "jotai"
 import { useRouter } from "@tanstack/react-router"
 import { defaultTrailAtom, openTabsAtom, Tab, TrailSegment } from "../global-state"
@@ -95,6 +96,16 @@ function applyTrailRules(
   // Rule 2: root routes reset the trail. computeTrailSegment tags these
   // with iconKind === "route" (the top-level sidebar sections).
   if (next.iconKind === "route") return [next]
+  // Rule 3: a note/tag accessed when the trail is empty or the last segment
+  // is a non-notes root route (e.g. Tags, Tasks, Links) resets the trail.
+  // This handles pinned notes and sidebar navigation that shouldn't inherit
+  // a stale trail from an unrelated section.
+  if (next.iconKind === "note" || next.iconKind === "tag") {
+    const last = trail[trail.length - 1]
+    if (!last || (last.iconKind === "route" && !last.path.startsWith("/notes"))) {
+      return [next]
+    }
+  }
   const existing = trail.findIndex((s) => s.path === next.path)
   if (existing !== -1) {
     // Truncate to the revisited segment (replace its title/icon in case they changed)
@@ -111,26 +122,28 @@ export function useTabs() {
   // Derive active tab path from current route
   const currentPath = normalizePath(router.state.location.pathname)
 
+  // Ensure there's always at least 1 tab — bootstrap from the current route
+  React.useEffect(() => {
+    if (tabs.length === 0 && currentPath) {
+      const title = document.title.replace(/ · Lumen$/, "") || currentPath
+      const segment = computeTrailSegment(currentPath, title)
+      setTabs([{ path: currentPath, title, trail: segment ? [segment] : [] }])
+    }
+  }, [tabs.length, currentPath, setTabs])
+
   const activeTabIndex = tabs.findIndex((t) => normalizePath(t.path) === currentPath)
 
   /**
    * Create a NEW tab (explicit action: Cmd+T, +button, Cmd+click).
-   * If a tab for this path already exists, just switch to it.
-   * New tabs start with a fresh trail — they do NOT inherit the originating
-   * tab's trail.
+   * Always creates a new tab, even if one for this path already exists
+   * (Notion-style — tabs are independent and can have duplicate paths).
+   * New tabs start with a fresh trail.
    */
   const openTab = (path: string, title: string, icon?: Tab["icon"]) => {
     const normalized = normalizePath(path)
     const segment = computeTrailSegment(normalized, title, icon)
     const freshTrail = segment ? [segment] : []
-    setTabs((prev) => {
-      if (prev.some((t) => normalizePath(t.path) === normalized)) {
-        return prev.map((t) =>
-          normalizePath(t.path) === normalized ? { ...t, title, icon, trail: freshTrail } : t,
-        )
-      }
-      return [...prev, { path: normalized, title, icon, trail: freshTrail }]
-    })
+    setTabs((prev) => [...prev, { path: normalized, title, icon, trail: freshTrail }])
   }
 
   /**
@@ -148,23 +161,20 @@ export function useTabs() {
       // Helper: build the next trail for a tab given its current trail
       const nextTrail = (t: Tab) => applyTrailRules(t.trail, segment)
 
-      // If this path already has a tab, update title/icon + advance its trail
-      if (prev.some((t) => normalizePath(t.path) === normalized)) {
-        return prev.map((t) =>
-          normalizePath(t.path) === normalized ? { ...t, title, icon, trail: nextTrail(t) } : t,
-        )
-      }
-
       // If no tabs exist, leave tabs alone — the default trail is updated
       // below instead, so the breadcrumb still works.
       if (prev.length === 0) {
         return prev
       }
 
-      // Replace the active tab with the new page, extending its trail
-      if (activeTabIndex >= 0) {
+      // Recompute active index inside the updater to avoid stale closures
+      const idx = prev.findIndex((t) => normalizePath(t.path) === currentPath)
+
+      // Always update the active tab by index — tabs are independent and
+      // can have duplicate paths (like Notion).
+      if (idx >= 0) {
         return prev.map((t, i) =>
-          i === activeTabIndex ? { path: normalized, title, icon, trail: nextTrail(t) } : t,
+          i === idx ? { path: normalized, title, icon, trail: nextTrail(t) } : t,
         )
       }
 
@@ -180,12 +190,14 @@ export function useTabs() {
     setDefaultTrail((prev) => applyTrailRules(prev, segment))
   }
 
-  const closeTab = (path: string) => {
-    const normalized = normalizePath(path)
-    const index = tabs.findIndex((t) => normalizePath(t.path) === normalized)
-    if (index === -1) return
+  const closeTab = (pathOrIndex: string | number) => {
+    const index =
+      typeof pathOrIndex === "number"
+        ? pathOrIndex
+        : tabs.findIndex((t) => normalizePath(t.path) === normalizePath(pathOrIndex))
+    if (index === -1 || index >= tabs.length) return
 
-    const newTabs = tabs.filter((t) => normalizePath(t.path) !== normalized)
+    const newTabs = [...tabs.slice(0, index), ...tabs.slice(index + 1)]
     setTabs(newTabs)
 
     // Only navigate if closing the active tab
@@ -194,19 +206,20 @@ export function useTabs() {
         const nextIndex = Math.min(index, newTabs.length - 1)
         router.navigate({ to: newTabs[nextIndex].path })
       } else {
-        router.navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
+        // Last tab closed — navigate to Home. The useEffect will
+        // re-create a tab for the new route automatically.
+        router.navigate({ to: "/" })
       }
     }
   }
 
-  const closeOtherTabs = (path: string) => {
-    const normalized = normalizePath(path)
-    setTabs((prev) => prev.filter((t) => normalizePath(t.path) === normalized))
+  const closeOtherTabs = (index: number) => {
+    setTabs((prev) => (index >= 0 && index < prev.length ? [prev[index]] : prev))
   }
 
   const closeAllTabs = () => {
     setTabs([])
-    router.navigate({ to: "/notes", search: { query: undefined, view: "grid" } })
+    router.navigate({ to: "/" })
   }
 
   // When there's an active tab, its trail wins. Otherwise fall back to the

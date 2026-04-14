@@ -31,14 +31,16 @@ function applyWouldChangeLocalStorage(repoSettings: SyncedSettings): boolean {
 /**
  * Sync user settings between localStorage and the user's GitHub repo.
  *
- * On mount:
+ * Runs when `isRepoCloned` becomes true:
  * - If `.lumen/settings.json` exists in repo, apply to localStorage (repo wins)
  * - Otherwise, create `.lumen/settings.json` from localStorage
  *
- * Call this once in the app root component, after repo is cloned.
+ * Call this once in the app root component.
  */
-export function useSettingsSync() {
+export function useSettingsSync(isRepoCloned: boolean) {
   useEffect(() => {
+    if (!isRepoCloned) return
+
     let mounted = true
 
     async function sync() {
@@ -73,7 +75,7 @@ export function useSettingsSync() {
     return () => {
       mounted = false
     }
-  }, [])
+  }, [isRepoCloned])
 }
 
 async function saveSettingsToRepoNow(): Promise<void> {

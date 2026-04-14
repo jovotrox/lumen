@@ -1,12 +1,21 @@
 import { Link, useNavigate } from "@tanstack/react-router"
 import { TrailSegment } from "../global-state"
 import { cx } from "../utils/cx"
+import { getLeadingEmoji, removeLeadingEmoji } from "../utils/emoji"
 import { BreadcrumbIcon } from "./breadcrumb-icon"
 import { DropdownMenu } from "./dropdown-menu"
 
 type Props = {
   trail: TrailSegment[]
   className?: string
+}
+
+/** Strip leading emoji from segment title since BreadcrumbIcon already renders it. */
+function displayTitle(seg: TrailSegment): string {
+  if (seg.iconKind === "note" && getLeadingEmoji(seg.title)) {
+    return removeLeadingEmoji(seg.title)
+  }
+  return seg.title
 }
 
 /** How many trailing segments to always show when the trail is collapsed. */
@@ -78,7 +87,7 @@ function SegmentRow({
           <span className="flex shrink-0 text-text-secondary">
             <BreadcrumbIcon segment={segment} />
           </span>
-          <span className="max-w-[180px] truncate">{segment.title}</span>
+          <span className="max-w-[180px] truncate">{displayTitle(segment)}</span>
         </span>
       ) : (
         <Link
@@ -89,7 +98,7 @@ function SegmentRow({
           <span className="flex shrink-0 text-text-secondary">
             <BreadcrumbIcon segment={segment} />
           </span>
-          <span className="max-w-[180px] truncate">{segment.title}</span>
+          <span className="max-w-[180px] truncate">{displayTitle(segment)}</span>
         </Link>
       )}
       {withSeparator ? <Separator /> : null}
@@ -123,7 +132,7 @@ function EllipsisDropdown({ segments }: { segments: TrailSegment[] }) {
             icon={<BreadcrumbIcon segment={seg} />}
             onClick={() => navigate({ to: seg.path })}
           >
-            {seg.title}
+            {displayTitle(seg)}
           </DropdownMenu.Item>
         ))}
       </DropdownMenu.Content>

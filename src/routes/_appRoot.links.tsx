@@ -24,7 +24,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="Links" icon={<LinkIcon16 />}>
-      <div className="p-4 pt-0">
+      <div className="p-4 pt-0 sm:px-8 sm:pt-2">
         <LinksView
           query={query ?? ""}
           view={view}

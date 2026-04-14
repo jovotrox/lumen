@@ -59,6 +59,7 @@ module.exports = {
         backdrop: "var(--color-bg-backdrop)",
         "overlay-backdrop": "var(--color-bg-overlay-backdrop)",
         secondary: "var(--color-bg-secondary)",
+        sidebar: "var(--color-bg-sidebar)",
         "secondary-hover": "var(--color-bg-secondary-hover)",
         "secondary-active": "var(--color-bg-secondary-active)",
         tertiary: "var(--color-bg-tertiary)",

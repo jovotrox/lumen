@@ -1,21 +1,29 @@
 import { useAtomValue, useSetAtom } from "jotai"
 import React, { useDeferredValue, useMemo } from "react"
 import { Link, useNavigate } from "@tanstack/react-router"
+import { Grid2x2, Grid3x3, LayoutGrid, List, Plus, Search, Users } from "lucide-react"
+import { cx } from "../utils/cx"
 import { globalStateMachineAtom, peopleAtom, tasksAtom } from "../global-state"
 import { generateNoteId } from "../utils/note-id"
-import { Plus, Search, Users } from "lucide-react"
 import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
 import { EmptyState } from "./empty-state"
 import { IconButton } from "./icon-button"
-import { GridIcon16, ListIcon16 } from "./icons"
+import { NotePreview } from "./note-preview"
 import type { Note } from "../schema"
+import type { ViewMode } from "../routes/_appRoot.projects"
+
+const gridCols: Record<Exclude<ViewMode, "list">, string> = {
+  sm: "grid-cols-[repeat(auto-fill,minmax(200px,1fr))]",
+  md: "grid-cols-[repeat(auto-fill,minmax(280px,1fr))]",
+  lg: "grid-cols-[repeat(auto-fill,minmax(360px,1fr))]",
+}
 
 type PeopleViewProps = {
   query: string
-  view: "grid" | "list"
+  view: ViewMode
   onQueryChange: (query: string) => void
-  onViewChange: (view: "grid" | "list") => void
+  onViewChange: (view: ViewMode) => void
 }
 
 export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleViewProps) {
@@ -62,6 +70,17 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
     return counts
   }, [people, allTasks])
 
+  const viewIcon =
+    view === "list" ? (
+      <List size={16} />
+    ) : view === "sm" ? (
+      <Grid3x3 size={16} />
+    ) : view === "md" ? (
+      <LayoutGrid size={16} />
+    ) : (
+      <Grid2x2 size={16} />
+    )
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
@@ -78,18 +97,38 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
           <Plus size={16} />
         </IconButton>
         <DropdownMenu>
-          <DropdownMenu.Trigger
-            render={
-              <IconButton aria-label="View">
-                {view === "grid" ? <GridIcon16 /> : <ListIcon16 />}
-              </IconButton>
-            }
-          />
-          <DropdownMenu.Content align="end" width={160}>
-            <DropdownMenu.Item selected={view === "grid"} onClick={() => onViewChange("grid")}>
-              Grid
-            </DropdownMenu.Item>
-            <DropdownMenu.Item selected={view === "list"} onClick={() => onViewChange("list")}>
+          <DropdownMenu.Trigger render={<IconButton aria-label="View">{viewIcon}</IconButton>} />
+          <DropdownMenu.Content align="end" width={140}>
+            <DropdownMenu.Group>
+              <DropdownMenu.GroupLabel>Grid</DropdownMenu.GroupLabel>
+              <DropdownMenu.Item
+                icon={<Grid3x3 size={16} />}
+                selected={view === "sm"}
+                onClick={() => onViewChange("sm")}
+              >
+                Small
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                icon={<LayoutGrid size={16} />}
+                selected={view === "md"}
+                onClick={() => onViewChange("md")}
+              >
+                Medium
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                icon={<Grid2x2 size={16} />}
+                selected={view === "lg"}
+                onClick={() => onViewChange("lg")}
+              >
+                Large
+              </DropdownMenu.Item>
+            </DropdownMenu.Group>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item
+              icon={<List size={16} />}
+              selected={view === "list"}
+              onClick={() => onViewChange("list")}
+            >
               List
             </DropdownMenu.Item>
           </DropdownMenu.Content>
@@ -109,7 +148,7 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
             description="Try different search terms or clear the filter."
           />
         )
-      ) : (
+      ) : view === "list" ? (
         <ul className="flex flex-col gap-2">
           {filteredPeople.map((person) => (
             <PersonListItem
@@ -119,8 +158,46 @@ export function PeopleView({ query, view, onQueryChange, onViewChange }: PeopleV
             />
           ))}
         </ul>
+      ) : (
+        <div className={cx("grid gap-4", gridCols[view])}>
+          {filteredPeople.map((person) => (
+            <PersonGridCard
+              key={person.id}
+              person={person}
+              taskCount={taskCounts[person.id] ?? 0}
+            />
+          ))}
+        </div>
       )}
     </div>
+  )
+}
+
+function PersonGridCard({ person, taskCount }: { person: Note; taskCount: number }) {
+  const role = person.frontmatter.role as string | undefined
+  const team = person.frontmatter.team as string | undefined
+
+  return (
+    <Link
+      to="/notes/$"
+      params={{ _splat: person.id }}
+      search={{ mode: "read", query: undefined, view: "grid" }}
+      draggable={false}
+      className="card-1 group flex flex-col overflow-hidden rounded-lg transition-[outline] hover:outline hover:outline-2 hover:outline-[var(--neutral-7)]"
+    >
+      {/* Content preview */}
+      <div className="grow overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_60%,transparent_100%)]">
+        <NotePreview note={person} hideProperties />
+      </div>
+      {/* Footer */}
+      {role || team || taskCount > 0 ? (
+        <div className="flex flex-col gap-0.5 px-3 pb-3 text-[11px] text-text-tertiary">
+          {role ? <span className="truncate">{role}</span> : null}
+          {team ? <span className="truncate">{team}</span> : null}
+          {taskCount > 0 ? <span>{taskCount} pending tasks</span> : null}
+        </div>
+      ) : null}
+    </Link>
   )
 }
 

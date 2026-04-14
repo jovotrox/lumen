@@ -486,6 +486,7 @@ function AppearanceSection() {
 const defaultCustomColors: ThemeColors = {
   bg: "#1e1e1e",
   bgSecondary: "#252526",
+  bgSidebar: "#252526",
   text: "#d4d4d4",
   textSecondary: "#858585",
   border: "#3c3c3c",
@@ -497,6 +498,7 @@ const defaultCustomColors: ThemeColors = {
 const colorLabels: Record<keyof ThemeColors, string> = {
   bg: "Background",
   bgSecondary: "Background secondary",
+  bgSidebar: "Sidebar",
   text: "Text",
   textSecondary: "Text secondary",
   border: "Border",

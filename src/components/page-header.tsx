@@ -58,7 +58,7 @@ export function PageHeader({ title, icon, className, actions }: PageHeaderProps)
 
   return (
     <div className={cx("@container/header", className)}>
-      <header className="flex h-[var(--height-app-header)] items-center gap-2 px-2">
+      <header className="flex h-[var(--height-app-header)] items-center gap-2 px-2 sm:px-6 sm:pt-2">
         {showCollapsedControls ? (
           <div className="hidden items-center sm:flex">
             <IconButton

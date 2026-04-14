@@ -2,17 +2,20 @@ import { createFileRoute } from "@tanstack/react-router"
 import { User } from "lucide-react"
 import { PageLayout } from "../components/page-layout"
 import { PeopleView } from "../components/people-view"
+import type { ViewMode } from "./_appRoot.projects"
 
 type RouteSearch = {
   query: string | undefined
-  view: "grid" | "list"
+  view: ViewMode
 }
+
+const validViews = new Set<ViewMode>(["sm", "md", "lg", "list"])
 
 export const Route = createFileRoute("/_appRoot/people")({
   validateSearch: (search: Record<string, unknown>): RouteSearch => {
     return {
       query: typeof search.query === "string" ? search.query : undefined,
-      view: search.view === "grid" ? "grid" : "list",
+      view: validViews.has(search.view as ViewMode) ? (search.view as ViewMode) : "list",
     }
   },
   component: RouteComponent,
@@ -27,7 +30,7 @@ function RouteComponent() {
 
   return (
     <PageLayout title="People" icon={<User size={16} />}>
-      <div className="p-4 pt-0">
+      <div className="p-4 pt-0 sm:px-8 sm:pt-2">
         <PeopleView
           query={query ?? ""}
           view={view}

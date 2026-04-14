@@ -1,21 +1,41 @@
 import { useAtomValue, useSetAtom } from "jotai"
 import React, { useDeferredValue, useMemo } from "react"
 import { Link, useNavigate } from "@tanstack/react-router"
-import { Calendar, CheckSquare, FolderKanban, Plus, Search, User } from "lucide-react"
+import {
+  AlertTriangle,
+  Calendar,
+  CheckSquare,
+  FolderKanban,
+  Grid2x2,
+  Grid3x3,
+  LayoutGrid,
+  List,
+  Plus,
+  Search,
+  User,
+} from "lucide-react"
+import { cx } from "../utils/cx"
 import { globalStateMachineAtom, projectsAtom } from "../global-state"
 import { generateNoteId } from "../utils/note-id"
 import { SearchInput } from "./search-input"
 import { DropdownMenu } from "./dropdown-menu"
 import { EmptyState } from "./empty-state"
 import { IconButton } from "./icon-button"
-import { GridIcon16, ListIcon16 } from "./icons"
+import { NotePreview } from "./note-preview"
 import type { Note } from "../schema"
+import type { ViewMode } from "../routes/_appRoot.projects"
+
+const gridCols: Record<Exclude<ViewMode, "list">, string> = {
+  sm: "grid-cols-[repeat(auto-fill,minmax(200px,1fr))]",
+  md: "grid-cols-[repeat(auto-fill,minmax(280px,1fr))]",
+  lg: "grid-cols-[repeat(auto-fill,minmax(360px,1fr))]",
+}
 
 type ProjectsViewProps = {
   query: string
-  view: "grid" | "list"
+  view: ViewMode
   onQueryChange: (query: string) => void
-  onViewChange: (view: "grid" | "list") => void
+  onViewChange: (view: ViewMode) => void
 }
 
 export function ProjectsView({ query, view, onQueryChange, onViewChange }: ProjectsViewProps) {
@@ -50,6 +70,17 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
     )
   }, [projects, deferredQuery])
 
+  const viewIcon =
+    view === "list" ? (
+      <List size={16} />
+    ) : view === "sm" ? (
+      <Grid3x3 size={16} />
+    ) : view === "md" ? (
+      <LayoutGrid size={16} />
+    ) : (
+      <Grid2x2 size={16} />
+    )
+
   return (
     <div className="flex flex-col gap-4">
       <div className="flex items-center gap-2">
@@ -66,18 +97,38 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
           <Plus size={16} />
         </IconButton>
         <DropdownMenu>
-          <DropdownMenu.Trigger
-            render={
-              <IconButton aria-label="View">
-                {view === "grid" ? <GridIcon16 /> : <ListIcon16 />}
-              </IconButton>
-            }
-          />
-          <DropdownMenu.Content align="end" width={160}>
-            <DropdownMenu.Item selected={view === "grid"} onClick={() => onViewChange("grid")}>
-              Grid
-            </DropdownMenu.Item>
-            <DropdownMenu.Item selected={view === "list"} onClick={() => onViewChange("list")}>
+          <DropdownMenu.Trigger render={<IconButton aria-label="View">{viewIcon}</IconButton>} />
+          <DropdownMenu.Content align="end" width={140}>
+            <DropdownMenu.Group>
+              <DropdownMenu.GroupLabel>Grid</DropdownMenu.GroupLabel>
+              <DropdownMenu.Item
+                icon={<Grid3x3 size={16} />}
+                selected={view === "sm"}
+                onClick={() => onViewChange("sm")}
+              >
+                Small
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                icon={<LayoutGrid size={16} />}
+                selected={view === "md"}
+                onClick={() => onViewChange("md")}
+              >
+                Medium
+              </DropdownMenu.Item>
+              <DropdownMenu.Item
+                icon={<Grid2x2 size={16} />}
+                selected={view === "lg"}
+                onClick={() => onViewChange("lg")}
+              >
+                Large
+              </DropdownMenu.Item>
+            </DropdownMenu.Group>
+            <DropdownMenu.Separator />
+            <DropdownMenu.Item
+              icon={<List size={16} />}
+              selected={view === "list"}
+              onClick={() => onViewChange("list")}
+            >
               List
             </DropdownMenu.Item>
           </DropdownMenu.Content>
@@ -97,20 +148,89 @@ export function ProjectsView({ query, view, onQueryChange, onViewChange }: Proje
             description="Try different search terms or clear the filter."
           />
         )
-      ) : (
+      ) : view === "list" ? (
         <ul className="flex flex-col gap-2">
           {filteredProjects.map((project) => (
             <ProjectListItem key={project.id} project={project} />
           ))}
         </ul>
+      ) : (
+        <div className={cx("grid gap-4", gridCols[view])}>
+          {filteredProjects.map((project) => (
+            <ProjectGridCard key={project.id} project={project} />
+          ))}
+        </div>
       )}
     </div>
+  )
+}
+
+function ProjectGridCard({ project }: { project: Note }) {
+  const status = (project.frontmatter.status as string) ?? "active"
+  const rawDeadline = project.frontmatter.deadline
+  const deadline =
+    rawDeadline instanceof Date
+      ? rawDeadline.toISOString().slice(0, 10)
+      : typeof rawDeadline === "string"
+        ? rawDeadline
+        : undefined
+  const total = project.tasks.length
+  const completed = project.tasks.filter((t) => t.completed).length
+  const pct = total > 0 ? Math.round((completed / total) * 100) : 0
+  const isOverdue =
+    deadline && new Date(deadline + "T23:59:59").getTime() < Date.now() && status === "active"
+
+  return (
+    <Link
+      to="/notes/$"
+      params={{ _splat: project.id }}
+      search={{ mode: "read", query: undefined, view: "grid" }}
+      draggable={false}
+      className="card-1 group flex flex-col overflow-hidden rounded-lg transition-[outline] hover:outline hover:outline-2 hover:outline-[var(--neutral-7)]"
+    >
+      {/* Content preview */}
+      <div className="grow overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_60%,transparent_100%)]">
+        <NotePreview note={project} hideProperties />
+      </div>
+      {/* Footer */}
+      <div className="flex flex-col gap-2 px-3 pb-3">
+        {total > 0 ? (
+          <div className="flex items-center gap-2">
+            <div className="h-1 flex-1 rounded-full bg-bg-tertiary">
+              <div
+                className="h-full rounded-full bg-text-success transition-all"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <span className="shrink-0 text-[11px] text-text-tertiary">
+              {completed}/{total}
+            </span>
+          </div>
+        ) : null}
+        <div className="flex items-center gap-2">
+          <StatusBadge status={status} />
+          {deadline ? (
+            <span
+              className={cx(
+                "flex items-center gap-1 text-[11px] text-text-tertiary",
+                isOverdue && "text-text-danger",
+              )}
+            >
+              <Calendar size={11} />
+              {formatShortDate(deadline)}
+              {isOverdue ? " (overdue)" : ""}
+            </span>
+          ) : null}
+        </div>
+      </div>
+    </Link>
   )
 }
 
 function ProjectListItem({ project }: { project: Note }) {
   const status = (project.frontmatter.status as string) ?? "active"
   const owner = project.frontmatter.owner as string | undefined
+  const priority = project.frontmatter.priority as number | undefined
   const rawDeadline = project.frontmatter.deadline
   const deadline =
     rawDeadline instanceof Date
@@ -174,8 +294,14 @@ function ProjectListItem({ project }: { project: Note }) {
           </div>
         ) : null}
 
-        {/* Meta row: owner, deadline, top incomplete tasks */}
+        {/* Meta row: priority, owner, deadline, top incomplete tasks */}
         <div className="flex flex-wrap items-center gap-3 text-xs text-text-secondary">
+          {priority ? (
+            <span className={cx("flex items-center gap-1", priorityColor(priority))}>
+              <AlertTriangle size={12} />
+              {priority === 1 ? "High" : priority === 2 ? "Medium" : "Low"}
+            </span>
+          ) : null}
           {owner ? (
             <span className="flex items-center gap-1">
               <User size={12} />
@@ -202,13 +328,35 @@ function ProjectListItem({ project }: { project: Note }) {
 }
 
 function StatusBadge({ status }: { status: string }) {
-  const colors: Record<string, string> = {
-    active: "text-text-success",
-    paused: "text-text-pending",
-    completed: "text-text-secondary",
-    cancelled: "text-text-danger",
+  const styles: Record<string, string> = {
+    active: "bg-text-success/15 text-text-success",
+    paused: "bg-text-pending/15 text-text-pending",
+    completed: "bg-bg-tertiary text-text-secondary",
+    cancelled: "bg-text-danger/15 text-text-danger",
   }
-  return <span className={colors[status] ?? "text-text-secondary"}>● {status}</span>
+  return (
+    <span
+      className={cx(
+        "inline-flex w-fit items-center gap-1 rounded-full px-1.5 py-px text-[11px] font-medium capitalize",
+        styles[status] ?? "bg-bg-tertiary text-text-secondary",
+      )}
+    >
+      <span className="text-[7px]">●</span>
+      {status}
+    </span>
+  )
+}
+
+function priorityColor(priority: number): string {
+  if (priority === 1) return "text-text-danger"
+  if (priority === 2) return "text-text-pending"
+  return "text-text-secondary"
+}
+
+/** Format YYYY-MM-DD as "Apr 14" */
+function formatShortDate(date: string): string {
+  const d = new Date(date + "T00:00:00")
+  return d.toLocaleDateString("en-US", { month: "short", day: "numeric" })
 }
 
 /** Convert YYYY-MM-DD to DD-MM-YYYY for display */
