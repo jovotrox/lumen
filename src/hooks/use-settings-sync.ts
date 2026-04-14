@@ -1,6 +1,5 @@
 import { useEffect } from "react"
-import { getDefaultStore } from "jotai"
-import { globalStateMachineAtom } from "../global-state"
+import { sendWriteFiles } from "../utils/send-write-files"
 import {
   applySettingsToLocalStorage,
   collectSettingsFromLocalStorage,
@@ -17,15 +16,18 @@ import {
  * don't count as a mismatch, since `applySettingsToLocalStorage` ignores
  * undefined values and leaves them untouched.
  */
-function applyWouldChangeLocalStorage(repoSettings: SyncedSettings): boolean {
-  for (const { localStorageKey, settingsKey } of settingsKeyMap) {
-    const newValue = (repoSettings as Record<string, unknown>)[settingsKey]
+function getChangedKeys(
+  repoSettings: SyncedSettings,
+): Array<{ localStorageKey: string; settingsKey: keyof SyncedSettings }> {
+  const changed: Array<{ localStorageKey: string; settingsKey: keyof SyncedSettings }> = []
+  for (const entry of settingsKeyMap) {
+    const newValue = (repoSettings as Record<string, unknown>)[entry.settingsKey]
     if (newValue === undefined) continue
     const serialized = JSON.stringify(newValue)
-    const current = localStorage.getItem(localStorageKey)
-    if (current !== serialized) return true
+    const current = localStorage.getItem(entry.localStorageKey)
+    if (current !== serialized) changed.push(entry)
   }
-  return false
+  return changed
 }
 
 /**
@@ -52,12 +54,18 @@ export function useSettingsSync(isRepoCloned: boolean) {
           // Repo has settings — apply to localStorage (repo is source of truth).
           // Jotai's atomWithStorage picks up the new values on next render;
           // no reload needed.
-          const willChange = applyWouldChangeLocalStorage(repoSettings)
+          // Collect changed keys before applying
+          const changedKeys = getChangedKeys(repoSettings)
           applySettingsToLocalStorage(repoSettings)
-          if (willChange) {
-            // Nudge Jotai atoms that use atomWithStorage — the storage event
-            // only fires for cross-tab changes, so dispatch one for same-tab.
-            window.dispatchEvent(new StorageEvent("storage"))
+          // Nudge Jotai atoms — storage events only fire for cross-tab changes,
+          // so dispatch per-key events for same-tab atomWithStorage listeners.
+          for (const { localStorageKey } of changedKeys) {
+            window.dispatchEvent(
+              new StorageEvent("storage", {
+                key: localStorageKey,
+                newValue: localStorage.getItem(localStorageKey),
+              }),
+            )
           }
         } else if (mounted) {
           // No settings in repo — save current localStorage settings via state machine
@@ -80,18 +88,7 @@ export function useSettingsSync(isRepoCloned: boolean) {
   }, [isRepoCloned])
 }
 
-/**
- * Send a WRITE_FILES event to the state machine via the Jotai store.
- * This serializes git operations (add/commit) with pull/push.
- */
-function sendWriteFiles(files: Record<string, string | null>, commitMessage?: string): void {
-  const store = getDefaultStore()
-  store.set(globalStateMachineAtom, {
-    type: "WRITE_FILES",
-    markdownFiles: files,
-    commitMessage,
-  })
-}
+let saveTimeout: ReturnType<typeof setTimeout> | null = null
 
 /**
  * Save current settings to the repo via the state machine. Debounced 500ms.
@@ -106,12 +103,12 @@ export function saveSettingsToRepo(): void {
   }, 500)
 }
 
-let saveTimeout: ReturnType<typeof setTimeout> | null = null
-
 /**
  * Force an immediate save. Use before unmount / navigation.
+ * Note: persistence is best-effort — the WRITE_FILES event is enqueued
+ * but may not complete before the tab closes.
  */
-export async function flushSettingsToRepo(): Promise<void> {
+export function flushSettingsToRepo(): void {
   if (saveTimeout) {
     clearTimeout(saveTimeout)
     saveTimeout = null
