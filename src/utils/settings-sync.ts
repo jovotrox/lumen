@@ -17,7 +17,15 @@ const SETTINGS_FILE_PATH_PROD = `${REPO_DIR}/.lumen/settings.json`
 import type { CalendarFeed } from "./calendar"
 
 /** Settings that sync across devices via the user's GitHub repo */
+/**
+ * Bump this when the settings format changes in a way that requires a fresh start.
+ * Old settings files with a different (or missing) version will be overwritten
+ * with current localStorage values on next sync. Safe for beta.
+ */
+export const SETTINGS_VERSION = 2
+
 export type SyncedSettings = {
+  _version?: number
   nickname?: string
   font?: string
   theme?: string
@@ -109,7 +117,7 @@ export async function writeSettingsToRepo(settings: SyncedSettings): Promise<voi
 
 /** Collect current settings from localStorage into a SyncedSettings object */
 export function collectSettingsFromLocalStorage(): SyncedSettings {
-  const settings: SyncedSettings = {}
+  const settings: SyncedSettings = { _version: SETTINGS_VERSION }
   for (const { localStorageKey, settingsKey } of settingsKeyMap) {
     const raw = localStorage.getItem(localStorageKey)
     if (raw !== null) {

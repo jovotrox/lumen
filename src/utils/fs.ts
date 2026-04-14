@@ -15,9 +15,17 @@ const DB_NAME = "fs"
 // Reference: https://github.com/streamich/memfs/tree/c8bfa38aa15f1d3c9f326e9c25c8972326193a26/demo/git-opfs
 export const fs = new LightningFS(DB_NAME)
 
-/** Delete file system database */
-export function fsWipe() {
-  window.indexedDB.deleteDatabase(DB_NAME)
+/** Delete file system database. Returns a Promise that resolves when deletion completes. */
+export function fsWipe(): Promise<void> {
+  return new Promise<void>((resolve, reject) => {
+    const req = window.indexedDB.deleteDatabase(DB_NAME)
+    req.onsuccess = () => resolve()
+    req.onerror = () => reject(req.error)
+    req.onblocked = () => {
+      // Will resolve via onsuccess once unblocked
+      console.warn("IndexedDB deletion blocked — waiting for other connections to close")
+    }
+  })
 }
 
 /**

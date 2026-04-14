@@ -606,6 +606,10 @@ function createGlobalStateMachine() {
           markdownFiles: (context, event) => {
             const merged = { ...context.markdownFiles }
             for (const [filepath, content] of Object.entries(event.markdownFiles)) {
+              // Only track .md files in context — non-markdown files (like
+              // .lumen/settings.json) are written to disk + committed by the
+              // writeFiles service but shouldn't appear as "notes".
+              if (!filepath.endsWith(".md")) continue
               if (content === null) {
                 delete merged[filepath]
               } else {
@@ -618,6 +622,7 @@ function createGlobalStateMachine() {
         mergeMarkdownFilesLocalStorage: (context, event) => {
           const merged = { ...context.markdownFiles }
           for (const [filepath, content] of Object.entries(event.markdownFiles)) {
+            if (!filepath.endsWith(".md")) continue
             if (content === null) {
               delete merged[filepath]
             } else {

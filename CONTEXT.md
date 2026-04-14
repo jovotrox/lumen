@@ -296,6 +296,14 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 
 ## Historial de Cambios Importantes
 
+### Sync Race Condition Fixes — 2026-04-14
+
+- **fix: settings/theme sync racing with state machine** — our custom settings sync (`useSettingsSync`) and theme sync (`saveCustomThemes`) were calling `gitAdd`/`gitCommit` directly, bypassing the XState state machine that serializes all git operations. Concurrent git operations on the same IndexedDB repo corrupted the git config, causing "fetch refspec" and "401" errors. Now both route writes through `WRITE_FILES` event via Jotai store.
+- **fix: remove window.location.reload() from settings sync** — the reload killed in-flight git operations and caused IndexedDB corruption on multi-device sync. Replaced with synthetic StorageEvent to nudge Jotai atoms reactively.
+- **fix: await fsWipe() before git clone** — `indexedDB.deleteDatabase()` was fire-and-forget, causing `git.clone()` to operate on a partially-deleted database. Now returns a Promise that resolves when deletion completes.
+- **fix: forced settings reset for beta** — added `_version` field to settings.json (`SETTINGS_VERSION = 2`). Stale/missing version → repo settings overwritten with current localStorage (clean slate). Prevents corrupted settings from propagating across devices.
+- **fix: validate custom theme IDs** — when applying settings from repo, custom theme IDs are checked against local themes. Missing themes fall back to "default" to prevent broken UI from cross-device mismatch.
+
 ### PWA Mobile Fixes — 2026-04-14
 
 - **fix: horizontal overflow on iOS PWA** — `w-screen` (100vw) replaced with `w-full` (100%) on root container; 100vw can be wider than visible area in PWA standalone mode, causing content to overflow past the right edge
