@@ -296,6 +296,20 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 
 ## Historial de Cambios Importantes
 
+### Subtle Sync Status — 2026-04-14
+
+- **feat: subtle sync status indicator**
+  - Syncing color changed from yellow (`text-text-pending`) to gray (`text-text-secondary`)
+  - Syncing/Synced auto-hide after 3 seconds with fade-out animation (`transition-opacity duration-300`)
+  - Errors remain visible indefinitely (safety net)
+  - New `useSyncStatus()` hook returns `{ state, text, visible }` with timer logic
+  - `SyncStatusIcon` now receives `state` prop instead of reading atoms directly
+- **feat: "Show sync status" setting**
+  - Toggle in Settings > GitHub section, synced via `.lumen/settings.json`
+  - `showSyncStatusAtom` (`show-sync-status` localStorage key)
+  - When disabled, sync indicator hidden entirely (errors still shown)
+  - E-paper variant respected for fade animation
+
 ### Raycast Theme Import + Mobile Layout Fixes — 2026-04-14
 
 - **feat(themes): Raycast theme import in custom theme editor**
