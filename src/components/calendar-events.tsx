@@ -1,7 +1,6 @@
 import { useNavigate } from "@tanstack/react-router"
 import { useAtomValue, useSetAtom } from "jotai"
 import { Calendar, FileText } from "lucide-react"
-import { AnimatePresence, motion } from "motion/react"
 import React from "react"
 import {
   calendarFeedsAtom,
@@ -117,45 +116,39 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
   if (events.length === 0 && errors.length === 0) return null
 
   return (
-    <motion.div layout className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
-      <AnimatePresence mode="popLayout">
-        {events.map((event, i) => {
-          const noteId = getEventNoteId(event)
-          const hasNote = notes.has(noteId)
-          return (
-            <motion.button
-              key={noteId}
-              layout
-              initial={{ opacity: 0, y: 4 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.2, ease: "easeOut", delay: i * 0.03 }}
-              type="button"
-              onClick={() => openEventNote(event)}
-              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition-colors hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none"
-              title={
-                event.calendar
-                  ? `${event.calendar} — ${hasNote ? "open linked note" : "create linked note"}`
-                  : undefined
-              }
+    <div className="my-2 flex flex-col gap-0 rounded-lg bg-bg-secondary p-1">
+      {events.map((event, i) => {
+        const noteId = getEventNoteId(event)
+        const hasNote = notes.has(noteId)
+        return (
+          <button
+            key={noteId}
+            type="button"
+            onClick={() => openEventNote(event)}
+            className="calendar-event-enter flex w-full items-center gap-2 rounded-lg px-2.5 py-1 text-left transition-colors hover:bg-bg-tertiary active:bg-bg-tertiary focus-visible:bg-bg-tertiary focus:outline-none"
+            style={{ animationDelay: `${i * 30}ms` }}
+            title={
+              event.calendar
+                ? `${event.calendar} — ${hasNote ? "open linked note" : "create linked note"}`
+                : undefined
+            }
+          >
+            <span
+              className="shrink-0 text-sm font-medium tabular-nums"
+              style={{ color: event.color }}
             >
-              <span
-                className="shrink-0 text-sm font-medium tabular-nums"
-                style={{ color: event.color }}
-              >
-                {formatStartTime(event)}
-              </span>
-              <span className="flex-1 truncate text-sm text-text">{event.title}</span>
-              {hasNote ? (
-                <FileText
-                  className="size-3 shrink-0 text-text-tertiary"
-                  aria-label="Has linked note"
-                />
-              ) : null}
-            </motion.button>
-          )
-        })}
-      </AnimatePresence>
+              {formatStartTime(event)}
+            </span>
+            <span className="flex-1 truncate text-sm text-text">{event.title}</span>
+            {hasNote ? (
+              <FileText
+                className="size-3 shrink-0 text-text-tertiary"
+                aria-label="Has linked note"
+              />
+            ) : null}
+          </button>
+        )
+      })}
       {errors.length > 0 ? (
         <div className="mt-1 flex flex-col gap-0.5 px-2 text-[10px] text-text-tertiary">
           {errors.map((e, i) => (
@@ -165,6 +158,6 @@ export function CalendarEvents({ dateString }: { dateString: string }) {
           ))}
         </div>
       ) : null}
-    </motion.div>
+    </div>
   )
 }
