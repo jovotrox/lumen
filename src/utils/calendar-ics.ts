@@ -91,7 +91,7 @@ export function parseIcsForDate(icsText: string, dateString: string): CalendarEv
   // Validate response is actually ICS before feeding to parser —
   // CORS proxy may return HTML error pages that block the UI thread
   // when ICAL.parse tries to parse them synchronously.
-  const trimmed = icsText.trimStart()
+  const trimmed = icsText.replace(/^\uFEFF/, "").trimStart()
   if (!trimmed.startsWith("BEGIN:VCALENDAR")) {
     throw new Error("Response is not a valid iCalendar file")
   }
