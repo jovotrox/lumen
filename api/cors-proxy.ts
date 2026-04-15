@@ -99,17 +99,22 @@ async function handler(request: Request): Promise<Response> {
 
     const response = await fetch(targetUrl, fetchOptions)
 
+    // Buffer the full response to prevent Vercel from truncating streamed bodies.
+    // Outlook ICS files can be ~300KB which is well within Vercel's 4.5MB limit.
+    const body = await response.arrayBuffer()
+
     const responseHeaders = new Headers()
     for (const [key, value] of response.headers.entries()) {
       if (EXPOSE_HEADERS.includes(key.toLowerCase())) {
         responseHeaders.set(key, value)
       }
     }
+    responseHeaders.set("content-length", String(body.byteLength))
 
     // Add CORS headers to the response
     addCorsHeaders(responseHeaders, request)
 
-    return new Response(response.body, {
+    return new Response(body, {
       status: response.status,
       statusText: response.statusText,
       headers: responseHeaders,
