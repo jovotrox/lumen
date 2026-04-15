@@ -919,14 +919,14 @@ function NotePage() {
               resolvedWidth === "fixed" && "mx-auto max-w-[700px]",
             )}
           >
-            {isDailyNote || isWeeklyNote ? (
+            {(isDailyNote || isWeeklyNote) && calendarEnabled ? (
               <div className="print-hidden flex flex-col gap-8">
                 <Calendar className="-m-2" activeNoteId={noteId ?? ""} />
                 <CalendarHeader activeNoteId={noteId ?? ""} />
               </div>
             ) : null}
 
-            {isDailyNote ? <CalendarEvents dateString={noteId ?? ""} /> : null}
+            {isDailyNote && calendarEnabled ? <CalendarEvents dateString={noteId ?? ""} /> : null}
 
             {mode === "read" && (
               <div className="min-h-[240px]">
