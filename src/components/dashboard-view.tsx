@@ -580,6 +580,7 @@ function ProjectCard({ project }: { project: Note }) {
   const completed = project.tasks.filter((t) => t.completed).length
   const pct = total > 0 ? Math.round((completed / total) * 100) : 0
   const status = (project.frontmatter.status as string) ?? "active"
+  const owner = project.frontmatter.owner as string | undefined
   const rawDeadline = project.frontmatter.deadline
   const deadline =
     rawDeadline instanceof Date
@@ -594,10 +595,15 @@ function ProjectCard({ project }: { project: Note }) {
       to="/notes/$"
       params={{ _splat: project.id }}
       search={{ mode: "read", query: undefined, view: "grid" }}
-      className="card-1 flex w-[200px] shrink-0 snap-start flex-col overflow-hidden rounded-lg"
+      className="card-1 flex w-[200px] shrink-0 snap-start flex-col overflow-hidden rounded-lg p-3"
     >
+      {/* Title + Owner */}
+      <div className="flex flex-col gap-0.5 pb-2">
+        <span className="truncate text-sm font-medium">{project.displayName}</span>
+        {owner ? <span className="truncate text-xs text-text-tertiary">{owner}</span> : null}
+      </div>
       {/* Footer */}
-      <div className="flex flex-col gap-2 px-3 pb-3">
+      <div className="flex flex-col gap-2">
         {/* Progress */}
         {total > 0 ? (
           <div className="flex items-center gap-2">
