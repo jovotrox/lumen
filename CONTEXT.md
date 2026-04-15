@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-15 (v0.7.1)
+**Ultima actualizacion:** 2026-04-15 (v0.7.2)
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal` (fork personal, rama de compilación)
 - **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, calendar caching v0.7.0
-- **Version:** 0.7.1
+- **Version:** 0.7.2
 
 ### Migracion Tauri → Electron
 
@@ -295,6 +295,14 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 ---
 
 ## Historial de Cambios Importantes
+
+### OAuth Token Refresh Flow — 2026-04-15 (v0.7.2)
+
+- **fix: real root cause of recurring 401** — the previous fixes (CORS buffer, debounce, Electron net.fetch cache+credentials) didn't resolve the issue. Debug log probe confirmed the actual problem: GitHub's `/user` endpoint was returning 401 "Bad credentials" with the same token — the access_token itself was dying. The OAuth app has "Expire user authorization tokens" enabled (invisible in the UI for apps created before a certain date, but still active), so access tokens have an 8h TTL and issue alongside a refresh_token.
+- **feat: token refresh flow** — `gitClone`/`gitPull`/`gitPush` now accept an `onTokenRefreshed` callback. When GitHub returns 401 on an authenticated request (`onAuthFailure`), we attempt `refreshAccessToken(refresh_token)` against `https://github.com/login/oauth/access_token` with `grant_type=refresh_token`. On success, isomorphic-git retries transparently with the new token; a new `REFRESH_TOKEN` event updates the Jotai store + localStorage so subsequent syncs use the fresh credentials. No user interaction required.
+- **schema: `GitHubUser` adds optional `refreshToken` + `expiresAt`** — backward-compatible; existing localStorage entries without these fields continue to work (refresh flow is a no-op for them until next sign-in).
+- **Electron Device Flow captures refresh fields** — `github-auth-electron.tsx` now saves `refresh_token` + `expires_in` from GitHub's Device Flow response, and logs the response shape to the debug log (without exposing tokens) to confirm whether the OAuth app emits refresh tokens.
+- **Scope: Electron only for now** — web PWA refresh requires `client_secret` on the server side (Vercel function) and is deferred to a follow-up. Tauri can be added with a similar Device Flow update.
 
 ### Sync 401 Fix + Diagnostics — 2026-04-15 (v0.7.1)
 

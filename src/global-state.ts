@@ -1,6 +1,6 @@
 import { Searcher } from "fast-fuzzy"
 import git, { WORKDIR } from "isomorphic-git"
-import { atom } from "jotai"
+import { atom, getDefaultStore } from "jotai"
 import { atomWithMachine } from "jotai-xstate"
 import { atomWithStorage, selectAtom } from "jotai/utils"
 import { assign, createMachine, raise } from "xstate"
@@ -53,6 +53,13 @@ type Context = {
 type Event =
   | { type: "SIGN_IN"; githubUser: GitHubUser }
   | { type: "SIGN_OUT" }
+  | {
+      /** Fired when git.ts refreshed the access_token mid-sync. */
+      type: "REFRESH_TOKEN"
+      token: string
+      refreshToken?: string
+      expiresAt?: number
+    }
   | { type: "SELECT_REPO"; githubRepo: GitHubRepository }
   | { type: "SYNC" }
   | { type: "SYNC_DEBOUNCED" }
@@ -62,6 +69,24 @@ type Event =
       commitMessage?: string
     }
   | { type: "DELETE_FILE"; filepath: string }
+
+/**
+ * Dispatched from git.ts when the access_token was refreshed mid-sync. We
+ * defer to a microtask (setTimeout 0) so the event is queued AFTER the
+ * currently-invoked service returns, avoiding reentrancy into XState while
+ * it's mid-transition.
+ */
+function queueRefreshTokenEvent(newUser: GitHubUser): void {
+  setTimeout(() => {
+    const store = getDefaultStore()
+    store.set(globalStateMachineAtom, {
+      type: "REFRESH_TOKEN",
+      token: newUser.token,
+      refreshToken: newUser.refreshToken,
+      expiresAt: newUser.expiresAt,
+    })
+  }, 0)
+}
 
 function createGlobalStateMachine() {
   return createMachine(
@@ -141,6 +166,9 @@ function createGlobalStateMachine() {
         signedIn: {
           on: {
             SIGN_OUT: "signedOut",
+            REFRESH_TOKEN: {
+              actions: ["updateGitHubUserTokens"],
+            },
           },
           initial: "resolvingRepo",
           states: {
@@ -415,7 +443,7 @@ function createGlobalStateMachine() {
         cloneRepo: async (context, event) => {
           if (!context.githubUser) throw new Error("Not signed in")
 
-          await gitClone(event.githubRepo, context.githubUser)
+          await gitClone(event.githubRepo, context.githubUser, queueRefreshTokenEvent)
 
           return {
             markdownFiles: await getMarkdownFilesFromFs(REPO_DIR),
@@ -424,7 +452,7 @@ function createGlobalStateMachine() {
         pull: async (context) => {
           if (!context.githubUser) throw new Error("Not signed in")
 
-          await gitPull(context.githubUser)
+          await gitPull(context.githubUser, queueRefreshTokenEvent)
 
           return {
             markdownFiles: await getMarkdownFilesFromFs(REPO_DIR),
@@ -433,7 +461,7 @@ function createGlobalStateMachine() {
         push: async (context) => {
           if (!context.githubUser) throw new Error("Not signed in")
 
-          await gitPush(context.githubUser)
+          await gitPush(context.githubUser, queueRefreshTokenEvent)
         },
         checkStatus: async () => {
           return { isSynced: await isRepoSynced() }
@@ -539,6 +567,22 @@ function createGlobalStateMachine() {
         clearGitHubUserLocalStorage: () => {
           localStorage.removeItem(GITHUB_USER_STORAGE_KEY)
         },
+        updateGitHubUserTokens: assign({
+          githubUser: (context, event) => {
+            if (!context.githubUser || event.type !== "REFRESH_TOKEN") {
+              return context.githubUser
+            }
+            const updated: GitHubUser = {
+              ...context.githubUser,
+              token: event.token,
+              // Keep the existing refreshToken if GitHub didn't rotate it.
+              refreshToken: event.refreshToken ?? context.githubUser.refreshToken,
+              expiresAt: event.expiresAt,
+            }
+            localStorage.setItem(GITHUB_USER_STORAGE_KEY, JSON.stringify(updated))
+            return updated
+          },
+        }),
         setGitHubRepo: assign({
           githubRepo: (_, event) => {
             switch (event.type) {
