@@ -391,10 +391,27 @@ function registerIpcHandlers(): void {
     ) => {
       const { url, method, headers, body } = request
 
+      // `cache: "no-store"` and `credentials: "omit"` are critical for git
+      // operations over HTTP:
+      //
+      //   - isomorphic-git does a two-step auth dance: first request without
+      //     Authorization gets a 401, second request with Basic auth should
+      //     succeed. Electron's default session cache can serve the first 401
+      //     response back on the second request, breaking the flow.
+      //
+      //   - Electron's default session shares cookies with the renderer. If
+      //     github.com cookies exist (e.g. from OAuth redirects), they get
+      //     sent alongside our Basic auth header, which can cause GitHub to
+      //     reject the request with "Invalid username or token".
+      //
+      // `fetch` here is only used by isomorphic-git + direct API probes, so
+      // these flags are safe globally.
       const response = await net.fetch(url, {
         method,
         headers,
         body: body ? Buffer.from(body) : undefined,
+        cache: "no-store",
+        credentials: "omit",
       })
 
       const responseHeaders: Record<string, string> = {}
