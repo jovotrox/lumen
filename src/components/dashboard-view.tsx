@@ -587,14 +587,17 @@ function RecentCarousel({ children }: { children: React.ReactNode }) {
   }, [updateScrollState])
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative min-w-0 overflow-hidden">
       {canScrollLeft ? (
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-[var(--color-bg)] to-transparent" />
       ) : null}
       {canScrollRight ? (
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-[var(--color-bg)] to-transparent" />
       ) : null}
-      <div ref={scrollRef} className="flex gap-3 overflow-x-auto py-1 scrollbar-hide snap-x">
+      <div
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto [-webkit-overflow-scrolling:touch] py-1 scrollbar-hide snap-x"
+      >
         {children}
       </div>
     </div>
