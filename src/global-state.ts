@@ -252,7 +252,7 @@ function createGlobalStateMachine() {
                     },
                     debouncing: {
                       after: {
-                        1000: "pulling",
+                        2000: "pulling",
                       },
                       on: {
                         SYNC: "pulling",

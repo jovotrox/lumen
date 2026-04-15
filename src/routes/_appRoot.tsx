@@ -194,7 +194,7 @@ function RouteComponent() {
   // Sync when the app becomes visible again
   useEvent("visibilitychange", () => {
     if (document.visibilityState === "visible" && online) {
-      send("SYNC")
+      send("SYNC_DEBOUNCED")
     }
   })
 
