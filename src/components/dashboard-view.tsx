@@ -16,7 +16,6 @@ import {
   FolderOpen,
   Inbox,
   ListPlus,
-  Sparkles,
   Sun,
   Wind,
   X,
@@ -149,10 +148,6 @@ export function DashboardView() {
     [recentNotes],
   )
 
-  const hasDailyNote = notes.has(todayNoteId)
-  const hasPendingItems =
-    unprocessed.length > 0 || incompleteTodayTasks.length > 0 || urgentTasks.length > 0
-
   // Date
   const now = new Date()
   const dayName = now.toLocaleDateString("en-US", { weekday: "long" })
@@ -223,7 +218,7 @@ export function DashboardView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4 pt-8">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 overflow-x-hidden p-4 pt-8">
       {/* Hero: date + greeting + actions */}
       <section className="flex flex-col gap-3">
         {/* Date + weather */}
@@ -475,32 +470,7 @@ export function DashboardView() {
         </DashboardSection>
       ) : null}
 
-      {/* Empty state */}
-      {!hasPendingItems ? (
-        <section className="flex flex-col items-center gap-3 rounded-lg border border-border-secondary py-8 text-center">
-          <Sparkles size={32} className="text-text-tertiary" />
-          <p className="text-text-secondary">No pending tasks — you're all clear!</p>
-          {!hasDailyNote ? (
-            <Link
-              to="/notes/$"
-              params={{ _splat: todayNoteId }}
-              search={{ mode: "write", query: undefined, view: "grid" }}
-              className="link text-sm font-medium"
-            >
-              Start today's note →
-            </Link>
-          ) : (
-            <Link
-              to="/notes/$"
-              params={{ _splat: todayNoteId }}
-              search={{ mode: "read", query: undefined, view: "grid" }}
-              className="link text-sm font-medium"
-            >
-              Open today's note →
-            </Link>
-          )}
-        </section>
-      ) : null}
+      {/* Empty state removed — greeting already communicates "nothing pending" */}
 
       {/* Active projects — carousel */}
       {activeProjects.length > 0 ? (
@@ -587,14 +557,17 @@ function RecentCarousel({ children }: { children: React.ReactNode }) {
   }, [updateScrollState])
 
   return (
-    <div className="relative overflow-hidden">
+    <div className="relative min-w-0 overflow-hidden">
       {canScrollLeft ? (
         <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-6 bg-gradient-to-r from-[var(--color-bg)] to-transparent" />
       ) : null}
       {canScrollRight ? (
         <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-6 bg-gradient-to-l from-[var(--color-bg)] to-transparent" />
       ) : null}
-      <div ref={scrollRef} className="flex gap-3 overflow-x-auto py-1 scrollbar-hide snap-x">
+      <div
+        ref={scrollRef}
+        className="flex gap-3 overflow-x-auto [-webkit-overflow-scrolling:touch] py-1 scrollbar-hide snap-x"
+      >
         {children}
       </div>
     </div>
