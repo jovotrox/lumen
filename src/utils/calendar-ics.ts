@@ -88,6 +88,14 @@ export async function fetchIcsRaw(url: string, signal?: AbortSignal): Promise<st
  *    They must NOT be processed as standalone events (would cause duplicates).
  */
 export function parseIcsForDate(icsText: string, dateString: string): CalendarEvent[] {
+  // Validate response is actually ICS before feeding to parser —
+  // CORS proxy may return HTML error pages that block the UI thread
+  // when ICAL.parse tries to parse them synchronously.
+  const trimmed = icsText.replace(/^\uFEFF/, "").trimStart()
+  if (!trimmed.startsWith("BEGIN:VCALENDAR")) {
+    throw new Error("Response is not a valid iCalendar file")
+  }
+
   const jcal = ICAL.parse(icsText)
   const comp = new ICAL.Component(jcal)
   const vevents = comp.getAllSubcomponents("vevent")

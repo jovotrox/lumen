@@ -6,6 +6,7 @@ import { CodeProps, LiProps } from "react-markdown/lib/ast-to-react"
 import { useNetworkState } from "react-use"
 import rehypeKatex from "rehype-katex"
 import rehypeRaw from "rehype-raw"
+import remarkBreaks from "remark-breaks"
 import remarkGfm from "remark-gfm"
 import remarkMath from "remark-math"
 import { z } from "zod"
@@ -324,6 +325,7 @@ export function MarkdownContent({ children, className }: { children: string; cla
       className={cx("markdown", className)}
       remarkPlugins={[
         remarkGfm,
+        remarkBreaks,
         // remarkEmoji,
         remarkWikilink,
         remarkEmbed,

@@ -41,6 +41,8 @@ import {
 import { cx } from "../utils/cx"
 import { generateAISummary } from "../utils/dashboard-ai"
 import { getGreeting } from "../utils/dashboard-templates"
+import { fs } from "../utils/fs"
+import { REPO_DIR } from "../utils/git"
 import { generateNoteId } from "../utils/note-id"
 import { dismissNudge } from "../utils/nudges"
 import { updateTaskCompletion } from "../utils/task"
@@ -298,24 +300,23 @@ export function DashboardView() {
                 })
               }
             }}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-text px-3 py-1.5 text-sm font-medium text-bg hover:opacity-90"
           >
             <CalendarPlus size={14} />
-            Daily note
+            New daily note
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               const today = todayNoteId
               const existing = notes.get(today)
               const taskLine = `- [ ] `
               if (existing) {
                 const content = existing.content.trimEnd() + "\n" + taskLine
+                await fs.promises.writeFile(`${REPO_DIR}/${today}.md`, content, "utf8")
                 send({ type: "WRITE_FILES", markdownFiles: { [`${today}.md`]: content } })
               } else {
-                send({
-                  type: "WRITE_FILES",
-                  markdownFiles: { [`${today}.md`]: `${taskLine}` },
-                })
+                await fs.promises.writeFile(`${REPO_DIR}/${today}.md`, taskLine, "utf8")
+                send({ type: "WRITE_FILES", markdownFiles: { [`${today}.md`]: taskLine } })
               }
               navigate({
                 to: "/notes/$",
@@ -577,7 +578,6 @@ function RecentCarousel({ children }: { children: React.ReactNode }) {
 function ProjectCard({ project }: { project: Note }) {
   const total = project.tasks.length
   const completed = project.tasks.filter((t) => t.completed).length
-  const pct = total > 0 ? Math.round((completed / total) * 100) : 0
   const status = (project.frontmatter.status as string) ?? "active"
   const rawDeadline = project.frontmatter.deadline
   const deadline =
@@ -588,55 +588,36 @@ function ProjectCard({ project }: { project: Note }) {
         : undefined
   const isOverdue =
     deadline && new Date(deadline + "T23:59:59").getTime() < Date.now() && status === "active"
-  const hasContent = project.content.replace(/^---[\s\S]*?---\n*/, "").trim().length > 0
-
   return (
     <Link
       to="/notes/$"
       params={{ _splat: project.id }}
       search={{ mode: "read", query: undefined, view: "grid" }}
-      className="card-1 flex w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-lg"
+      className="card-1 flex w-[200px] shrink-0 snap-start flex-col overflow-hidden rounded-lg"
     >
-      {/* Content preview or spacer */}
-      {hasContent ? (
-        <div className="grow overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_60%,transparent_100%)]">
-          <NotePreview note={project} hideProperties />
-        </div>
-      ) : (
-        <div className="p-4 pb-0" />
-      )}
-      {/* Footer */}
-      <div className="flex flex-col gap-2 px-3 pb-3">
-        {/* Progress */}
+      {/* Content preview with fade mask — same style as recently visited */}
+      <div className="grow overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_60%,transparent_100%)]">
+        <NotePreview note={project} hideProperties />
+      </div>
+      {/* Footer: status + deadline */}
+      <div className="flex items-center gap-2 px-3 pb-2">
+        <StatusBadge status={status} />
         {total > 0 ? (
-          <div className="flex items-center gap-2">
-            <div className="h-1 flex-1 rounded-full bg-bg-tertiary">
-              <div
-                className="h-full rounded-full bg-text-success transition-all"
-                style={{ width: `${pct}%` }}
-              />
-            </div>
-            <span className="shrink-0 text-[11px] text-text-tertiary">
-              {completed}/{total}
-            </span>
-          </div>
+          <span className="text-[11px] text-text-tertiary">
+            {completed}/{total}
+          </span>
         ) : null}
-        {/* Status + Deadline */}
-        <div className="flex items-center gap-2">
-          <StatusBadge status={status} />
-          {deadline ? (
-            <span
-              className={cx(
-                "flex items-center gap-1 text-[11px] text-text-tertiary",
-                isOverdue && "text-text-danger",
-              )}
-            >
-              <Calendar size={11} />
-              {formatShortDate(deadline)}
-              {isOverdue ? " (overdue)" : ""}
-            </span>
-          ) : null}
-        </div>
+        {deadline ? (
+          <span
+            className={cx(
+              "flex items-center gap-1 text-[11px] text-text-tertiary",
+              isOverdue && "text-text-danger",
+            )}
+          >
+            <Calendar size={11} />
+            {formatShortDate(deadline)}
+          </span>
+        ) : null}
       </div>
     </Link>
   )
