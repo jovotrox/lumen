@@ -32,14 +32,25 @@ function getChangedKeys(
 }
 
 /**
+ * Returns true if the current localStorage settings differ from what's in the
+ * repo. Used to skip no-op commits.
+ */
+async function hasSettingsChanged(): Promise<boolean> {
+  const current: SyncedSettings = { ...collectSettingsFromLocalStorage() }
+  const repoSettings = await readSettingsFromRepo()
+  if (!repoSettings) return true // no file yet, must write
+  // Compare serialized forms — same stable JSON.stringify both sides
+  return JSON.stringify(current) !== JSON.stringify(repoSettings)
+}
+
+/**
  * Sync user settings between localStorage and the user's GitHub repo.
  *
  * Runs when `isRepoCloned` becomes true:
- * - If `.lumen/settings.json` exists in repo, apply to localStorage (repo wins)
- * - Otherwise, create `.lumen/settings.json` from localStorage via WRITE_FILES
+ * - If `.lumen/settings.json` exists in repo with matching version, apply to localStorage
+ * - Otherwise (missing or stale version), overwrite repo with current localStorage
  *
- * All git operations (add/commit) go through the state machine's WRITE_FILES
- * event to avoid racing with pull/push. Never call gitAdd/gitCommit directly.
+ * All git operations go through WRITE_FILES to avoid racing with pull/push.
  */
 export function useSettingsSync(isRepoCloned: boolean) {
   useEffect(() => {
@@ -82,12 +93,15 @@ export function useSettingsSync(isRepoCloned: boolean) {
           }
         } else if (mounted) {
           // No settings, or stale version — overwrite repo with current localStorage.
-          // This forces a clean reset (safe for beta).
-          // No settings in repo — save current localStorage settings via state machine
-          const current = collectSettingsFromLocalStorage()
-          if (Object.keys(current).length > 0) {
-            const content = JSON.stringify(current, null, 2)
-            sendWriteFiles({ [SETTINGS_FILE_REL_PATH]: content }, "Initialize settings")
+          // Only write if the content actually differs from what's in the repo (or
+          // if nothing is there yet). Prevents a redundant "initialize" commit when
+          // the user has never changed anything.
+          if (await hasSettingsChanged()) {
+            const current = collectSettingsFromLocalStorage()
+            if (Object.keys(current).length > 0) {
+              const content = JSON.stringify(current, null, 2)
+              sendWriteFiles({ [SETTINGS_FILE_REL_PATH]: content }, "Initialize settings")
+            }
           }
         }
       } catch (error) {
@@ -107,11 +121,13 @@ let saveTimeout: ReturnType<typeof setTimeout> | null = null
 
 /**
  * Save current settings to the repo via the state machine. Debounced 500ms.
+ * Skips no-op commits when nothing changed since last write.
  */
 export function saveSettingsToRepo(): void {
   if (saveTimeout) clearTimeout(saveTimeout)
-  saveTimeout = setTimeout(() => {
+  saveTimeout = setTimeout(async () => {
     saveTimeout = null
+    if (!(await hasSettingsChanged())) return
     const settings = collectSettingsFromLocalStorage()
     const content = JSON.stringify(settings, null, 2)
     sendWriteFiles({ [SETTINGS_FILE_REL_PATH]: content }, "Update settings")
@@ -120,14 +136,14 @@ export function saveSettingsToRepo(): void {
 
 /**
  * Force an immediate save. Use before unmount / navigation.
- * Note: persistence is best-effort — the WRITE_FILES event is enqueued
- * but may not complete before the tab closes.
+ * Skips no-op commits — common case when user just viewed Settings without editing.
  */
-export function flushSettingsToRepo(): void {
+export async function flushSettingsToRepo(): Promise<void> {
   if (saveTimeout) {
     clearTimeout(saveTimeout)
     saveTimeout = null
   }
+  if (!(await hasSettingsChanged())) return
   const settings = collectSettingsFromLocalStorage()
   const content = JSON.stringify(settings, null, 2)
   sendWriteFiles({ [SETTINGS_FILE_REL_PATH]: content }, "Update settings")
