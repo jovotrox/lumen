@@ -16,6 +16,7 @@ import {
   templateSchema,
 } from "./schema"
 import type { CalendarFeed } from "./utils/calendar"
+import { clearCalendarCache } from "./utils/calendar-cache"
 import { fs, fsWipe } from "./utils/fs"
 import {
   REPO_DIR,
@@ -592,6 +593,7 @@ function createGlobalStateMachine() {
         }),
         clearFileSystem: () => {
           fsWipe()
+          void clearCalendarCache()
         },
         setMarkdownFiles: assign({
           markdownFiles: (_, event) => event.data.markdownFiles,
