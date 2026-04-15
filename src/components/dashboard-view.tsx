@@ -223,7 +223,7 @@ export function DashboardView() {
   }
 
   return (
-    <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 p-4 pt-8">
+    <div className="mx-auto flex w-full max-w-2xl flex-col gap-10 overflow-x-hidden p-4 pt-8">
       {/* Hero: date + greeting + actions */}
       <section className="flex flex-col gap-3">
         {/* Date + weather */}
