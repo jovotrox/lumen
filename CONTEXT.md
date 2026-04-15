@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-14 (v0.7.0)
+**Ultima actualizacion:** 2026-04-15 (v0.7.0)
 
 ---
 
@@ -295,6 +295,11 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 ---
 
 ## Historial de Cambios Importantes
+
+### Sync 401 Diagnostics — 2026-04-15
+
+- **feat: persistent debug log** — ring buffer (last 50 entries) in `localStorage` under `lumen_debug_log`. Each entry is tagged with a per-device ID + platform (PWA/Electron/Tauri) so multi-device sync issues can be correlated. New "Debug log" section in Settings with Copy + Clear buttons for easy sharing. Files: `src/utils/debug-log.ts`, `src/components/debug-log-panel.tsx`.
+- **fix: unmask isomorphic-git HTTP errors** — `src/utils/git.ts` now passes `onAuthFailure` to `gitClone`/`gitPull`/`gitPush` and wraps each call with `runGitOp` that surfaces the GitHub response body on `HttpError`. Previously isomorphic-git threw opaque "HTTP Error: 401" even when the real cause was non-fast-forward, rate limit, or ref corruption. The debug log captures the actual status + response body from GitHub.
 
 ### Sync Race Condition Fixes — 2026-04-14
 

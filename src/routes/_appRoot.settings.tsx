@@ -3,6 +3,7 @@ import { useAtom, useAtomValue } from "jotai"
 import React, { useState } from "react"
 import { useNetworkState } from "react-use"
 import { Button } from "../components/button"
+import { DebugLogPanel } from "../components/debug-log-panel"
 import { Dialog } from "../components/dialog"
 import { DropdownMenu } from "../components/dropdown-menu"
 import { FormControl } from "../components/form-control"
@@ -88,6 +89,7 @@ function RouteComponent() {
           <NotesSection />
           <CalendarSection />
           <AISection />
+          <DebugSection />
           <div className="p-5 text-text-tertiary self-center flex flex-col gap-3 items-center">
             <span className="text-sm">
               Made by{" "}
@@ -1150,6 +1152,20 @@ function AISection() {
             </div>
           </div>
         </div>
+      </div>
+    </SettingsSection>
+  )
+}
+
+function DebugSection() {
+  return (
+    <SettingsSection title="Debug log">
+      <div className="flex flex-col gap-3">
+        <p className="text-sm text-text-secondary">
+          Captures sync errors and other diagnostic events on this device. Click Copy to share when
+          reporting issues.
+        </p>
+        <DebugLogPanel />
       </div>
     </SettingsSection>
   )

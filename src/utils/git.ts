@@ -1,6 +1,7 @@
 import git from "isomorphic-git"
 import http from "isomorphic-git/http/web"
 import { GitHubRepository, GitHubUser } from "../schema"
+import { logDebug } from "./debug-log"
 import { createElectronHttpClient, isElectron } from "./electron"
 import { fs, fsWipe } from "./fs"
 import { createTauriHttpClient, isTauri } from "./tauri"
@@ -8,6 +9,63 @@ import { startTimer } from "./timer"
 
 export const REPO_DIR = "/repo"
 const DEFAULT_BRANCH = "main"
+
+/**
+ * Called by isomorphic-git when an already-authenticated request still gets
+ * rejected (401 on the retry). Without this, isomorphic-git just throws
+ * `HTTP Error: 401` with no context, masking the real cause (bad token,
+ * non-ff push, rate limit, ref corruption, etc).
+ *
+ * Returning nothing tells isomorphic-git to stop retrying and surface the
+ * error — the HttpError will include the response body, which we log below.
+ */
+function onAuthFailure(url: string) {
+  const msg = `auth retry failed for ${url} — token may be invalid, or GitHub rejected the request for another reason`
+  console.error(`[git] ${msg}`)
+  logDebug("git:auth-failure", { url })
+}
+
+/**
+ * Wraps a git network operation so any `HttpError` surfaces with the actual
+ * status code + response body from GitHub, instead of the opaque
+ * "HTTP Error: 401" that isomorphic-git throws by default.
+ */
+async function runGitOp<T>(label: string, fn: () => Promise<T>): Promise<T> {
+  try {
+    return await fn()
+  } catch (err) {
+    const e = err as {
+      code?: string
+      data?: { statusCode?: number; statusMessage?: string; response?: unknown }
+      message?: string
+    }
+    if (e?.code === "HttpError" && e.data) {
+      const { statusCode, statusMessage, response } = e.data
+      const body =
+        typeof response === "string"
+          ? response.length > 500
+            ? `${response.slice(0, 500)}…`
+            : response
+          : response
+      console.error(
+        `[git ${label}] HTTP ${statusCode} ${statusMessage ?? ""} — response body:`,
+        body,
+      )
+      logDebug(`git:${label}:http-error`, {
+        statusCode,
+        statusMessage,
+        response: body,
+      })
+    } else {
+      console.error(`[git ${label}] error:`, err)
+      logDebug(`git:${label}:error`, {
+        message: e?.message ?? String(err),
+        code: e?.code,
+      })
+    }
+    throw err
+  }
+}
 
 // Get the API base URL for web (Vercel deployment)
 // In Tauri/Electron, we don't need this as we bypass CORS
@@ -54,6 +112,7 @@ export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
     onAuth: () => ({ username: user.login, password: user.token }),
+    onAuthFailure,
   }
 
   // Wipe file system and wait for deletion to complete before cloning
@@ -63,7 +122,7 @@ export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
 
   // Clone repo
   let stopTimer = startTimer(`git clone ${options.url} ${options.dir}`)
-  await git.clone(options)
+  await runGitOp("clone", () => git.clone(options))
   stopTimer()
 
   // Set user in git config
@@ -88,10 +147,11 @@ export async function gitPull(user: GitHubUser) {
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
     onAuth: () => ({ username: user.login, password: user.token }),
+    onAuthFailure,
   }
 
   const stopTimer = startTimer("git pull")
-  await git.pull(options)
+  await runGitOp("pull", () => git.pull(options))
   stopTimer()
 }
 
@@ -105,10 +165,11 @@ export async function gitPush(user: GitHubUser) {
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
     onAuth: () => ({ username: user.login, password: user.token }),
+    onAuthFailure,
   }
 
   const stopTimer = startTimer("git push")
-  await git.push(options)
+  await runGitOp("push", () => git.push(options))
   stopTimer()
 }
 
