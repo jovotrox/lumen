@@ -392,10 +392,14 @@ function createGlobalStateMachine() {
           const login = searchParams.get("user_login")
           const name = searchParams.get("user_name")
           const email = searchParams.get("user_email")
+          const refreshToken = searchParams.get("user_refresh_token")
+          const expiresAtRaw = searchParams.get("user_expires_at")
 
           if (token && login && name && email) {
             const idNumberRaw = id ? Number(id) : undefined
             const idNumber = Number.isFinite(idNumberRaw) ? idNumberRaw : undefined
+            const expiresAtNum = expiresAtRaw ? Number(expiresAtRaw) : undefined
+            const expiresAt = Number.isFinite(expiresAtNum) ? expiresAtNum : undefined
 
             // Remove user metadata from URL
             searchParams.delete("user_token")
@@ -403,6 +407,8 @@ function createGlobalStateMachine() {
             searchParams.delete("user_login")
             searchParams.delete("user_name")
             searchParams.delete("user_email")
+            searchParams.delete("user_refresh_token")
+            searchParams.delete("user_expires_at")
 
             window.location.replace(
               `${window.location.pathname}${
@@ -410,7 +416,17 @@ function createGlobalStateMachine() {
               }`,
             )
 
-            return { githubUser: { token, id: idNumber, login, name, email } }
+            return {
+              githubUser: {
+                token,
+                id: idNumber,
+                login,
+                name,
+                email,
+                refreshToken: refreshToken ?? undefined,
+                expiresAt,
+              },
+            }
           }
 
           // Next, check localStorage for user metadata

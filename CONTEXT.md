@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-15 (v0.7.2)
+**Ultima actualizacion:** 2026-04-15 (v0.7.3)
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal` (fork personal, rama de compilación)
 - **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, calendar caching v0.7.0
-- **Version:** 0.7.2
+- **Version:** 0.7.3
 
 ### Migracion Tauri → Electron
 
@@ -295,6 +295,15 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 ---
 
 ## Historial de Cambios Importantes
+
+### PWA Token Refresh — 2026-04-15 (v0.7.3)
+
+- **fix: extend OAuth token refresh flow to PWA** — v0.7.2 only covered Electron (Device Flow refresh, no `client_secret` needed). PWA was skipping refresh with `{ reason: "env not supported" }`. Added:
+  - **`api/github-auth-refresh.ts`** (new Vercel function) — proxies refresh calls to GitHub with `client_secret` server-side.
+  - **`api/github-auth.ts`** now forwards `refresh_token` and `expires_in` in the OAuth redirect URL params, so the PWA actually receives them. Previously they were discarded at the server exchange step.
+  - **`src/global-state.ts`** `resolveUser` parses the new URL params (`user_refresh_token`, `user_expires_at`) into the `GitHubUser` atom.
+  - **`src/utils/github-auth-refresh.ts`** branches on platform — Electron calls GitHub directly, PWA calls `/api/github-auth-refresh`.
+- Users who signed in on the PWA _before_ v0.7.3 won't have `refreshToken` in localStorage — they'll need to sign out + sign in once to pick up the new fields.
 
 ### OAuth Token Refresh Flow — 2026-04-15 (v0.7.2)
 
