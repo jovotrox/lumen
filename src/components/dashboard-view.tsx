@@ -41,6 +41,8 @@ import {
 import { cx } from "../utils/cx"
 import { generateAISummary } from "../utils/dashboard-ai"
 import { getGreeting } from "../utils/dashboard-templates"
+import { fs } from "../utils/fs"
+import { REPO_DIR } from "../utils/git"
 import { generateNoteId } from "../utils/note-id"
 import { dismissNudge } from "../utils/nudges"
 import { updateTaskCompletion } from "../utils/task"
@@ -304,18 +306,17 @@ export function DashboardView() {
             New daily note
           </button>
           <button
-            onClick={() => {
+            onClick={async () => {
               const today = todayNoteId
               const existing = notes.get(today)
               const taskLine = `- [ ] `
               if (existing) {
                 const content = existing.content.trimEnd() + "\n" + taskLine
+                await fs.promises.writeFile(`${REPO_DIR}/${today}.md`, content, "utf8")
                 send({ type: "WRITE_FILES", markdownFiles: { [`${today}.md`]: content } })
               } else {
-                send({
-                  type: "WRITE_FILES",
-                  markdownFiles: { [`${today}.md`]: `${taskLine}` },
-                })
+                await fs.promises.writeFile(`${REPO_DIR}/${today}.md`, taskLine, "utf8")
+                send({ type: "WRITE_FILES", markdownFiles: { [`${today}.md`]: taskLine } })
               }
               navigate({
                 to: "/notes/$",
