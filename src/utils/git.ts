@@ -2,7 +2,7 @@ import git from "isomorphic-git"
 import http from "isomorphic-git/http/web"
 import { GitHubRepository, GitHubUser } from "../schema"
 import { logDebug } from "./debug-log"
-import { createElectronHttpClient, isElectron } from "./electron"
+import { createElectronHttpClient, electronFetch, isElectron } from "./electron"
 import { fs, fsWipe } from "./fs"
 import { createTauriHttpClient, isTauri } from "./tauri"
 import { startTimer } from "./timer"
@@ -19,10 +19,104 @@ const DEFAULT_BRANCH = "main"
  * Returning nothing tells isomorphic-git to stop retrying and surface the
  * error — the HttpError will include the response body, which we log below.
  */
-function onAuthFailure(url: string) {
-  const msg = `auth retry failed for ${url} — token may be invalid, or GitHub rejected the request for another reason`
-  console.error(`[git] ${msg}`)
-  logDebug("git:auth-failure", { url })
+function onAuthFailure(
+  url: string,
+  auth: { username?: string; password?: string; headers?: Record<string, string> },
+) {
+  // Capture what was sent (safely — log only token PREFIX + length, never the full token).
+  // This lets us tell apart: bad username, wrong account, token type, truncated token, etc.
+  const username = auth.username ?? "(none)"
+  const token = auth.password ?? ""
+  const tokenInfo = token
+    ? { prefix: token.slice(0, 4), length: token.length }
+    : { prefix: "(none)", length: 0 }
+
+  console.error(
+    `[git] auth retry failed for ${url} — username="${username}", token prefix="${tokenInfo.prefix}…" length=${tokenInfo.length}`,
+  )
+  logDebug("git:auth-failure", {
+    url,
+    username,
+    tokenPrefix: tokenInfo.prefix,
+    tokenLength: tokenInfo.length,
+  })
+
+  // Fire-and-forget probe: what does this token actually have access to?
+  // Throttled to once per 60s so we don't spam the log on repeated syncs.
+  void maybeProbeAuth(url, token)
+}
+
+/**
+ * Probes GitHub's REST API to determine whether the token is valid for
+ * general use (/user) and for the specific repo the git op is targeting
+ * (/repos/{owner}/{name}). Results go into the debug log so we can tell
+ * apart "token is dead" vs "token is fine but has no access to this repo".
+ */
+let lastProbeAt = 0
+async function maybeProbeAuth(repoUrl: string, token: string) {
+  if (!token) return
+  const now = Date.now()
+  if (now - lastProbeAt < 60_000) return
+  lastProbeAt = now
+
+  try {
+    const userResult = await apiProbe("https://api.github.com/user", token)
+    const probe: Record<string, unknown> = {
+      repoUrl,
+      apiUser: {
+        status: userResult.status,
+        login: userResult.body?.login,
+        scopes: userResult.headers["x-oauth-scopes"],
+      },
+    }
+
+    const match = repoUrl.match(/^https:\/\/github\.com\/([^/]+)\/([^/.]+?)(?:\.git)?\/?$/)
+    const owner = match?.[1]
+    const name = match?.[2]
+    if (owner && name) {
+      const repoResult = await apiProbe(`https://api.github.com/repos/${owner}/${name}`, token)
+      probe.apiRepo = {
+        owner,
+        name,
+        status: repoResult.status,
+        // Surface the error message if the call failed — "Not Found" vs
+        // "Bad credentials" distinguishes missing access from dead token.
+        message: repoResult.status >= 400 ? repoResult.body?.message : undefined,
+        private: repoResult.status === 200 ? repoResult.body?.private : undefined,
+      }
+    }
+
+    logDebug("git:auth-probe", probe)
+  } catch (err) {
+    logDebug("git:auth-probe-failed", { error: String(err), repoUrl })
+  }
+}
+
+async function apiProbe(
+  url: string,
+  token: string,
+): Promise<{
+  status: number
+  body: Record<string, unknown> & { login?: string; private?: boolean; message?: string }
+  headers: Record<string, string>
+}> {
+  const headers = {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+  }
+  // In Electron, use IPC fetch to bypass CORS; in browser, api.github.com has CORS headers
+  const res = isElectron() ? await electronFetch(url, { headers }) : await fetch(url, { headers })
+  let body: Record<string, unknown> & { login?: string; private?: boolean; message?: string } = {}
+  try {
+    body = (await res.json()) as typeof body
+  } catch {
+    // Ignore
+  }
+  const headerRecord: Record<string, string> = {}
+  res.headers.forEach((v, k) => {
+    headerRecord[k] = v
+  })
+  return { status: res.status, body, headers: headerRecord }
 }
 
 /**
