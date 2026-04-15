@@ -16,7 +16,6 @@ import {
   FolderOpen,
   Inbox,
   ListPlus,
-  Sparkles,
   Sun,
   Wind,
   X,
@@ -148,10 +147,6 @@ export function DashboardView() {
         .slice(0, 5),
     [recentNotes],
   )
-
-  const hasDailyNote = notes.has(todayNoteId)
-  const hasPendingItems =
-    unprocessed.length > 0 || incompleteTodayTasks.length > 0 || urgentTasks.length > 0
 
   // Date
   const now = new Date()
@@ -475,32 +470,7 @@ export function DashboardView() {
         </DashboardSection>
       ) : null}
 
-      {/* Empty state */}
-      {!hasPendingItems ? (
-        <section className="flex flex-col items-center gap-3 rounded-lg border border-border-secondary py-8 text-center">
-          <Sparkles size={32} className="text-text-tertiary" />
-          <p className="text-text-secondary">No pending tasks — you're all clear!</p>
-          {!hasDailyNote ? (
-            <Link
-              to="/notes/$"
-              params={{ _splat: todayNoteId }}
-              search={{ mode: "write", query: undefined, view: "grid" }}
-              className="link text-sm font-medium"
-            >
-              Start today's note →
-            </Link>
-          ) : (
-            <Link
-              to="/notes/$"
-              params={{ _splat: todayNoteId }}
-              search={{ mode: "read", query: undefined, view: "grid" }}
-              className="link text-sm font-medium"
-            >
-              Open today's note →
-            </Link>
-          )}
-        </section>
-      ) : null}
+      {/* Empty state removed — greeting already communicates "nothing pending" */}
 
       {/* Active projects — carousel */}
       {activeProjects.length > 0 ? (
