@@ -298,10 +298,10 @@ export function DashboardView() {
                 })
               }
             }}
-            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-bg-secondary px-3 py-1.5 text-sm text-text-secondary hover:bg-bg-secondary-hover"
+            className="flex cursor-pointer items-center gap-1.5 rounded-lg bg-text px-3 py-1.5 text-sm font-medium text-bg hover:opacity-90"
           >
             <CalendarPlus size={14} />
-            Daily note
+            New daily note
           </button>
           <button
             onClick={() => {
