@@ -275,23 +275,11 @@ function createGlobalStateMachine() {
                           ],
                         },
                         onError: [
-                          // Can retry? Back off and try again
                           {
                             target: "retrying",
                             cond: "canRetrySync",
                             actions: "incrementSyncRetryCount",
                           },
-                          // Max retries reached — silent re-clone (same as sign out + sign in)
-                          {
-                            target: "#global.signedIn.cloningRepo",
-                            cond: "hasGitHubRepo",
-                            actions: [
-                              "resetSyncRetryCount",
-                              "clearMarkdownFiles",
-                              "clearMarkdownFilesLocalStorage",
-                            ],
-                          },
-                          // No repo in context (shouldn't happen) — show error
                           {
                             target: "error",
                             actions: "resetSyncRetryCount",
@@ -312,15 +300,6 @@ function createGlobalStateMachine() {
                             target: "retrying",
                             cond: "canRetrySync",
                             actions: "incrementSyncRetryCount",
-                          },
-                          {
-                            target: "#global.signedIn.cloningRepo",
-                            cond: "hasGitHubRepo",
-                            actions: [
-                              "resetSyncRetryCount",
-                              "clearMarkdownFiles",
-                              "clearMarkdownFilesLocalStorage",
-                            ],
                           },
                           {
                             target: "error",
@@ -353,15 +332,6 @@ function createGlobalStateMachine() {
                             actions: "incrementSyncRetryCount",
                           },
                           {
-                            target: "#global.signedIn.cloningRepo",
-                            cond: "hasGitHubRepo",
-                            actions: [
-                              "resetSyncRetryCount",
-                              "clearMarkdownFiles",
-                              "clearMarkdownFilesLocalStorage",
-                            ],
-                          },
-                          {
                             target: "error",
                             actions: "resetSyncRetryCount",
                           },
@@ -381,7 +351,6 @@ function createGlobalStateMachine() {
         isOffline: () => !navigator.onLine,
         isSynced: (_, event) => event.data.isSynced,
         canRetrySync: (context) => context.syncRetryCount < 3,
-        hasGitHubRepo: (context) => context.githubRepo !== null,
       },
       delays: {
         SYNC_RETRY_DELAY: (context) => Math.min(1000 * Math.pow(2, context.syncRetryCount), 8000),
@@ -446,12 +415,7 @@ function createGlobalStateMachine() {
         cloneRepo: async (context, event) => {
           if (!context.githubUser) throw new Error("Not signed in")
 
-          // Use event.githubRepo (from SELECT_REPO) or fall back to context
-          // (from auto-reclone recovery where the repo is already in context)
-          const repo = ("githubRepo" in event ? event.githubRepo : null) ?? context.githubRepo
-          if (!repo) throw new Error("No repository selected")
-
-          await gitClone(repo, context.githubUser)
+          await gitClone(event.githubRepo, context.githubUser)
 
           return {
             markdownFiles: await getMarkdownFilesFromFs(REPO_DIR),
@@ -576,15 +540,12 @@ function createGlobalStateMachine() {
           localStorage.removeItem(GITHUB_USER_STORAGE_KEY)
         },
         setGitHubRepo: assign({
-          githubRepo: (context, event) => {
+          githubRepo: (_, event) => {
             switch (event.type) {
               case "SELECT_REPO":
                 return event.githubRepo
               case "done.invoke.global.signedIn.resolvingRepo:invocation[0]":
                 return event.data.githubRepo
-              default:
-                // Preserve existing repo (e.g., auto-reclone recovery)
-                return context.githubRepo
             }
           },
         }),
