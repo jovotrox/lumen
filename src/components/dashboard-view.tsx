@@ -589,23 +589,13 @@ function ProjectCard({ project }: { project: Note }) {
         : undefined
   const isOverdue =
     deadline && new Date(deadline + "T23:59:59").getTime() < Date.now() && status === "active"
-  const hasContent = project.content.replace(/^---[\s\S]*?---\n*/, "").trim().length > 0
-
   return (
     <Link
       to="/notes/$"
       params={{ _splat: project.id }}
       search={{ mode: "read", query: undefined, view: "grid" }}
-      className="card-1 flex w-[280px] shrink-0 snap-start flex-col overflow-hidden rounded-lg"
+      className="card-1 flex w-[200px] shrink-0 snap-start flex-col overflow-hidden rounded-lg"
     >
-      {/* Content preview or spacer */}
-      {hasContent ? (
-        <div className="grow overflow-hidden [mask-image:linear-gradient(to_bottom,black_0%,black_60%,transparent_100%)]">
-          <NotePreview note={project} hideProperties />
-        </div>
-      ) : (
-        <div className="p-4 pb-0" />
-      )}
       {/* Footer */}
       <div className="flex flex-col gap-2 px-3 pb-3">
         {/* Progress */}
