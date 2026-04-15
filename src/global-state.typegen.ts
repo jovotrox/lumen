@@ -62,6 +62,7 @@
 "setMarkdownFiles": "done.invoke.global.signedIn.cloned.sync.pulling:invocation[0]" | "done.invoke.global.signedIn.cloningRepo:invocation[0]" | "done.invoke.global.signedIn.resolvingRepo:invocation[0]";
 "setMarkdownFilesLocalStorage": "done.invoke.global.signedIn.cloned.sync.pulling:invocation[0]" | "done.invoke.global.signedIn.cloningRepo:invocation[0]" | "done.invoke.global.signedIn.resolvingRepo:invocation[0]";
 "setSampleMarkdownFiles": "SIGN_OUT" | "error.platform.global.resolvingUser:invocation[0]";
+"updateGitHubUserTokens": "REFRESH_TOKEN";
         };
         eventsCausingDelays: {
           "SYNC_RETRY_DELAY": "error.platform.global.signedIn.cloned.sync.pulling:invocation[0]" | "error.platform.global.signedIn.cloned.sync.pushing:invocation[0]" | "error.platform.global.signedIn.cloned.sync.checkingStatus:invocation[0]";

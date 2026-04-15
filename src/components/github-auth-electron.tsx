@@ -1,6 +1,7 @@
 import { useSetAtom } from "jotai"
 import React from "react"
 import { globalStateMachineAtom } from "../global-state"
+import { logDebug } from "../utils/debug-log"
 import { electronFetch } from "../utils/electron"
 import { openExternal } from "../utils/tauri"
 import { Button, ButtonProps } from "./button"
@@ -19,6 +20,14 @@ interface DeviceCodeResponse {
 
 interface TokenResponse {
   access_token?: string
+  /** Present when the OAuth app has "Expire user authorization tokens" enabled. */
+  refresh_token?: string
+  /** Seconds until `access_token` expires, when the OAuth app uses expiring tokens. */
+  expires_in?: number
+  /** Seconds until `refresh_token` expires (typically ~6 months). */
+  refresh_token_expires_in?: number
+  token_type?: string
+  scope?: string
   error?: string
   error_description?: string
 }
@@ -117,12 +126,29 @@ export function ElectronSignInButton(props: ButtonProps) {
         if (data.access_token) {
           cleanup()
 
+          // Log which fields GitHub returned (without the token values) so we
+          // can confirm whether this OAuth app issues expiring tokens + refresh
+          // tokens. If `hasRefreshToken` is false, the refresh flow is a no-op
+          // and users will need to manually sign in again every time the token
+          // dies — the OAuth app needs "Expire user authorization tokens"
+          // enabled to emit refresh tokens.
+          logDebug("github-auth:device-flow:success", {
+            hasAccessToken: !!data.access_token,
+            hasRefreshToken: !!data.refresh_token,
+            expiresIn: data.expires_in,
+            refreshTokenExpiresIn: data.refresh_token_expires_in,
+            tokenType: data.token_type,
+            scope: data.scope,
+          })
+
           // Get user info
           const user = await getUser(data.access_token)
           send({
             type: "SIGN_IN",
             githubUser: {
               token: data.access_token,
+              refreshToken: data.refresh_token,
+              expiresAt: data.expires_in ? Date.now() + data.expires_in * 1000 : undefined,
               login: user.login,
               name: user.name,
               email: user.email,

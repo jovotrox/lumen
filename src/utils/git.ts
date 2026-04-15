@@ -4,6 +4,7 @@ import { GitHubRepository, GitHubUser } from "../schema"
 import { logDebug } from "./debug-log"
 import { createElectronHttpClient, electronFetch, isElectron } from "./electron"
 import { fs, fsWipe } from "./fs"
+import { canRefreshTokens, refreshAccessToken } from "./github-auth-refresh"
 import { createTauriHttpClient, isTauri } from "./tauri"
 import { startTimer } from "./timer"
 
@@ -11,39 +12,85 @@ export const REPO_DIR = "/repo"
 const DEFAULT_BRANCH = "main"
 
 /**
- * Called by isomorphic-git when an already-authenticated request still gets
- * rejected (401 on the retry). Without this, isomorphic-git just throws
- * `HTTP Error: 401` with no context, masking the real cause (bad token,
- * non-ff push, rate limit, ref corruption, etc).
- *
- * Returning nothing tells isomorphic-git to stop retrying and surface the
- * error — the HttpError will include the response body, which we log below.
+ * Optional callback invoked when the access_token was refreshed mid-sync.
+ * Callers (global-state.ts) pass this to propagate the new token back into
+ * the Jotai store / localStorage so future syncs use it.
  */
-function onAuthFailure(
-  url: string,
-  auth: { username?: string; password?: string; headers?: Record<string, string> },
+export type OnTokenRefreshed = (user: GitHubUser) => void
+
+/**
+ * Builds the isomorphic-git `onAuthFailure` callback for a given git
+ * operation. Keeps `currentUser` as a mutable closure variable so that after
+ * a successful refresh, subsequent `onAuth` calls within the same git op
+ * return the new token.
+ *
+ * Logic on 401:
+ *   1. Log what was sent (safely — token prefix only, never the full value).
+ *   2. Fire a throttled probe to `/user` + `/repos/owner/name` for diagnostics.
+ *   3. Attempt to refresh the access_token if we have a refresh_token.
+ *      - If refresh succeeds, return new {username, password} — isomorphic-git
+ *        retries with the new token and (usually) succeeds.
+ *      - If refresh fails or isn't available, return undefined — isomorphic-git
+ *        bails out with HttpError which `runGitOp` then surfaces.
+ */
+function makeAuthFailureHandler(
+  getUser: () => GitHubUser,
+  setUser: (user: GitHubUser) => void,
+  onTokenRefreshed?: OnTokenRefreshed,
 ) {
-  // Capture what was sent (safely — log only token PREFIX + length, never the full token).
-  // This lets us tell apart: bad username, wrong account, token type, truncated token, etc.
-  const username = auth.username ?? "(none)"
-  const token = auth.password ?? ""
-  const tokenInfo = token
-    ? { prefix: token.slice(0, 4), length: token.length }
-    : { prefix: "(none)", length: 0 }
+  return async function onAuthFailure(
+    url: string,
+    auth: { username?: string; password?: string; headers?: Record<string, string> },
+  ): Promise<{ username: string; password: string } | undefined> {
+    const username = auth.username ?? "(none)"
+    const token = auth.password ?? ""
+    const tokenInfo = token
+      ? { prefix: token.slice(0, 4), length: token.length }
+      : { prefix: "(none)", length: 0 }
 
-  console.error(
-    `[git] auth retry failed for ${url} — username="${username}", token prefix="${tokenInfo.prefix}…" length=${tokenInfo.length}`,
-  )
-  logDebug("git:auth-failure", {
-    url,
-    username,
-    tokenPrefix: tokenInfo.prefix,
-    tokenLength: tokenInfo.length,
-  })
+    console.error(
+      `[git] auth retry failed for ${url} — username="${username}", token prefix="${tokenInfo.prefix}…" length=${tokenInfo.length}`,
+    )
+    logDebug("git:auth-failure", {
+      url,
+      username,
+      tokenPrefix: tokenInfo.prefix,
+      tokenLength: tokenInfo.length,
+    })
 
-  // Fire-and-forget probe: what does this token actually have access to?
-  // Throttled to once per 60s so we don't spam the log on repeated syncs.
-  void maybeProbeAuth(url, token)
+    void maybeProbeAuth(url, token)
+
+    // Attempt refresh
+    const user = getUser()
+    if (!canRefreshTokens()) {
+      logDebug("git:refresh:skipped", { reason: "env not supported" })
+      return
+    }
+    if (!user.refreshToken) {
+      logDebug("git:refresh:skipped", { reason: "no refresh_token on user" })
+      return
+    }
+    try {
+      const refreshed = await refreshAccessToken(user.refreshToken)
+      const newUser: GitHubUser = {
+        ...user,
+        token: refreshed.accessToken,
+        refreshToken: refreshed.refreshToken,
+        expiresAt: refreshed.expiresAt,
+      }
+      setUser(newUser)
+      onTokenRefreshed?.(newUser)
+      logDebug("git:refresh:success", {
+        newTokenPrefix: refreshed.accessToken.slice(0, 4),
+        newTokenLength: refreshed.accessToken.length,
+        expiresAt: refreshed.expiresAt,
+      })
+      return { username: newUser.login, password: newUser.token }
+    } catch (err) {
+      logDebug("git:refresh:failed", { error: err instanceof Error ? err.message : String(err) })
+      return
+    }
+  }
 }
 
 /**
@@ -192,8 +239,13 @@ function getHttpConfig() {
   }
 }
 
-export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
+export async function gitClone(
+  repo: GitHubRepository,
+  user: GitHubUser,
+  onTokenRefreshed?: OnTokenRefreshed,
+) {
   const httpConfig = getHttpConfig()
+  let currentUser = user
   const options: Parameters<typeof git.clone>[0] = {
     fs,
     http: httpConfig.http,
@@ -205,8 +257,14 @@ export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
     depth: 1,
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
-    onAuth: () => ({ username: user.login, password: user.token }),
-    onAuthFailure,
+    onAuth: () => ({ username: currentUser.login, password: currentUser.token }),
+    onAuthFailure: makeAuthFailureHandler(
+      () => currentUser,
+      (u) => {
+        currentUser = u
+      },
+      onTokenRefreshed,
+    ),
   }
 
   // Wipe file system and wait for deletion to complete before cloning
@@ -230,8 +288,9 @@ export async function gitClone(repo: GitHubRepository, user: GitHubUser) {
   stopTimer()
 }
 
-export async function gitPull(user: GitHubUser) {
+export async function gitPull(user: GitHubUser, onTokenRefreshed?: OnTokenRefreshed) {
   const httpConfig = getHttpConfig()
+  let currentUser = user
   const options: Parameters<typeof git.pull>[0] = {
     fs,
     http: httpConfig.http,
@@ -240,8 +299,14 @@ export async function gitPull(user: GitHubUser) {
     singleBranch: true,
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
-    onAuth: () => ({ username: user.login, password: user.token }),
-    onAuthFailure,
+    onAuth: () => ({ username: currentUser.login, password: currentUser.token }),
+    onAuthFailure: makeAuthFailureHandler(
+      () => currentUser,
+      (u) => {
+        currentUser = u
+      },
+      onTokenRefreshed,
+    ),
   }
 
   const stopTimer = startTimer("git pull")
@@ -249,8 +314,9 @@ export async function gitPull(user: GitHubUser) {
   stopTimer()
 }
 
-export async function gitPush(user: GitHubUser) {
+export async function gitPush(user: GitHubUser, onTokenRefreshed?: OnTokenRefreshed) {
   const httpConfig = getHttpConfig()
+  let currentUser = user
   const options: Parameters<typeof git.push>[0] = {
     fs,
     http: httpConfig.http,
@@ -258,8 +324,14 @@ export async function gitPush(user: GitHubUser) {
     corsProxy: httpConfig.corsProxy,
     onMessage: (message) => console.debug("onMessage", message),
     onProgress: (progress) => console.debug("onProgress", progress),
-    onAuth: () => ({ username: user.login, password: user.token }),
-    onAuthFailure,
+    onAuth: () => ({ username: currentUser.login, password: currentUser.token }),
+    onAuthFailure: makeAuthFailureHandler(
+      () => currentUser,
+      (u) => {
+        currentUser = u
+      },
+      onTokenRefreshed,
+    ),
   }
 
   const stopTimer = startTimer("git push")

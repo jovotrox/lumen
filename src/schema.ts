@@ -65,6 +65,13 @@ export const githubUserSchema = z.object({
   login: z.string(),
   name: z.string(),
   email: z.string(),
+  // Populated when the OAuth app has "Expire user authorization tokens"
+  // enabled. We use `refreshToken` to renew `token` automatically on 401
+  // instead of forcing the user to sign in again. `expiresAt` is epoch ms.
+  // Both optional for backward compat with localStorage entries from before
+  // token-refresh was added.
+  refreshToken: z.string().optional(),
+  expiresAt: z.number().optional(),
 })
 
 export type GitHubUser = z.infer<typeof githubUserSchema>
