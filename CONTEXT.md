@@ -2,7 +2,7 @@
 
 Este archivo contiene el contexto actual del proyecto para mantener continuidad entre sesiones de Claude Code.
 
-**Ultima actualizacion:** 2026-04-15 (v0.7.0)
+**Ultima actualizacion:** 2026-04-15 (v0.7.1)
 
 ---
 
@@ -12,7 +12,7 @@ Este archivo contiene el contexto actual del proyecto para mantener continuidad 
 
 - **Branch:** `personal` (fork personal, rama de compilación)
 - **Estado:** Electron v2.0 Phases 1-4 completadas, versioning + pre-commit hooks activos, calendar caching v0.7.0
-- **Version:** 0.7.0
+- **Version:** 0.7.1
 
 ### Migracion Tauri → Electron
 
@@ -296,10 +296,12 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 
 ## Historial de Cambios Importantes
 
-### Sync 401 Diagnostics — 2026-04-15
+### Sync 401 Fix + Diagnostics — 2026-04-15 (v0.7.1)
 
+- **fix: bypass Electron HTTP cache + cookies for git operations** — Electron's `net.fetch` in `ipcMain.handle("electron:fetch")` was using the default session, which has shared HTTP cache and cookies with the renderer. The cache could serve the first 401 response (issued when isomorphic-git sends the initial unauthenticated request) back to the second request (the authenticated retry), making GitHub appear to reject the token when in reality the authenticated request never left the machine. Cookies from github.com (set during OAuth redirects) could also mix with Basic auth headers. Fix: pass `cache: "no-store"` and `credentials: "omit"` to `net.fetch`. Only affects Electron — Tauri and PWA paths are unchanged.
 - **feat: persistent debug log** — ring buffer (last 50 entries) in `localStorage` under `lumen_debug_log`. Each entry is tagged with a per-device ID + platform (PWA/Electron/Tauri) so multi-device sync issues can be correlated. New "Debug log" section in Settings with Copy + Clear buttons for easy sharing. Files: `src/utils/debug-log.ts`, `src/components/debug-log-panel.tsx`.
-- **fix: unmask isomorphic-git HTTP errors** — `src/utils/git.ts` now passes `onAuthFailure` to `gitClone`/`gitPull`/`gitPush` and wraps each call with `runGitOp` that surfaces the GitHub response body on `HttpError`. Previously isomorphic-git threw opaque "HTTP Error: 401" even when the real cause was non-fast-forward, rate limit, or ref corruption. The debug log captures the actual status + response body from GitHub.
+- **fix: unmask isomorphic-git HTTP errors** — `src/utils/git.ts` now passes `onAuthFailure` to `gitClone`/`gitPull`/`gitPush` and wraps each call with `runGitOp` that surfaces the GitHub response body on `HttpError`. Previously isomorphic-git threw opaque "HTTP Error: 401" even when the real cause was non-fast-forward, rate limit, or ref corruption. Debug log captures actual status + response body.
+- **feat: auth probe on 401** — on `onAuthFailure`, a throttled probe (once per 60s) hits `/user` and `/repos/{owner}/{name}` directly against GitHub's API to distinguish "token is dead" vs "token lacks access" vs "git endpoint specific issue". Results land in the debug log alongside the error.
 
 ### Sync Race Condition Fixes — 2026-04-14
 
