@@ -296,14 +296,24 @@ Electron 36+ introduce `-electron-corner-smoothing`, una propiedad CSS que convi
 
 ## Historial de Cambios Importantes
 
-### PWA Token Refresh — 2026-04-15 (v0.7.3)
+### PWA Token Refresh + PAT Sign-in — 2026-04-15 (v0.7.3)
 
-- **fix: extend OAuth token refresh flow to PWA** — v0.7.2 only covered Electron (Device Flow refresh, no `client_secret` needed). PWA was skipping refresh with `{ reason: "env not supported" }`. Added:
-  - **`api/github-auth-refresh.ts`** (new Vercel function) — proxies refresh calls to GitHub with `client_secret` server-side.
-  - **`api/github-auth.ts`** now forwards `refresh_token` and `expires_in` in the OAuth redirect URL params, so the PWA actually receives them. Previously they were discarded at the server exchange step.
-  - **`src/global-state.ts`** `resolveUser` parses the new URL params (`user_refresh_token`, `user_expires_at`) into the `GitHubUser` atom.
-  - **`src/utils/github-auth-refresh.ts`** branches on platform — Electron calls GitHub directly, PWA calls `/api/github-auth-refresh`.
-- Users who signed in on the PWA _before_ v0.7.3 won't have `refreshToken` in localStorage — they'll need to sign out + sign in once to pick up the new fields.
+Two complementary fixes for the recurring 401. User confirmed via controlled test: a fresh sign-in on device B (Mac Electron) immediately invalidates the previously-issued access_token on device A (iPhone PWA). GitHub's OAuth apps with expiring tokens appear to allow only one active access_token per (user, app) pair — second sign-in revokes the first. The refresh_token of device A is also invalidated by device B's sign-in, so refresh flow alone can't recover device A across devices.
+
+**Part 1: Extend OAuth token refresh flow to PWA.** v0.7.2 only covered Electron (Device Flow refresh, no `client_secret` needed). PWA was skipping refresh with `{ reason: "env not supported" }`. Still useful for the TTL-only case (single-device, token dies after 8h idle):
+
+- **`api/github-auth-refresh.ts`** (new Vercel function) — proxies refresh calls to GitHub with `client_secret` server-side.
+- **`api/github-auth.ts`** now forwards `refresh_token` and `expires_in` in the OAuth redirect URL params. Previously discarded at the server exchange step.
+- **`src/global-state.ts`** `resolveUser` parses new URL params (`user_refresh_token`, `user_expires_at`) into the `GitHubUser` atom.
+- **`src/utils/github-auth-refresh.ts`** branches on platform — Electron calls GitHub directly, PWA calls `/api/github-auth-refresh`.
+
+**Part 2: Personal Access Token (PAT) sign-in as alternative.** The real fix for multi-device. PATs are not invalidated by new authorizations — each PAT is independent, any number can be active across any number of devices simultaneously.
+
+- **`src/components/sign-in-with-token-dialog.tsx`** (new) — dialog with token input, validates against `/user`, signs in without `refreshToken`/`expiresAt` (PATs don't expire via OAuth mechanism). Links directly to GitHub's "create token" page with correct scopes pre-selected.
+- Added "or use a personal access token" link under the sign-in button in `sign-in-banner.tsx` and `routes/ai.tsx`.
+- Recommended flow for multi-device: create one classic PAT with `repo`, `gist`, `user:email` scopes, use it on every device.
+
+Existing OAuth users signed in before v0.7.3 won't have `refreshToken` in localStorage — they need to sign out + sign in once to pick up the new fields (applies only to users staying on OAuth; PAT path is independent and works immediately).
 
 ### OAuth Token Refresh Flow — 2026-04-15 (v0.7.2)
 
