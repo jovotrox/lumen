@@ -4,6 +4,7 @@ import { useAtomValue } from "jotai"
 import { selectAtom } from "jotai/utils"
 import React from "react"
 import { SignInButton } from "../components/github-auth"
+import { SignInWithTokenDialog } from "../components/sign-in-with-token-dialog"
 import { Markdown } from "../components/markdown"
 import { githubRepoAtom, globalStateMachineAtom } from "../global-state"
 import { cx } from "../utils/cx"
@@ -34,8 +35,15 @@ function RouteComponent() {
 
     case "signIn":
       return (
-        <div className="p-4">
+        <div className="flex flex-col items-stretch gap-2 p-4">
           <SignInButton className="w-full" />
+          <SignInWithTokenDialog
+            trigger={
+              <button type="button" className="link text-sm text-text-secondary self-center">
+                or use a personal access token
+              </button>
+            }
+          />
         </div>
       )
 

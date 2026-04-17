@@ -19,7 +19,12 @@ export async function GET(request: Request): Promise<Response> {
       }),
     })
 
-    const { error, access_token: token } = await response.json()
+    const {
+      error,
+      access_token: token,
+      refresh_token: refreshToken,
+      expires_in: expiresIn,
+    } = await response.json()
 
     if (error) {
       throw new Error(error)
@@ -35,6 +40,15 @@ export async function GET(request: Request): Promise<Response> {
     redirectUrl.searchParams.set("user_login", login)
     redirectUrl.searchParams.set("user_name", name)
     redirectUrl.searchParams.set("user_email", email)
+    // Include refresh_token + expires_at when the OAuth app has expiring
+    // tokens enabled. Lets the PWA renew its access_token on 401 without
+    // forcing the user through the full OAuth flow again.
+    if (typeof refreshToken === "string" && refreshToken.length > 0) {
+      redirectUrl.searchParams.set("user_refresh_token", refreshToken)
+    }
+    if (typeof expiresIn === "number" && Number.isFinite(expiresIn)) {
+      redirectUrl.searchParams.set("user_expires_at", String(Date.now() + expiresIn * 1000))
+    }
 
     return Response.redirect(redirectUrl.toString())
   } catch (error) {

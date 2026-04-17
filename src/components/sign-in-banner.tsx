@@ -1,5 +1,6 @@
 import { useAtomValue } from "jotai"
 import { SignInButton } from "./github-auth"
+import { SignInWithTokenDialog } from "./sign-in-with-token-dialog"
 import { isSignedOutAtom } from "../global-state"
 import { cx } from "../utils/cx"
 
@@ -20,7 +21,16 @@ export function SignInBanner({ className }: { className?: string }) {
       <span className="px-2 text-text-secondary text-balance text-center sm:text-left">
         These are demo notes. Sign in to write your own.
       </span>
-      <SignInButton className="w-full sm:w-auto" />
+      <div className="flex flex-col items-center gap-1 sm:items-end">
+        <SignInButton className="w-full sm:w-auto" />
+        <SignInWithTokenDialog
+          trigger={
+            <button type="button" className="link text-sm text-text-secondary">
+              or use a personal access token
+            </button>
+          }
+        />
+      </div>
     </div>
   )
 }
